@@ -1,0 +1,3 @@
+displayName = Quite Enough Recipes
+author = divqii
+version = 0.1
