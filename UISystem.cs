@@ -1,9 +1,10 @@
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
+using System.Linq;
 using System;
+using Terraria.GameContent.UI.Elements;
 using Terraria.ID;
 using Terraria.ModLoader;
-using Terraria.GameContent.UI.Elements;
 using Terraria.UI;
 using Terraria;
 
@@ -17,7 +18,21 @@ internal class UIQERState : UIState
 		panel.Width.Percent = panel.Height.Percent = 0.8f;
 		panel.HAlign = panel.VAlign = 0.5f;
 
-		panel.Append(new UIItemPanel(new Item(ItemID.Zenith)));
+		var scroll = new UIScrollbar();
+		scroll.Height.Percent = 1;
+		scroll.Width.Percent = 0.1f;
+		scroll.HAlign = 1;
+
+		var list = new UIItemList();
+		list.Scrollbar = scroll;
+		list.Items = Enumerable.Range(0, 1000).Select(i => new Item(i)).ToList();
+		list.Width.Percent = 0.95f;
+		list.Height.Percent = 1;
+
+		list.OnLeftClickItem += i => Main.NewText($"[i:{i.type}]");
+
+		panel.Append(list);
+		panel.Append(scroll);
 
 		Append(panel);
 	}
