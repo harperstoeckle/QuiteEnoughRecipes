@@ -25,7 +25,10 @@ internal class UIQERState : UIState
 
 		var list = new UIItemList();
 		list.Scrollbar = scroll;
-		list.Items = Enumerable.Range(0, 1000).Select(i => new Item(i)).ToList();
+		list.Items = Enumerable.Range(0, ItemLoader.ItemCount)
+			.Select(i => new Item(i))
+			.Where(i => i.type != 0)
+			.ToList();
 		list.Width.Percent = 0.95f;
 		list.Height.Percent = 1;
 
