@@ -51,20 +51,6 @@ public class UIQERState : UIState
 		list.Height.Percent = 0.9f;
 		list.VAlign = 1;
 
-		list.OnLeftClickItem += i => {
-			_recipeList.Clear();
-
-			foreach (var r in Main.recipe)
-			{
-				if (r.createItem.type == i.type)
-				{
-					_recipeList.Add(new UIRecipePanel(r));
-				}
-			}
-
-			_recipeList.Activate();
-		};
-
 		var recipeScroll = new UIScrollbar();
 		recipeScroll.Height.Percent = 1;
 		recipeScroll.Width.Percent = 0.1f;
@@ -100,5 +86,41 @@ public class UIQERState : UIState
 
 		Append(recipePanel);
 		Append(itemPanel);
+	}
+
+	public override void LeftClick(UIMouseEvent e)
+	{
+		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
+		{
+			_recipeList.Clear();
+
+			foreach (var r in Main.recipe)
+			{
+				if (r.createItem.type == p.DisplayedItem.type)
+				{
+					_recipeList.Add(new UIRecipePanel(r));
+				}
+			}
+
+			_recipeList.Activate();
+		}
+	}
+
+	public override void RightClick(UIMouseEvent e)
+	{
+		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
+		{
+			_recipeList.Clear();
+
+			foreach (var r in Main.recipe)
+			{
+				if (r.requiredItem.Any(i => i.type == p.DisplayedItem.type))
+				{
+					_recipeList.Add(new UIRecipePanel(r));
+				}
+			}
+
+			_recipeList.Activate();
+		}
 	}
 }

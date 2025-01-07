@@ -39,9 +39,6 @@ public class UIItemList : UIElement
 	// If this is not present, scrolling will not happen.
 	public UIScrollbar? Scrollbar = null;
 
-	// Triggered when an item (not null) is left clicked.
-	public event Action<Item> OnLeftClickItem;
-
 	// Offset into the list of items for displaying.
 	private int _itemsOffset => (int) ((Scrollbar?.ViewPosition ?? 0) / (ItemWidth + Padding)) * NumCols;
 
@@ -68,14 +65,6 @@ public class UIItemList : UIElement
 		if (Scrollbar != null)
 		{
 			Scrollbar.ViewPosition -= e.ScrollWheelValue;
-		}
-	}
-
-	public override void LeftClick(UIMouseEvent e)
-	{
-		if (e.Target is UIItemPanel p && p.DisplayedItem is Item i)
-		{
-			OnLeftClickItem?.Invoke(i);
 		}
 	}
 
