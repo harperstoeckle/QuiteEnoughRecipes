@@ -71,6 +71,16 @@ public class UIQERState : UIState
 				s.ToggleTakingText();
 			}
 		};
+		search.OnRightClick += (evt, elem) => {
+			if (elem is UISearchBar s)
+			{
+				s.SetContents("");
+				if (!s.IsWritingText)
+				{
+					s.ToggleTakingText();
+				}
+			}
+		};
 		search.OnContentsChanged += s => {
 			_filteredItems.Clear();
 			_filteredItems.AddRange(_allItems.Where(i => i.Name.ToLower().StartsWith(s)));
