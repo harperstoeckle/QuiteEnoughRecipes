@@ -24,11 +24,17 @@ internal class UIQERState : UIState
 			.ToList();
 		_filteredItems = new(_allItems);
 
-		var panel = new UIPanel();
-		panel.Left.Percent = 0.525f;
-		panel.Width.Percent = 0.45f;
-		panel.Height.Percent = 0.8f;
-		panel.VAlign = 0.5f;
+		var recipePanel = new UIPanel();
+		recipePanel.Left.Percent = 0.04f;
+		recipePanel.Width.Percent = 0.45f;
+		recipePanel.Height.Percent = 0.8f;
+		recipePanel.VAlign = 0.5f;
+
+		var itemPanel = new UIPanel();
+		itemPanel.Left.Percent = 0.51f;
+		itemPanel.Width.Percent = 0.45f;
+		itemPanel.Height.Percent = 0.8f;
+		itemPanel.VAlign = 0.5f;
 
 		var scroll = new UIScrollbar();
 		scroll.Height.Percent = 0.9f;
@@ -61,11 +67,12 @@ internal class UIQERState : UIState
 			list.Items = _filteredItems;
 		};
 
-		panel.Append(list);
-		panel.Append(scroll);
-		panel.Append(search);
+		itemPanel.Append(list);
+		itemPanel.Append(scroll);
+		itemPanel.Append(search);
 
-		Append(panel);
+		Append(recipePanel);
+		Append(itemPanel);
 	}
 }
 
