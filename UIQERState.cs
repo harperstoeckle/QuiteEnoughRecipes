@@ -16,6 +16,8 @@ public class UIQERState : UIState
 	private List<Item> _allItems;
 	private List<Item> _filteredItems;
 
+	private UIList _recipeList = new();
+
 	public override void OnInitialize()
 	{
 		_allItems = Enumerable.Range(0, ItemLoader.ItemCount)
@@ -49,7 +51,29 @@ public class UIQERState : UIState
 		list.Height.Percent = 0.9f;
 		list.VAlign = 1;
 
-		list.OnLeftClickItem += i => Main.mouseItem = i;
+		list.OnLeftClickItem += i => {
+			_recipeList.Clear();
+
+			foreach (var r in Main.recipe)
+			{
+				if (r.createItem.type == i.type)
+				{
+					_recipeList.Add(new UIRecipePanel(r));
+				}
+			}
+
+			_recipeList.Activate();
+		};
+
+		var recipeScroll = new UIScrollbar();
+		recipeScroll.Height.Percent = 1;
+		recipeScroll.Width.Percent = 0.1f;
+		recipeScroll.HAlign = 1;
+
+		_recipeList.Width.Percent = 0.95f;
+		_recipeList.Height.Percent = 1;
+		_recipeList.ListPadding = 15;
+		_recipeList.SetScrollbar(recipeScroll);
 
 		var search = new UISearchBar(Language.GetText(""), 1);
 		search.Width.Percent = 1;
@@ -67,14 +91,8 @@ public class UIQERState : UIState
 			list.Items = _filteredItems;
 		};
 
-		foreach (var recipe in Main.recipe)
-		{
-			if (recipe.createItem.type == ItemID.Zenith)
-			{
-				recipePanel.Append(new UIRecipePanel(recipe));
-				break;
-			}
-		}
+		recipePanel.Append(_recipeList);
+		recipePanel.Append(recipeScroll);
 
 		itemPanel.Append(list);
 		itemPanel.Append(scroll);
