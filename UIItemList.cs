@@ -16,12 +16,22 @@ namespace QuiteEnoughRecipes;
 public class UIItemList : UIElement
 {
 	private List<UIItemPanel> _grid = new();
+	private List<Item> _items = new();
 
 	// Width of item squares.
 	public float ItemWidth = 50;
 
 	// *all* items to be displayed. These can be scrolled through.
-	public List<Item> Items = new();
+	public List<Item> Items
+	{
+		get => _items;
+		set
+		{
+			_items = value;
+			if (Scrollbar != null) { Scrollbar.ViewPosition = 0; }
+			Recalculate();
+		}
+	}
 	public float Padding = 5;
 	public int NumCols { get; private set; } = 0;
 	public int NumRows { get; private set; } = 0;
