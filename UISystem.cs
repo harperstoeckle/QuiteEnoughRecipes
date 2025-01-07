@@ -67,6 +67,15 @@ internal class UIQERState : UIState
 			list.Items = _filteredItems;
 		};
 
+		foreach (var recipe in Main.recipe)
+		{
+			if (recipe.createItem.type == ItemID.Zenith)
+			{
+				recipePanel.Append(new UIRecipePanel(recipe));
+				break;
+			}
+		}
+
 		itemPanel.Append(list);
 		itemPanel.Append(scroll);
 		itemPanel.Append(search);
