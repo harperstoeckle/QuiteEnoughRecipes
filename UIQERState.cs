@@ -124,7 +124,7 @@ public class UIQERState : UIState
 
 			foreach (var r in Main.recipe)
 			{
-				if (r.requiredItem.Any(i => i.type == p.DisplayedItem.type))
+				if (RecipeAcceptsItem(r, p.DisplayedItem))
 				{
 					_recipeList.Add(new UIRecipePanel(r));
 				}
@@ -132,5 +132,13 @@ public class UIQERState : UIState
 
 			_recipeList.Activate();
 		}
+	}
+
+	private static bool RecipeAcceptsItem(Recipe r, Item i)
+	{
+		return r.requiredItem.Any(x => x.type == i.type)
+			|| r.acceptedGroups.Any(
+				g => RecipeGroup.recipeGroups.TryGetValue(g, out var rg) && rg.ContainsItem(i.type)
+			);
 	}
 }
