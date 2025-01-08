@@ -1,5 +1,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using System.Collections.Generic;
+using System;
 using Terraria.UI;
 using Terraria;
 
@@ -43,5 +45,39 @@ public class UIItemPanel : UIElement
 			Main.instance.MouseText("");
 			Main.HoverItem = DisplayedItem.Clone();
 		}
+	}
+}
+
+// Displays an item group by cycling through items in that group.
+public class UIRecipeGroupPanel : UIItemPanel
+{
+	// Amount of time to wait before the displayed item is cycled.
+	private static readonly TimeSpan TimePerCycle = new(0, 0, 0, 1);
+
+	private TimeSpan _timeSinceLastCycle = new(0);
+	private List<int> _itemsInGroup;
+	private int _curItemIndex = 0;
+
+	public UIRecipeGroupPanel(RecipeGroup displayedGroup, int stack = 1, float width = 50) :
+		base(null, width)
+	{
+		DisplayedItem = new Item(displayedGroup.IconicItemId, stack);
+		_itemsInGroup = new(displayedGroup.ValidItems);
+	}
+
+	public override void Update(GameTime t)
+	{
+		if (_itemsInGroup.Count == 0) { return; }
+
+		_timeSinceLastCycle += t.ElapsedGameTime;
+
+		while (_timeSinceLastCycle >= TimePerCycle)
+		{
+			_timeSinceLastCycle -= TimePerCycle;
+			_curItemIndex = (_curItemIndex + 1) % _itemsInGroup.Count;
+		}
+
+		// We only change the type instead of the
+		DisplayedItem.type = _itemsInGroup[_curItemIndex];
 	}
 }

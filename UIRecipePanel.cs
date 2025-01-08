@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Terraria.UI;
 using Terraria;
 
@@ -19,19 +21,29 @@ public class UIRecipePanel : UIElement
 	{
 		float offset = 0;
 
-		var appendItem = (Item item, float width) => {
-			var panel = new UIItemPanel(item, width);
-			panel.VAlign = 0.5f;
-			panel.Left.Pixels = offset;
-			Append(panel);
+		var appendElement = (UIElement elem, float width) => {
+			elem.VAlign = 0.5f;
+			elem.Left.Pixels = offset;
+			Append(elem);
 			offset += width + 10;
 		};
 
-		appendItem(_recipe.createItem, 50);
+		appendElement(new UIItemPanel(_recipe.createItem, 50), 50);
 
 		foreach (var item in _recipe.requiredItem)
 		{
-			appendItem(item, 30);
+			// See if there's a group in the recipe that accepts this item.
+			var maybeGroup = _recipe.acceptedGroups
+				.Select(g => {
+					RecipeGroup.recipeGroups.TryGetValue(g, out var rg);
+					return rg;
+				}).FirstOrDefault(rg => rg.ContainsItem(item.type), null);
+
+			var elem = maybeGroup == null
+					? new UIItemPanel(item, 30)
+					: new UIRecipeGroupPanel(maybeGroup, item.stack, 30);
+
+			appendElement(elem, 30);
 		}
 	}
 }
