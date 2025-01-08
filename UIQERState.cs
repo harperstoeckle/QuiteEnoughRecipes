@@ -98,21 +98,43 @@ public class UIQERState : UIState
 		Append(itemPanel);
 	}
 
+	// Open the recipe panel to a list of sources for an item.
+	public void ShowSources(Item i)
+	{
+		_recipeList.Clear();
+
+		foreach (var r in Main.recipe)
+		{
+			if (r.createItem.type == i.type)
+			{
+				_recipeList.Add(new UIRecipePanel(r));
+			}
+		}
+
+		_recipeList.Activate();
+	}
+
+	// Open the recipe panel to a list of uses for an item.
+	public void ShowUses(Item i)
+	{
+		_recipeList.Clear();
+
+		foreach (var r in Main.recipe)
+		{
+			if (RecipeAcceptsItem(r, i))
+			{
+				_recipeList.Add(new UIRecipePanel(r));
+			}
+		}
+
+		_recipeList.Activate();
+	}
+
 	public override void LeftClick(UIMouseEvent e)
 	{
 		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
 		{
-			_recipeList.Clear();
-
-			foreach (var r in Main.recipe)
-			{
-				if (r.createItem.type == p.DisplayedItem.type)
-				{
-					_recipeList.Add(new UIRecipePanel(r));
-				}
-			}
-
-			_recipeList.Activate();
+			ShowSources(p.DisplayedItem);
 		}
 	}
 
@@ -120,17 +142,7 @@ public class UIQERState : UIState
 	{
 		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
 		{
-			_recipeList.Clear();
-
-			foreach (var r in Main.recipe)
-			{
-				if (RecipeAcceptsItem(r, p.DisplayedItem))
-				{
-					_recipeList.Add(new UIRecipePanel(r));
-				}
-			}
-
-			_recipeList.Activate();
+			ShowUses(p.DisplayedItem);
 		}
 	}
 

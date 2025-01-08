@@ -1,1 +1,5 @@
-Keybinds.OpenUI.DisplayName: Open QER browser
+Keybinds: {
+	OpenUI.DisplayName: Open QER browser
+	HoverSources.DisplayName: Show sources for hovered item
+	HoverUses.DisplayName: Show uses for hovered item
+}
