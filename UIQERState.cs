@@ -37,6 +37,9 @@ public class UIQERState : UIState
 		recipePanel.Height.Percent = 0.8f;
 		recipePanel.VAlign = 0.5f;
 
+		const float ItemPanelBarHeight = 30;
+		const float ScrollBarWidth = 30;
+
 		var itemPanel = new UIPanel();
 		itemPanel.Left.Percent = 0.51f;
 		itemPanel.Width.Percent = 0.45f;
@@ -44,31 +47,31 @@ public class UIQERState : UIState
 		itemPanel.VAlign = 0.5f;
 
 		var scroll = new UIScrollbar();
-		scroll.Height.Percent = 0.9f;
-		scroll.Width.Percent = 0.1f;
+		scroll.Height = new StyleDimension(-ItemPanelBarHeight, 1);
+		scroll.Width.Pixels = ScrollBarWidth;
 		scroll.HAlign = 1;
 		scroll.VAlign = 1;
 
 		var list = new UIItemList();
 		list.Scrollbar = scroll;
 		list.Items = _filteredItems;
-		list.Width.Percent = 0.95f;
-		list.Height.Percent = 0.9f;
+		list.Width = new StyleDimension(-ScrollBarWidth, 1);
+		list.Height = new StyleDimension(-ItemPanelBarHeight, 1);
 		list.VAlign = 1;
 
 		var recipeScroll = new UIScrollbar();
 		recipeScroll.Height.Percent = 1;
-		recipeScroll.Width.Percent = 0.1f;
+		recipeScroll.Width = new StyleDimension(-ScrollBarWidth, 1);
 		recipeScroll.HAlign = 1;
 
-		_recipeList.Width.Percent = 0.95f;
+		_recipeList.Width = new StyleDimension(-ScrollBarWidth, 1);
 		_recipeList.Height.Percent = 1;
 		_recipeList.ListPadding = 15;
 		_recipeList.SetScrollbar(recipeScroll);
 
 		var search = new UISearchBar(Language.GetText(""), 1);
 		search.Width.Percent = 1;
-		search.Height.Percent = 0.1f;
+		search.Height.Pixels = ItemPanelBarHeight;
 
 		search.OnLeftClick += (evt, elem) => {
 			if (elem is UISearchBar s)
