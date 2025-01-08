@@ -15,8 +15,13 @@ public class UIQERState : UIState
 {
 	private List<Item> _allItems;
 	private List<Item> _filteredItems;
-
 	private UIList _recipeList = new();
+
+	/*
+	 * When an item panel is being hovered, this keeps track of it. This is needed so that we can
+	 * have the panel do tooltip modifications.
+	 */
+	private UIItemPanel? _hoveredItemPanel = null;
 
 	public override void OnInitialize()
 	{
@@ -144,6 +149,21 @@ public class UIQERState : UIState
 		{
 			ShowUses(p.DisplayedItem);
 		}
+	}
+
+	public override void MouseOver(UIMouseEvent e)
+	{
+		if (e.Target is UIItemPanel p) { _hoveredItemPanel = p; }
+	}
+
+	public override void MouseOut(UIMouseEvent e)
+	{
+		if (e.Target == _hoveredItemPanel) { _hoveredItemPanel = null; }
+	}
+
+	public void ModifyTooltips(Mod mod, List<TooltipLine> tooltips)
+	{
+		_hoveredItemPanel?.ModifyTooltips(mod, tooltips);
 	}
 
 	private static bool RecipeAcceptsItem(Recipe r, Item i)

@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using System;
+using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria;
 
@@ -46,6 +47,12 @@ public class UIItemPanel : UIElement
 			Main.HoverItem = DisplayedItem.Clone();
 		}
 	}
+
+	/*
+	 * Special item panels can override this to display their own tooltips when they are being
+	 * hovered. This is only called for item panels in the QER browser.
+	 */
+	public virtual void ModifyTooltips(Mod mod, List<TooltipLine> tooltips) {}
 }
 
 // Displays an item group by cycling through items in that group.
@@ -55,12 +62,14 @@ public class UIRecipeGroupPanel : UIItemPanel
 	private static readonly TimeSpan TimePerCycle = new(0, 0, 0, 1);
 
 	private TimeSpan _timeSinceLastCycle = new(0);
+	private RecipeGroup _displayedGroup;
 	private List<int> _itemsInGroup;
 	private int _curItemIndex = 0;
 
 	public UIRecipeGroupPanel(RecipeGroup displayedGroup, int stack = 1, float width = 50) :
 		base(null, width)
 	{
+		_displayedGroup = displayedGroup;
 		DisplayedItem = new Item(displayedGroup.IconicItemId, stack);
 		_itemsInGroup = new(displayedGroup.ValidItems);
 	}
@@ -79,5 +88,13 @@ public class UIRecipeGroupPanel : UIItemPanel
 
 		// We only change the type instead of the
 		DisplayedItem.type = _itemsInGroup[_curItemIndex];
+	}
+
+	public override void ModifyTooltips(Mod mod, List<TooltipLine> tooltips)
+	{
+		if (tooltips.Count <= 0) { return; }
+		tooltips.Insert(0, new(mod, "QER: recipe group", _displayedGroup.GetText()){
+			OverrideColor = Main.OurFavoriteColor
+		});
 	}
 }
