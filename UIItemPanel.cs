@@ -86,8 +86,9 @@ public class UIRecipeGroupPanel : UIItemPanel
 			_curItemIndex = (_curItemIndex + 1) % _itemsInGroup.Count;
 		}
 
-		// We only change the type instead of the
-		DisplayedItem.type = _itemsInGroup[_curItemIndex];
+		int stack = DisplayedItem.stack;
+		DisplayedItem.SetDefaults(_itemsInGroup[_curItemIndex]);
+		DisplayedItem.stack = stack;
 	}
 
 	public override void ModifyTooltips(Mod mod, List<TooltipLine> tooltips)
