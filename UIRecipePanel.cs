@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
+using Terraria.GameContent.UI.Elements;
+using Terraria.ID;
 using Terraria.UI;
 using Terraria;
 
@@ -22,13 +24,23 @@ public class UIRecipePanel : UIElement
 		float offset = 0;
 
 		var appendElement = (UIElement elem, float width) => {
-			elem.VAlign = 0.5f;
 			elem.Left.Pixels = offset;
 			Append(elem);
 			offset += width + 10;
 		};
 
 		appendElement(new UIItemPanel(_recipe.createItem, 50), 50);
+
+		var conditionStrings =
+			_recipe.requiredTile.Select(id => TileID.Search.TryGetName(id, out var s) ? s : "?")
+			.Concat(_recipe.Conditions.Select(c => c.Description.Value));
+		var conditionText = string.Join(", ", conditionStrings);
+
+		var constraintTextPanel = new UIText(conditionText, 0.6f);
+		constraintTextPanel.Left.Pixels = offset;
+		constraintTextPanel.VAlign = 1;
+
+		Append(constraintTextPanel);
 
 		foreach (var item in _recipe.requiredItem)
 		{
