@@ -24,7 +24,10 @@ public class UIQERState : UIState
 		};
 
 		// Each tab has its own associated scrollbar.
-		public UIScrollbar Scrollbar = new(){ Height = new(0, 1) };
+		public UIScrollbar Scrollbar = new(){
+			Height = new(0, 1),
+			HAlign = 1
+		};
 
 		public RecipeTab(IRecipeHandler handler)
 		{
@@ -64,8 +67,11 @@ public class UIQERState : UIState
 		_filteredItems = new(_allItems);
 
 		AddSourceHandler(new BasicSourceHandler());
+		AddSourceHandler(new ShimmerSourceHandler());
+
 		AddUsageHandler(new BasicUsageHandler());
 		AddUsageHandler(new TileUsageHandler());
+		AddUsageHandler(new ShimmerUsageHandler());
 
 		var recipePanel = new UIPanel();
 		recipePanel.Left.Percent = 0.04f;
@@ -312,5 +318,48 @@ internal class TileUsageHandler : IRecipeHandler
 				yield return new UIRecipePanel(r);
 			}
 		}
+	}
+}
+
+// Show items that can be shimmered into the target item.
+internal class ShimmerSourceHandler : IRecipeHandler
+{
+	public LocalizedText HoverName { get; }
+		= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Shimmer");
+	
+	public Item TabItem { get; } = new(ItemID.BottomlessShimmerBucket);
+
+	public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+	{
+		for (int id = 0; id < ItemID.Sets.ShimmerTransformToItem.Length; ++id)
+		{
+			if (ShimmerUsageHandler.ShimmerTransformResult(id) == i.type)
+			{
+				yield return new UIRecipePanel(i, new List<Item>{new(id)});
+			}
+		}
+	}
+}
+
+// Show the result of shimmering the target item.
+internal class ShimmerUsageHandler : IRecipeHandler
+{
+	public LocalizedText HoverName { get; }
+		= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Shimmer");
+	
+	public Item TabItem { get; } = new(ItemID.BottomlessShimmerBucket);
+
+	public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+	{
+		int id = ShimmerTransformResult(i.type);
+		if (id == -1) { yield break; }
+		yield return new UIRecipePanel(new(id), new List<Item>{i});
+	}
+
+	public static int ShimmerTransformResult(int inputItem)
+	{
+		int id = ItemID.Sets.ShimmerCountsAsItem[inputItem];
+		if (id == -1) { id = inputItem; }
+		return ItemID.Sets.ShimmerTransformToItem[id];
 	}
 }

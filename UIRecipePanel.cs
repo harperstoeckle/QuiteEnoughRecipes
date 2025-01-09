@@ -10,13 +10,35 @@ namespace QuiteEnoughRecipes;
 // Displays a recipe; similar to what you might see in the crafting window.
 public class UIRecipePanel : UIElement
 {
-	private Recipe _recipe;
+	/*
+	 * Sometimes we want to show recipes that aren't real recipes (like shimmer), so we want to
+	 * create a new `Recipe` object. However, Terraria will throw an exception if we try to
+	 * construct a `Recipe` in the wrong context, so we instead have to store this stuff directly.
+	 */
+	private Item _createItem;
+	private List<Item> _requiredItems;
+	private List<int> _acceptedGroups;
+	private List<int> _requiredTiles;
+	private List<Condition> _conditions;
 
-	public UIRecipePanel(Recipe recipe)
+	public UIRecipePanel(Item createItem, List<Item>? requiredItems = null,
+		List<int>? acceptedGroups = null, List<int>? requiredTiles = null,
+		List<Condition>? conditions = null)
 	{
-		_recipe = recipe;
+		_createItem = createItem;
+		_requiredItems = requiredItems ?? new();
+		_acceptedGroups = acceptedGroups ?? new();
+		_requiredTiles = requiredTiles ?? new();
+		_conditions = conditions ?? new();
+
 		Height.Pixels = 50;
-		Width.Percent = 100;
+		Width.Percent = 1;
+	}
+
+	public UIRecipePanel(Recipe recipe) :
+		this(recipe.createItem, recipe.requiredItem, recipe.acceptedGroups, recipe.requiredTile,
+			recipe.Conditions)
+	{
 	}
 
 	public override void OnInitialize()
@@ -29,11 +51,11 @@ public class UIRecipePanel : UIElement
 			offset += width + 10;
 		};
 
-		appendElement(new UIItemPanel(_recipe.createItem, 50), 50);
+		appendElement(new UIItemPanel(_createItem, 50), 50);
 
 		var conditionStrings =
-			_recipe.requiredTile.Select(id => TileID.Search.TryGetName(id, out var s) ? s : "?")
-			.Concat(_recipe.Conditions.Select(c => c.Description.Value));
+			_requiredTiles.Select(id => TileID.Search.TryGetName(id, out var s) ? s : "?")
+			.Concat(_conditions.Select(c => c.Description.Value));
 		var conditionText = string.Join(", ", conditionStrings);
 
 		var constraintTextPanel = new UIText(conditionText, 0.6f);
@@ -42,10 +64,10 @@ public class UIRecipePanel : UIElement
 
 		Append(constraintTextPanel);
 
-		foreach (var item in _recipe.requiredItem)
+		foreach (var item in _requiredItems)
 		{
 			// See if there's a group in the recipe that accepts this item.
-			var maybeGroup = _recipe.acceptedGroups
+			var maybeGroup = _acceptedGroups
 				.Select(g => {
 					RecipeGroup.recipeGroups.TryGetValue(g, out var rg);
 					return rg;

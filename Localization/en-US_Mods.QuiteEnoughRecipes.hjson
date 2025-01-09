@@ -7,4 +7,5 @@ Keybinds: {
 Tabs: {
 	Recipes: Recipes
 	Tiles: Required tiles
+	Shimmer: Shimmer transformations
 }
