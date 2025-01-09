@@ -130,8 +130,9 @@ public class UIQERState : UIState
 			}
 		};
 		search.OnContentsChanged += s => {
+			var sNorm = s.ToLower();
 			_filteredItems.Clear();
-			_filteredItems.AddRange(_allItems.Where(i => i.Name.ToLower().StartsWith(s)));
+			_filteredItems.AddRange(_allItems.Where(i => i.Name.ToLower().Contains(sNorm)));
 			list.Items = _filteredItems;
 		};
 
