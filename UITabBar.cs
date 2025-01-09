@@ -21,14 +21,21 @@ public class UITabBar : UIElement
 		private static readonly Color UnselectedBorderColor = Color.Black;
 
 		private LocalizedText _text;
+		private Item _item;
 
 		public bool Selected = false;
 		public int Index { get; private set; }
 
-		public Tab(LocalizedText text, int index)
+		public Tab(LocalizedText text, Item item, int index)
 		{
 			_text = text;
+			_item = item;
 			Index = index;
+		}
+
+		public override void OnInitialize()
+		{
+			Append(new UIItemIcon(_item, false){ IgnoresMouseInteraction = true });
 		}
 
 		protected override void DrawSelf(SpriteBatch sb)
@@ -49,6 +56,11 @@ public class UITabBar : UIElement
 	// Called with the index of the tab that was selected.
 	public event Action<int> OnTabSelected;
 
+	public UITabBar()
+	{
+		OverflowHidden = true;
+	}
+
 	public void ClearTabs()
 	{
 		_tabs.Clear();
@@ -56,10 +68,13 @@ public class UITabBar : UIElement
 		Recalculate();
 	}
 
-	// Adds a tab to the right that displays `text` when hovered and returns its index.
-	public int AddTab(LocalizedText text)
+	/*
+	 * Adds a tab to the right that displays `text` when hovered and returns its index. The tab
+	 * itself will display `item` as an icon.
+	 */
+	public int AddTab(LocalizedText text, Item item)
 	{
-		var tab = new Tab(text, _tabs.Count);
+		var tab = new Tab(text, item, _tabs.Count);
 		_tabs.Add(tab);
 		Append(tab);
 
@@ -76,11 +91,14 @@ public class UITabBar : UIElement
 	private void ReLayoutTabs()
 	{
 		const float padding = 5;
-		float tabWidth = (GetInnerDimensions().Width - padding * (_tabs.Count - 1)) / _tabs.Count;
+		float tabWidth = 42;
 
 		for (int i = 0; i < _tabs.Count; ++i)
 		{
-			_tabs[i].Height.Percent = 1.0f;
+			// This should move the tab down a bit so the bottom is hidden.
+			_tabs[i].Height.Percent = 1;
+			_tabs[i].Top.Pixels = 5;
+			_tabs[i].VAlign = 0;
 			_tabs[i].Width.Pixels = tabWidth;
 			_tabs[i].Left.Pixels = i * (padding + tabWidth);
 		}

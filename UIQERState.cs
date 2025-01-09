@@ -44,7 +44,7 @@ public class UIQERState : UIState
 	private UITabBar _tabBar = new();
 
 	// Contains, as a child, the current recipe list tab being viewed.
-	private UIElement _recipeListContainer = new();
+	private UIPanel _recipeListContainer = new();
 
 	// Contains the recipe list scrollbar as a child.
 	private UIElement _recipeScrollContainer = new();
@@ -73,7 +73,7 @@ public class UIQERState : UIState
 		recipePanel.Height.Percent = 0.8f;
 		recipePanel.VAlign = 0.5f;
 
-		const float BarHeight = 30;
+		const float BarHeight = 40;
 		const float ScrollBarWidth = 30;
 
 		var itemPanel = new UIPanel();
@@ -104,8 +104,10 @@ public class UIQERState : UIState
 		_recipeListContainer.Height = new StyleDimension(-BarHeight, 1);
 		_recipeListContainer.VAlign = 1;
 
-		_tabBar.Width = new StyleDimension(-ScrollBarWidth, 1);
-		_tabBar.Height.Pixels = BarHeight - 5;
+		_tabBar.Width = new StyleDimension(-ScrollBarWidth - 10, 1);
+		_tabBar.Left.Pixels = 5;
+		_tabBar.Top.Pixels = 0;
+		_tabBar.Height.Pixels = BarHeight;
 
 		_tabBar.OnTabSelected += ShowTab;
 
@@ -212,8 +214,10 @@ public class UIQERState : UIState
 		_tabBar.ClearTabs();
 		foreach (var tab in _activeTabs)
 		{
-			_tabBar.AddTab(tab.Handler.HoverName);
+			_tabBar.AddTab(tab.Handler.HoverName, tab.Handler.TabItem);
 		}
+
+		_tabBar.Activate();
 
 		ShowTab(0);
 	}
@@ -246,6 +250,8 @@ internal class BasicSourceHandler : IRecipeHandler
 	public LocalizedText HoverName { get; }
 		= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Recipes");
 
+	public Item TabItem { get; } = new(ItemID.WorkBench);
+
 	public IEnumerable<UIElement> GetRecipeDisplays(Item i)
 	{
 		foreach (var r in Main.recipe)
@@ -263,6 +269,8 @@ internal class BasicUsageHandler : IRecipeHandler
 {
 	public LocalizedText HoverName { get; }
 		= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Recipes");
+
+	public Item TabItem { get; } = new(ItemID.WorkBench);
 
 	public IEnumerable<UIElement> GetRecipeDisplays(Item i)
 	{
@@ -292,6 +300,8 @@ internal class TileUsageHandler : IRecipeHandler
 {
 	public LocalizedText HoverName { get; }
 		= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Tiles");
+
+	public Item TabItem { get; } = new(ItemID.Furnace);
 
 	public IEnumerable<UIElement> GetRecipeDisplays(Item i)
 	{

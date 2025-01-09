@@ -15,6 +15,9 @@ public interface IRecipeHandler
 	// The name that will be shown when this tab is hovered.
 	public LocalizedText HoverName { get; }
 
+	// Item icon that will be displayed in the tab.
+	public Item TabItem { get; }
+
 	// Given an item, get a sequence of UI elements showing the recipes involving that item.
 	public IEnumerable<UIElement> GetRecipeDisplays(Item i);
 }
