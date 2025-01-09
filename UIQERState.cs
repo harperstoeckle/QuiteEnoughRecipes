@@ -13,9 +13,41 @@ namespace QuiteEnoughRecipes;
 
 public class UIQERState : UIState
 {
+	// A tab that may or may not be displayed.
+	private class RecipeTab
+	{
+		public IRecipeHandler Handler;
+		public UIList RecipeList = new(){
+			Width = new(0, 1),
+			Height = new(0, 1),
+			ListPadding = 15
+		};
+
+		// Each tab has its own associated scrollbar.
+		public UIScrollbar Scrollbar = new(){ Height = new(0, 1) };
+
+		public RecipeTab(IRecipeHandler handler)
+		{
+			Handler = handler;
+			RecipeList.SetScrollbar(Scrollbar);
+		}
+	}
+
 	private List<Item> _allItems;
 	private List<Item> _filteredItems;
-	private UIList _recipeList = new();
+
+	// Contains references to tabs in either _sourceTabs or _usageTabs.
+	private List<RecipeTab> _activeTabs = new();
+	private List<RecipeTab> _sourceTabs = new();
+	private List<RecipeTab> _usageTabs = new();
+
+	private UITabBar _tabBar = new();
+
+	// Contains, as a child, the current recipe list tab being viewed.
+	private UIElement _recipeListContainer = new();
+
+	// Contains the recipe list scrollbar as a child.
+	private UIElement _recipeScrollContainer = new();
 
 	/*
 	 * When an item panel is being hovered, this keeps track of it. This is needed so that we can
@@ -31,13 +63,17 @@ public class UIQERState : UIState
 			.ToList();
 		_filteredItems = new(_allItems);
 
+		AddSourceHandler(new BasicSourceHandler());
+		AddUsageHandler(new BasicUsageHandler());
+		AddUsageHandler(new TileUsageHandler());
+
 		var recipePanel = new UIPanel();
 		recipePanel.Left.Percent = 0.04f;
 		recipePanel.Width.Percent = 0.45f;
 		recipePanel.Height.Percent = 0.8f;
 		recipePanel.VAlign = 0.5f;
 
-		const float ItemPanelBarHeight = 30;
+		const float BarHeight = 30;
 		const float ScrollBarWidth = 30;
 
 		var itemPanel = new UIPanel();
@@ -47,7 +83,7 @@ public class UIQERState : UIState
 		itemPanel.VAlign = 0.5f;
 
 		var scroll = new UIScrollbar();
-		scroll.Height = new StyleDimension(-ItemPanelBarHeight, 1);
+		scroll.Height = new StyleDimension(-BarHeight, 1);
 		scroll.Width.Pixels = ScrollBarWidth;
 		scroll.HAlign = 1;
 		scroll.VAlign = 1;
@@ -56,22 +92,26 @@ public class UIQERState : UIState
 		list.Scrollbar = scroll;
 		list.Items = _filteredItems;
 		list.Width = new StyleDimension(-ScrollBarWidth, 1);
-		list.Height = new StyleDimension(-ItemPanelBarHeight, 1);
+		list.Height = new StyleDimension(-BarHeight, 1);
 		list.VAlign = 1;
 
-		var recipeScroll = new UIScrollbar();
-		recipeScroll.Height.Percent = 1;
-		recipeScroll.Width = new StyleDimension(-ScrollBarWidth, 1);
-		recipeScroll.HAlign = 1;
+		_recipeScrollContainer.Height = new StyleDimension(-BarHeight, 1);
+		_recipeScrollContainer.Width.Pixels = ScrollBarWidth;
+		_recipeScrollContainer.HAlign = 1;
+		_recipeScrollContainer.VAlign = 1;
 
-		_recipeList.Width = new StyleDimension(-ScrollBarWidth, 1);
-		_recipeList.Height.Percent = 1;
-		_recipeList.ListPadding = 15;
-		_recipeList.SetScrollbar(recipeScroll);
+		_recipeListContainer.Width = new StyleDimension(-ScrollBarWidth, 1);
+		_recipeListContainer.Height = new StyleDimension(-BarHeight, 1);
+		_recipeListContainer.VAlign = 1;
+
+		_tabBar.Width = new StyleDimension(-ScrollBarWidth, 1);
+		_tabBar.Height.Pixels = BarHeight - 5;
+
+		_tabBar.OnTabSelected += ShowTab;
 
 		var search = new UISearchBar(Language.GetText(""), 1);
 		search.Width.Percent = 1;
-		search.Height.Pixels = ItemPanelBarHeight;
+		search.Height.Pixels = BarHeight;
 
 		search.OnLeftClick += (evt, elem) => {
 			if (elem is UISearchBar s)
@@ -95,8 +135,9 @@ public class UIQERState : UIState
 			list.Items = _filteredItems;
 		};
 
-		recipePanel.Append(_recipeList);
-		recipePanel.Append(recipeScroll);
+		recipePanel.Append(_tabBar);
+		recipePanel.Append(_recipeListContainer);
+		recipePanel.Append(_recipeScrollContainer);
 
 		itemPanel.Append(list);
 		itemPanel.Append(scroll);
@@ -106,37 +147,11 @@ public class UIQERState : UIState
 		Append(itemPanel);
 	}
 
-	// Open the recipe panel to a list of sources for an item.
-	public void ShowSources(Item i)
-	{
-		_recipeList.Clear();
+	public void AddSourceHandler(IRecipeHandler handler) => _sourceTabs.Add(new(handler));
+	public void AddUsageHandler(IRecipeHandler handler) => _usageTabs.Add(new(handler));
 
-		foreach (var r in Main.recipe)
-		{
-			if (r.createItem.type == i.type)
-			{
-				_recipeList.Add(new UIRecipePanel(r));
-			}
-		}
-
-		_recipeList.Activate();
-	}
-
-	// Open the recipe panel to a list of uses for an item.
-	public void ShowUses(Item i)
-	{
-		_recipeList.Clear();
-
-		foreach (var r in Main.recipe)
-		{
-			if (RecipeAcceptsItem(r, i))
-			{
-				_recipeList.Add(new UIRecipePanel(r));
-			}
-		}
-
-		_recipeList.Activate();
-	}
+	public void ShowSources(Item i) => TryShowRelevantTabs(_sourceTabs, i);
+	public void ShowUses(Item i) => TryShowRelevantTabs(_usageTabs, i);
 
 	public override void LeftClick(UIMouseEvent e)
 	{
@@ -169,11 +184,122 @@ public class UIQERState : UIState
 		_hoveredItemPanel?.ModifyTooltips(mod, tooltips);
 	}
 
+	/*
+	 * Try to show the subset of tabs in `tabs` that apply to the item `item`. If no tabs have any
+	 * elements for the given item, the view is not changed.
+	 */
+	private void TryShowRelevantTabs(List<RecipeTab> tabs, Item item)
+	{
+		// List of lists of things to display for each tab.
+		var displayLists = tabs.Select(t => t.Handler.GetRecipeDisplays(item).ToList()).ToList();
+
+		// No tab has anything to display; don't do anything else.
+		if (displayLists.All(l => l.Count == 0)) { return; }
+
+		// We only want to update and show tabs that are relevant (i.e., they have content).
+		_activeTabs.Clear();
+		for (int i = 0; i < tabs.Count; ++i)
+		{
+			if (displayLists[i].Count > 0)
+			{
+				tabs[i].RecipeList.Clear();
+				tabs[i].RecipeList.AddRange(displayLists[i]);
+				_activeTabs.Add(tabs[i]);
+			}
+		}
+
+		_tabBar.ClearTabs();
+		foreach (var tab in _activeTabs)
+		{
+			_tabBar.AddTab(tab.Handler.HoverName);
+		}
+
+		ShowTab(0);
+	}
+
+	// Try to display the active tab with index `i`, if it exists.
+	private void ShowTab(int i)
+	{
+		if (i < 0 || i >= _activeTabs.Count) { return; }
+
+		_recipeListContainer.RemoveAllChildren();
+		_recipeListContainer.Append(_activeTabs[i].RecipeList);
+
+		_recipeScrollContainer.RemoveAllChildren();
+		_recipeScrollContainer.Append(_activeTabs[i].Scrollbar);
+
+		/*
+		 * Just try to activate these every time since they won't be activated on the initial
+		 * initialization of the UI state.
+		 */
+		_activeTabs[i].RecipeList.Activate();
+		_activeTabs[i].Scrollbar.Activate();
+
+		Recalculate();
+	}
+}
+
+// Source handler for normal crafting.
+internal class BasicSourceHandler : IRecipeHandler
+{
+	public LocalizedText HoverName { get; }
+		= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Recipes");
+
+	public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+	{
+		foreach (var r in Main.recipe)
+		{
+			if (r.createItem.type == i.type)
+			{
+				yield return new UIRecipePanel(r);
+			}
+		}
+	}
+}
+
+// Usage handler for normal crafting.
+internal class BasicUsageHandler : IRecipeHandler
+{
+	public LocalizedText HoverName { get; }
+		= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Recipes");
+
+	public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+	{
+		foreach (var r in Main.recipe)
+		{
+			if (RecipeAcceptsItem(r, i))
+			{
+				yield return new UIRecipePanel(r);
+			}
+		}
+	}
+
 	private static bool RecipeAcceptsItem(Recipe r, Item i)
 	{
 		return r.requiredItem.Any(x => x.type == i.type)
 			|| r.acceptedGroups.Any(
 				g => RecipeGroup.recipeGroups.TryGetValue(g, out var rg) && rg.ContainsItem(i.type)
 			);
+	}
+}
+
+/*
+ * Shows recipes that require a tile to be crafted. The tile is selected from whatever tile the item
+ * will place.
+ */
+internal class TileUsageHandler : IRecipeHandler
+{
+	public LocalizedText HoverName { get; }
+		= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Tiles");
+
+	public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+	{
+		foreach (var r in Main.recipe)
+		{
+			if (r.requiredTile.Contains(i.createTile))
+			{
+				yield return new UIRecipePanel(r);
+			}
+		}
 	}
 }

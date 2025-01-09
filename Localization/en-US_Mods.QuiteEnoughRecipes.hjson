@@ -3,3 +3,8 @@ Keybinds: {
 	HoverSources.DisplayName: Show sources for hovered item
 	HoverUses.DisplayName: Show uses for hovered item
 }
+
+Tabs: {
+	Recipes: Recipes
+	Tiles: Required tiles
+}
