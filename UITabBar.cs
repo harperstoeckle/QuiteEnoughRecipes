@@ -17,8 +17,8 @@ public class UITabBar : UIElement
 {
 	private class Tab : UIPanel
 	{
-		private static readonly Color SelectedBorderColor = Main.OurFavoriteColor;
-		private static readonly Color UnselectedBorderColor = Color.Black;
+		private static readonly Color SelectedBackgroundColor = Color.White * 0.7f;
+		private static readonly Color UnselectedBackgroundColor = new Color(63, 82, 151) * 0.7f;
 
 		private LocalizedText _text;
 		private Item _item;
@@ -40,7 +40,7 @@ public class UITabBar : UIElement
 
 		protected override void DrawSelf(SpriteBatch sb)
 		{
-			BorderColor = Selected ? SelectedBorderColor : UnselectedBorderColor;
+			BackgroundColor = Selected ? SelectedBackgroundColor : UnselectedBackgroundColor;
 
 			if (IsMouseHovering)
 			{
