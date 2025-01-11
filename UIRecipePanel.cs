@@ -9,7 +9,7 @@ using Terraria;
 namespace QuiteEnoughRecipes;
 
 // Displays a recipe; similar to what you might see in the crafting window.
-public class UIRecipePanel : UIElement
+public class UIRecipePanel : UIAutoExtend
 {
 	/*
 	 * Sometimes we want to show recipes that aren't real recipes (like shimmer), so we want to
@@ -61,9 +61,13 @@ public class UIRecipePanel : UIElement
 
 		var constraintTextPanel = new UIText(conditionText, 0.6f);
 		constraintTextPanel.Left.Pixels = offset;
-		constraintTextPanel.VAlign = 1;
 
 		Append(constraintTextPanel);
+
+		var requiredItemsContainer = new UIAutoExtendGrid();
+		requiredItemsContainer.Width = new StyleDimension(-60, 1);
+		requiredItemsContainer.Top.Pixels = 20;
+		requiredItemsContainer.HAlign = 1;
 
 		foreach (var item in _requiredItems)
 		{
@@ -78,8 +82,10 @@ public class UIRecipePanel : UIElement
 					? new UIItemPanel(item, 30)
 					: new UIRecipeGroupPanel(maybeGroup, item.stack, 30);
 
-			appendElement(elem, 30);
+			requiredItemsContainer.Append(elem);
 		}
+
+		Append(requiredItemsContainer);
 	}
 
 	private static string CraftingStationName(int tileID)
