@@ -35,7 +35,7 @@ public class UITabBar : UIElement
 
 		public override void OnInitialize()
 		{
-			Append(new UIItemIcon(_item, false){ IgnoresMouseInteraction = true });
+			Append(new UIItemIcon(_item, false){ IgnoresMouseInteraction = true, VAlign = 0.5f });
 		}
 
 		protected override void DrawSelf(SpriteBatch sb)
@@ -95,9 +95,12 @@ public class UITabBar : UIElement
 
 		for (int i = 0; i < _tabs.Count; ++i)
 		{
-			// This should move the tab down a bit so the bottom is hidden.
-			_tabs[i].Height.Percent = 1;
-			_tabs[i].Top.Pixels = 5;
+			/*
+			 * The panel needs to be a bit taller than the tab bar so that it hangs off of the
+			 * bottom. Since `OverflowHidden` is set, the bottom of the panel will be invisible,
+			 * which gives it a more "tab-like" feel.
+			 */
+			_tabs[i].Height = _tabs[i].MaxHeight = new StyleDimension(10, 1);
 			_tabs[i].VAlign = 0;
 			_tabs[i].Width.Pixels = tabWidth;
 			_tabs[i].Left.Pixels = i * (padding + tabWidth);
