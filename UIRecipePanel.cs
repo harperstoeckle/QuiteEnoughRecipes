@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Terraria.GameContent.UI.Elements;
 using Terraria.ID;
+using Terraria.Map;
 using Terraria.UI;
 using Terraria;
 
@@ -54,7 +55,7 @@ public class UIRecipePanel : UIElement
 		appendElement(new UIItemPanel(_createItem, 50), 50);
 
 		var conditionStrings =
-			_requiredTiles.Select(id => TileID.Search.TryGetName(id, out var s) ? s : "?")
+			_requiredTiles.Select(CraftingStationName)
 			.Concat(_conditions.Select(c => c.Description.Value));
 		var conditionText = string.Join(", ", conditionStrings);
 
@@ -79,5 +80,12 @@ public class UIRecipePanel : UIElement
 
 			appendElement(elem, 30);
 		}
+	}
+
+	private static string CraftingStationName(int tileID)
+	{
+		return tileID == -1
+			? "?"
+			: Lang.GetMapObjectName(MapHelper.TileToLookup(tileID, Recipe.GetRequiredTileStyle(tileID)));
 	}
 }
