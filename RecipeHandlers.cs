@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using Terraria.GameContent.UI.Elements;
 using Terraria.ID;
 using Terraria.Localization;
+using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria;
 
@@ -108,6 +110,25 @@ public static class RecipeHandlers
 		}
 	}
 
+	public class NPCShopSourceHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Shops");
+
+		public Item TabItem { get; } = new(ItemID.GoldCoin);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			foreach (var shop in NPCShopDatabase.AllShops)
+			{
+				if (shop.ActiveEntries.Any(e => e.Item.type == i.type))
+				{
+					yield return new UINPCShopPanel(shop);
+				}
+			}
+		}
+	}
+
 	private static bool RecipeAcceptsItem(Recipe r, Item i)
 	{
 		return r.requiredItem.Any(x => x.type == i.type)
@@ -120,7 +141,7 @@ public static class RecipeHandlers
 	 * Returns the item ID of the shimmer result of transforming an item with ID `inputItem`. If no
 	 * such output exists, returns -1.
 	 */
-	public static int ShimmerTransformResult(int inputItem)
+	private static int ShimmerTransformResult(int inputItem)
 	{
 		int id = ItemID.Sets.ShimmerCountsAsItem[inputItem];
 		if (id == -1) { id = inputItem; }
