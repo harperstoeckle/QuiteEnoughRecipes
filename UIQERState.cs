@@ -69,10 +69,12 @@ public class UIQERState : UIState
 		AddSourceHandler(new RecipeHandlers.BasicSourceHandler());
 		AddSourceHandler(new RecipeHandlers.ShimmerSourceHandler());
 		AddSourceHandler(new RecipeHandlers.NPCShopSourceHandler());
+		AddSourceHandler(new RecipeHandlers.ItemDropSourceHandler());
 
 		AddUsageHandler(new RecipeHandlers.BasicUsageHandler());
 		AddUsageHandler(new RecipeHandlers.TileUsageHandler());
 		AddUsageHandler(new RecipeHandlers.ShimmerUsageHandler());
+		AddUsageHandler(new RecipeHandlers.ItemDropUsageHandler());
 
 		var recipePanel = new UIPanel();
 		recipePanel.Left.Percent = 0.04f;

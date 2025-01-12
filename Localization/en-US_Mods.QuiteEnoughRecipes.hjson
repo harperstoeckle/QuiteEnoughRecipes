@@ -9,4 +9,5 @@ Tabs: {
 	Tiles: Required tiles
 	Shimmer: Shimmer transformations
 	Shops: NPC shops
+	ItemDrops: Item drops
 }

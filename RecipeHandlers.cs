@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Terraria.GameContent.ItemDropRules;
 using Terraria.GameContent.UI.Elements;
 using Terraria.ID;
 using Terraria.Localization;
@@ -110,6 +111,7 @@ public static class RecipeHandlers
 		}
 	}
 
+	// Shows NPC shops that sell the given item.
 	public class NPCShopSourceHandler : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
@@ -125,6 +127,59 @@ public static class RecipeHandlers
 				{
 					yield return new UINPCShopPanel(shop);
 				}
+			}
+		}
+	}
+
+	// Shows items that can drop the given item when used. I.e., treasure bags.
+	public class ItemDropSourceHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.ItemDrops");
+
+		public Item TabItem { get; } = new(ItemID.CultistBossBag);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			var item = new Item();
+
+			foreach (int itemID in Enumerable.Range(0, ItemLoader.ItemCount))
+			{
+				item.SetDefaults(itemID);
+
+				var droppedItems = GetItemDrops(item.type)
+					.Select(info => new Item(info.itemId, info.stackMin))
+					.ToList();
+				if (droppedItems.Any(o => o.type == i.type))
+				{
+					yield return new UIRecipePanel(item.Clone(), droppedItems);
+				}
+			}
+		}
+	}
+
+	// Shows items dropped when using the given item.
+	public class ItemDropUsageHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.ItemDrops");
+
+		public Item TabItem { get; } = new(ItemID.CultistBossBag);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			/*
+			 * TODO: Show the range and percentage.
+			 *
+			 * Currently, this just shows the minimum dropped stack size.
+			 */
+			var droppedItems = GetItemDrops(i.type)
+				.Select(info => new Item(info.itemId, info.stackMin))
+				.ToList();
+			if (droppedItems.Count > 0)
+			{
+				// TODO: Use a better UI element for this.
+				yield return new UIRecipePanel(i, droppedItems);
 			}
 		}
 	}
@@ -146,5 +201,20 @@ public static class RecipeHandlers
 		int id = ItemID.Sets.ShimmerCountsAsItem[inputItem];
 		if (id == -1) { id = inputItem; }
 		return ItemID.Sets.ShimmerTransformToItem[id];
+	}
+
+	// Get items that can be dropped when using the item with ID `itemID`.
+	private static List<DropRateInfo> GetItemDrops(int itemID)
+	{
+		var rules = Main.ItemDropsDB.GetRulesForItemID(itemID);
+		var results = new List<DropRateInfo>();
+		var feed = new DropRateInfoChainFeed(1);
+
+		foreach (var rule in rules)
+		{
+			rule.ReportDroprates(results, feed);
+		}
+
+		return results;
 	}
 }
