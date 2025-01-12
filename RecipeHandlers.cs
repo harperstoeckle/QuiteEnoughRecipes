@@ -147,12 +147,10 @@ public static class RecipeHandlers
 			{
 				item.SetDefaults(itemID);
 
-				var droppedItems = GetItemDrops(item.type)
-					.Select(info => new Item(info.itemId, info.stackMin))
-					.ToList();
-				if (droppedItems.Any(o => o.type == i.type))
+				var droppedItems = GetItemDrops(item.type);
+				if (droppedItems.Any(info => info.itemId == i.type))
 				{
-					yield return new UIRecipePanel(item.Clone(), droppedItems);
+					yield return new UIDropsPanel(new UIItemPanel(item.Clone(), 70), droppedItems);
 				}
 			}
 		}
@@ -168,18 +166,10 @@ public static class RecipeHandlers
 
 		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
 		{
-			/*
-			 * TODO: Show the range and percentage.
-			 *
-			 * Currently, this just shows the minimum dropped stack size.
-			 */
-			var droppedItems = GetItemDrops(i.type)
-				.Select(info => new Item(info.itemId, info.stackMin))
-				.ToList();
+			var droppedItems = GetItemDrops(i.type);
 			if (droppedItems.Count > 0)
 			{
-				// TODO: Use a better UI element for this.
-				yield return new UIRecipePanel(i, droppedItems);
+				yield return new UIDropsPanel(new UIItemPanel(i, 70), droppedItems);
 			}
 		}
 	}
