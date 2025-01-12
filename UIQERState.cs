@@ -58,6 +58,9 @@ public class UIQERState : UIState
 	 */
 	private UIItemPanel? _hoveredItemPanel = null;
 
+	// Gives us access to the active search bar so it can be canceled.
+	private UIQERSearchBar? _activeSearchBar = null;
+
 	public override void OnInitialize()
 	{
 		_allItems = Enumerable.Range(0, ItemLoader.ItemCount)
@@ -122,25 +125,12 @@ public class UIQERState : UIState
 
 		_tabBar.OnTabSelected += ShowTab;
 
-		var search = new UISearchBar(Language.GetText(""), 1);
-		search.Width.Percent = 1;
-		search.Height.Pixels = BarHeight;
-
-		search.OnLeftClick += (evt, elem) => {
-			if (elem is UISearchBar s)
-			{
-				s.ToggleTakingText();
-			}
+		var search = new UIQERSearchBar();
+		search.OnStartTakingInput += () => {
+			_activeSearchBar = search;
 		};
-		search.OnRightClick += (evt, elem) => {
-			if (elem is UISearchBar s)
-			{
-				s.SetContents("");
-				if (!s.IsWritingText)
-				{
-					s.ToggleTakingText();
-				}
-			}
+		search.OnEndTakingInput += () => {
+			_activeSearchBar = null;
 		};
 		search.OnContentsChanged += s => {
 			var sNorm = s.ToLower();
@@ -169,6 +159,11 @@ public class UIQERState : UIState
 
 	public override void LeftClick(UIMouseEvent e)
 	{
+		if (!(e.Target is UIQERSearchBar))
+		{
+			StopTakingInput();
+		}
+
 		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
 		{
 			ShowSources(p.DisplayedItem);
@@ -177,6 +172,11 @@ public class UIQERState : UIState
 
 	public override void RightClick(UIMouseEvent e)
 	{
+		if (!(e.Target is UIQERSearchBar))
+		{
+			StopTakingInput();
+		}
+
 		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
 		{
 			ShowUses(p.DisplayedItem);
@@ -252,5 +252,12 @@ public class UIQERState : UIState
 		_activeTabs[i].Scrollbar.Activate();
 
 		Recalculate();
+	}
+
+	// If a search bar is focused, stop taking input from it.
+	private void StopTakingInput()
+	{
+		_activeSearchBar?.SetTakingInput(false);
+		_activeSearchBar = null;
 	}
 }

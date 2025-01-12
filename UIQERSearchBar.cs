@@ -1,0 +1,83 @@
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework;
+using System;
+using Terraria.GameContent.UI.Elements;
+using Terraria.Localization;
+using Terraria.UI;
+using Terraria;
+
+namespace QuiteEnoughRecipes;
+
+/*
+ * This is just a blatant copy of the bestiary search bar, but it looks pretty good and is visually
+ * cohesive, so that's fine I think.
+ */
+public class UIQERSearchBar : UIPanel
+{
+	private static readonly Color _backgroundColor = new(35, 40, 83);
+	private UISearchBar _search;
+
+	/*
+	 * We just want to treat this element as if it's the search bar itself, so we forward event
+	 * subscriptions to the search bar.
+	 */
+	public event Action OnCanceledTakingInput
+	{
+		add { _search.OnCanceledTakingInput += value; }
+		remove { _search.OnCanceledTakingInput -= value; }
+	}
+	public event Action<string> OnContentsChanged
+	{
+		add { _search.OnContentsChanged += value; }
+		remove { _search.OnContentsChanged -= value; }
+	}
+	public event Action OnEndTakingInput
+	{
+		add { _search.OnEndTakingInput += value; }
+		remove { _search.OnEndTakingInput -= value; }
+	}
+	public event Action OnStartTakingInput
+	{
+		add { _search.OnStartTakingInput += value; }
+		remove { _search.OnStartTakingInput -= value; }
+	}
+
+	public UIQERSearchBar()
+	{
+		_search = new UISearchBar(Language.GetText(""), 0.8f){
+			VAlign = 0.5f,
+			IgnoresMouseInteraction = true
+		};
+
+		Width.Percent = 1;
+		Height.Pixels = 24;
+		SetPadding(0);
+
+		BackgroundColor = _backgroundColor;
+		BorderColor = _backgroundColor;
+
+		Append(_search);
+	}
+
+	public override void LeftClick(UIMouseEvent e)
+	{
+		base.LeftClick(e);
+		_search.ToggleTakingText();
+	}
+
+	// Right clicking clears the text and starts taking input.
+	public override void RightClick(UIMouseEvent e)
+	{
+		base.RightClick(e);
+		_search.SetContents("");
+		SetTakingInput(true);
+	}
+
+	public void SetTakingInput(bool b)
+	{
+		if (_search.IsWritingText != b)
+		{
+			_search.ToggleTakingText();
+		}
+	}
+}
