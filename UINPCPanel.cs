@@ -11,19 +11,17 @@ namespace QuiteEnoughRecipes;
  * Displays an NPC. Similar to a bestiary button, but is never locked. Shows the name of the NPC
  * when hovered.
  */
-public class UINPCPanel : UIPanel
+public class UINPCPanel : UIElement
 {
 	// This needs to be a child of the panel to handle overflow properly.
 	private class UINPCIcon : UIElement
 	{
-		private int _npcID;
 		private bool _isHovering => Parent?.IsMouseHovering ?? false;
 
 		public BestiaryEntry _entry;
 
 		public UINPCIcon(int npcID)
 		{
-			_npcID = npcID;
 			_entry = Main.BestiaryDB.FindEntryByNPCID(npcID);
 
 			OverflowHidden = true;
@@ -60,20 +58,16 @@ public class UINPCPanel : UIPanel
 					IsHovered = _isHovering,
 					IsPortrait = false
 				});
-
-			if (IsMouseHovering)
-			{
-				Main.instance.MouseText(
-					_entry.Icon?.GetHoverText(collectionInfo) ?? Lang.GetNPCNameValue(_npcID));
-			}
 		}
 	}
 
-	UINPCIcon _icon;
+	private UINPCIcon _icon;
+	private int _npcID;
 
 	public UINPCPanel(int npcID)
 	{
 		_icon = new(npcID);
+		_npcID = npcID;
 	}
 
 	public override void OnInitialize()
@@ -92,7 +86,8 @@ public class UINPCPanel : UIPanel
 
 		if (IsMouseHovering)
 		{
-			Main.instance.MouseText(_icon._entry.Icon.GetHoverText(collectionInfo));
+			Main.instance.MouseText(
+				_icon._entry.Icon?.GetHoverText(collectionInfo) ?? Lang.GetNPCNameValue(_npcID));
 		}
 	}
 }
