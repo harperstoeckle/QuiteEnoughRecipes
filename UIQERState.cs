@@ -47,7 +47,7 @@ public class UIQERState : UIState
 	private UITabBar _tabBar = new();
 
 	// Contains, as a child, the current recipe list tab being viewed.
-	private UIPanel _recipeListContainer = new();
+	private UIElement _recipeListContainer = new();
 
 	// Contains the recipe list scrollbar as a child.
 	private UIElement _recipeScrollContainer = new();
@@ -104,19 +104,17 @@ public class UIQERState : UIState
 		list.Height = new StyleDimension(-BarHeight, 1);
 		list.VAlign = 1;
 
-		_recipeScrollContainer.Height = new StyleDimension(-BarHeight, 1);
+		_recipeScrollContainer.Height.Percent = 1;
 		_recipeScrollContainer.Width.Pixels = ScrollBarWidth;
 		_recipeScrollContainer.HAlign = 1;
-		_recipeScrollContainer.VAlign = 1;
 
 		_recipeListContainer.Width = new StyleDimension(-ScrollBarWidth, 1);
-		_recipeListContainer.Height = new StyleDimension(-BarHeight, 1);
-		_recipeListContainer.VAlign = 1;
+		_recipeListContainer.Height.Percent = 1;
 
-		_tabBar.Width = new StyleDimension(-ScrollBarWidth - 10, 1);
-		_tabBar.Left.Pixels = 5;
-		_tabBar.Top.Pixels = 0;
+		_tabBar.Width = new StyleDimension(-10, 0.45f);
 		_tabBar.Height.Pixels = BarHeight;
+		_tabBar.Left = new StyleDimension(5, 0.04f);
+		_tabBar.Top = new StyleDimension(-BarHeight, 0.1f);
 
 		_tabBar.OnTabSelected += ShowTab;
 
@@ -147,10 +145,10 @@ public class UIQERState : UIState
 			list.Items = _filteredItems;
 		};
 
-		recipePanel.Append(_tabBar);
 		recipePanel.Append(_recipeListContainer);
 		recipePanel.Append(_recipeScrollContainer);
 
+		Append(_tabBar);
 		itemPanel.Append(list);
 		itemPanel.Append(scroll);
 		itemPanel.Append(search);
