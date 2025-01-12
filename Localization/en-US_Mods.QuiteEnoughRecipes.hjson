@@ -4,6 +4,8 @@ Keybinds: {
 	HoverUses.DisplayName: Show uses for hovered item
 }
 
+UI.SearchBarDefault: Search
+
 Tabs: {
 	Recipes: Recipes
 	Tiles: Required Tiles

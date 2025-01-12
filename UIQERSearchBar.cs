@@ -44,10 +44,13 @@ public class UIQERSearchBar : UIPanel
 
 	public UIQERSearchBar()
 	{
-		_search = new UISearchBar(Language.GetText(""), 0.8f){
+		_search = new UISearchBar(Language.GetText("Mods.QuiteEnoughRecipes.UI.SearchBarDefault"), 0.8f){
 			VAlign = 0.5f,
 			IgnoresMouseInteraction = true
 		};
+
+		// Needed to ensure the search bar starts with the faded text.
+		_search.SetContents(null, true);
 
 		Width.Percent = 1;
 		Height.Pixels = 24;
