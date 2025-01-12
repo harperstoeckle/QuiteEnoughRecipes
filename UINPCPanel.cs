@@ -16,12 +16,14 @@ public class UINPCPanel : UIPanel
 	// This needs to be a child of the panel to handle overflow properly.
 	private class UINPCIcon : UIElement
 	{
+		private int _npcID;
 		private bool _isHovering => Parent?.IsMouseHovering ?? false;
 
 		public BestiaryEntry _entry;
 
 		public UINPCIcon(int npcID)
 		{
+			_npcID = npcID;
 			_entry = Main.BestiaryDB.FindEntryByNPCID(npcID);
 
 			OverflowHidden = true;
@@ -37,7 +39,7 @@ public class UINPCPanel : UIPanel
 				OwnerEntry = _entry,
 				UnlockState = BestiaryEntryUnlockState.CanShowPortraitOnly_1
 			};
-			_entry.Icon.Update(collectionInfo, rect,
+			_entry.Icon?.Update(collectionInfo, rect,
 				new EntryIconDrawSettings(){
 					iconbox = rect,
 					IsHovered = _isHovering,
@@ -52,7 +54,7 @@ public class UINPCPanel : UIPanel
 				UnlockState = BestiaryEntryUnlockState.CanShowPortraitOnly_1
 			};
 
-			_entry.Icon.Draw(collectionInfo, sb,
+			_entry.Icon?.Draw(collectionInfo, sb,
 				new EntryIconDrawSettings(){
 					iconbox = GetDimensions().ToRectangle(),
 					IsHovered = _isHovering,
@@ -61,7 +63,8 @@ public class UINPCPanel : UIPanel
 
 			if (IsMouseHovering)
 			{
-				Main.instance.MouseText(_entry.Icon.GetHoverText(collectionInfo));
+				Main.instance.MouseText(
+					_entry.Icon?.GetHoverText(collectionInfo) ?? Lang.GetNPCNameValue(_npcID));
 			}
 		}
 	}

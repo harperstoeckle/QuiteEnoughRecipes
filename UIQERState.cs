@@ -70,6 +70,8 @@ public class UIQERState : UIState
 		AddSourceHandler(new RecipeHandlers.ShimmerSourceHandler());
 		AddSourceHandler(new RecipeHandlers.NPCShopSourceHandler());
 		AddSourceHandler(new RecipeHandlers.ItemDropSourceHandler());
+		AddSourceHandler(new RecipeHandlers.NPCDropSourceHandler());
+		AddSourceHandler(new RecipeHandlers.GlobalLootSourceHandler());
 
 		AddUsageHandler(new RecipeHandlers.BasicUsageHandler());
 		AddUsageHandler(new RecipeHandlers.TileUsageHandler());

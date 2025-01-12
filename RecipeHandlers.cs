@@ -174,6 +174,61 @@ public static class RecipeHandlers
 		}
 	}
 
+	// Shows what NPCs drop the given item.
+	public class NPCDropSourceHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.NPCDrops");
+
+		public Item TabItem { get; } = new(ItemID.ZombieArm);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			foreach (int id in Enumerable.Range(0, NPCLoader.NPCCount))
+			{
+				/*
+				 * TODO: Is there a better way to check whether a bestiary entry exists?
+				 *
+				 * For some reason, `FindEntryByNPCID` doesn't return null, but *does* return an
+				 * entry with a null icon.
+				 */
+				if (Main.BestiaryDB.FindEntryByNPCID(id).Icon == null) { continue; }
+
+				var droppedItems = GetNPCDrops(id);
+				if (droppedItems.Any(info => info.itemId == i.type))
+				{
+					yield return new UIDropsPanel(new UINPCPanel(id){
+						Width = new StyleDimension(82, 0),
+						Height = new StyleDimension(82, 0)
+					}, droppedItems);
+				}
+			}
+		}
+	}
+
+	// If the item can be dropped from any NPC, this tab will show.
+	public class GlobalLootSourceHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.GlobalDrops");
+
+		public Item TabItem { get; } = new(ItemID.Heart);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			var drops = GetGlobalDrops();
+
+			if (drops.Any(info => info.itemId == i.type))
+			{
+				/*
+				 * Cheaty way to do this. The "left element" that would usually be a portrait is
+				 * empty, so all that's visible is the grid.
+				 */
+				yield return new UIDropsPanel(new UIElement(), drops);
+			}
+		}
+	}
+
 	private static bool RecipeAcceptsItem(Recipe r, Item i)
 	{
 		return r.requiredItem.Any(x => x.type == i.type)
@@ -206,5 +261,38 @@ public static class RecipeHandlers
 		}
 
 		return results;
+	}
+
+	// Get items that can be dropped by the NPC with ID `id`.
+	private static List<DropRateInfo> GetNPCDrops(int id)
+	{
+		// We want to ignore common drops.
+		var rules = Main.ItemDropsDB.GetRulesForNPCID(id, false);
+
+		var results = new List<DropRateInfo>();
+		var feed = new DropRateInfoChainFeed(1);
+
+		foreach (var rule in rules)
+		{
+			rule.ReportDroprates(results, feed);
+		}
+
+		return results;
+	}
+
+	private static List<DropRateInfo> GetGlobalDrops()
+	{
+		var rules = new GlobalLoot(Main.ItemDropsDB).Get();
+
+		var results = new List<DropRateInfo>();
+		var feed = new DropRateInfoChainFeed(1);
+
+		foreach (var rule in rules)
+		{
+			rule.ReportDroprates(results, feed);
+		}
+
+		return results;
+
 	}
 }

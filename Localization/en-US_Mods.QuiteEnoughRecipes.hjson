@@ -10,4 +10,6 @@ Tabs: {
 	Shimmer: Shimmer transformations
 	Shops: NPC shops
 	ItemDrops: Item drops
+	NPCDrops: NPC drops
+	GlobalDrops: Global drops
 }
