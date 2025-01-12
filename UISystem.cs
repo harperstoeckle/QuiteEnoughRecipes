@@ -8,7 +8,7 @@ namespace QuiteEnoughRecipes;
 
 public class UISystem : ModSystem
 {
-	private UIQERState _ui = new();
+	private UIQERState _ui;
 
 	public static ModKeybind OpenUIKey { get; private set; }
 	public static ModKeybind HoverSourcesKey { get; private set; }
@@ -19,6 +19,16 @@ public class UISystem : ModSystem
 		OpenUIKey = KeybindLoader.RegisterKeybind(Mod, "OpenUI", "OemTilde");
 		HoverSourcesKey = KeybindLoader.RegisterKeybind(Mod, "HoverSources", "OemOpenBrackets");
 		HoverUsesKey = KeybindLoader.RegisterKeybind(Mod, "HoverUses", "OemCloseBrackets");
+	}
+
+	public override void OnWorldLoad()
+	{
+		/*
+		 * We want to reset the UI every time the world loads so it's not carrying over weird state
+		 * across worlds. There's also potentially world-specific data that needs to be handled
+		 * differently in each world.
+		 */
+		_ui = new();
 	}
 
 	public override void UpdateUI(GameTime t)
