@@ -20,7 +20,7 @@ public class UIQERState : UIState
 		public UIList RecipeList = new(){
 			Width = new(0, 1),
 			Height = new(0, 1),
-			ListPadding = 15
+			ListPadding = 30
 		};
 
 		// Each tab has its own associated scrollbar.
@@ -113,10 +113,12 @@ public class UIQERState : UIState
 		_recipeListContainer.Width = new StyleDimension(-ScrollBarWidth, 1);
 		_recipeListContainer.Height.Percent = 1;
 
+		const float TabHeight = 50;
+
 		_tabBar.Width = new StyleDimension(-10, 0.45f);
-		_tabBar.Height.Pixels = BarHeight;
+		_tabBar.Height.Pixels = TabHeight;
 		_tabBar.Left = new StyleDimension(5, 0.04f);
-		_tabBar.Top = new StyleDimension(-BarHeight, 0.1f);
+		_tabBar.Top = new StyleDimension(-TabHeight, 0.1f);
 
 		_tabBar.OnTabSelected += ShowTab;
 
