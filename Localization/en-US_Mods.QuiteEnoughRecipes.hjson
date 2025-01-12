@@ -6,10 +6,10 @@ Keybinds: {
 
 Tabs: {
 	Recipes: Recipes
-	Tiles: Required tiles
-	Shimmer: Shimmer transformations
-	Shops: NPC shops
-	ItemDrops: Item drops
-	NPCDrops: NPC drops
-	GlobalDrops: Global drops
+	Tiles: Required Tiles
+	Shimmer: Shimmer Transmutations
+	Shops: NPC Shops
+	ItemDrops: Item Loot
+	NPCDrops: NPC Loot
+	GlobalDrops: Global Loot
 }
