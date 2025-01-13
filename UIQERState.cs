@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,6 +37,19 @@ public class UIQERState : UIState
 		}
 	}
 
+	// Enough to reconstruct (enough of) the recipe panel state.
+	private struct HistoryEntry
+	{
+		// The tabs that were passed to `TryShowRelevantTabs`.
+		public List<RecipeTab> Tabs;
+		public Item ClickedItem;
+		public int TabIndex;
+		public float ScrollViewPosition;
+	}
+
+	// Keeps track of the recipe pages that have been viewed, not including the current one.
+	private Stack<HistoryEntry> _history = new();
+
 	private List<Item> _allItems;
 	private List<Item> _filteredItems;
 
@@ -43,6 +57,16 @@ public class UIQERState : UIState
 	private List<RecipeTab> _activeTabs = new();
 	private List<RecipeTab> _sourceTabs = new();
 	private List<RecipeTab> _usageTabs = new();
+
+	/*
+	 * This refers either to `_sourceTabs` or `_usageTabs`, and is used to keep track of tab
+	 * history.
+	 */
+	private List<RecipeTab>? _currentTabSet;
+	private Item? _clickedItem;
+
+	// Index of currently active tab in `_activeTabs`.
+	private int _tabIndex = 0;
 
 	private UITabBar _tabBar = new();
 
@@ -123,7 +147,7 @@ public class UIQERState : UIState
 		_tabBar.Left = new StyleDimension(5, 0.04f);
 		_tabBar.Top = new StyleDimension(-TabHeight, 0.1f);
 
-		_tabBar.OnTabSelected += ShowTab;
+		_tabBar.OnTabSelected += ShowTabContent;
 
 		var search = new UIQERSearchBar();
 		search.OnStartTakingInput += () => {
@@ -151,11 +175,35 @@ public class UIQERState : UIState
 		Append(itemPanel);
 	}
 
+	protected override void DrawSelf(SpriteBatch sb)
+	{
+		// TODO: Is this actually the right place to handle input?
+		if (UISystem.BackKey.JustPressed && _activeSearchBar == null)
+		{
+			TryPopHistory();
+		}
+	}
+
 	public void AddSourceHandler(IRecipeHandler handler) => _sourceTabs.Add(new(handler));
 	public void AddUsageHandler(IRecipeHandler handler) => _usageTabs.Add(new(handler));
 
-	public void ShowSources(Item i) => TryShowRelevantTabs(_sourceTabs, i);
-	public void ShowUses(Item i) => TryShowRelevantTabs(_usageTabs, i);
+	public void ShowSources(Item i) => TryPushPage(_sourceTabs, i);
+	public void ShowUses(Item i) => TryPushPage(_usageTabs, i);
+
+	// If it exists, load the top of the history stack and pop it.
+	public void TryPopHistory()
+	{
+		if (_history.Count == 0) { return; }
+
+		/*
+		 * It would be weird if the page showed something the first time, but didn't have anything
+		 * to show this time, so we'll just assume it will always work.
+		 */
+		var top = _history.Pop();
+		TryShowRelevantTabs(top.Tabs, top.ClickedItem);
+		SwitchToTab(top.TabIndex);
+		_activeTabs[_tabIndex].Scrollbar.ViewPosition = top.ScrollViewPosition;
+	}
 
 	public override void LeftClick(UIMouseEvent e)
 	{
@@ -202,13 +250,16 @@ public class UIQERState : UIState
 	 * Try to show the subset of tabs in `tabs` that apply to the item `item`. If no tabs have any
 	 * elements for the given item, the view is not changed.
 	 */
-	private void TryShowRelevantTabs(List<RecipeTab> tabs, Item item)
+	private bool TryShowRelevantTabs(List<RecipeTab> tabs, Item item)
 	{
 		// List of lists of things to display for each tab.
 		var displayLists = tabs.Select(t => t.Handler.GetRecipeDisplays(item).ToList()).ToList();
 
 		// No tab has anything to display; don't do anything else.
-		if (displayLists.All(l => l.Count == 0)) { return; }
+		if (displayLists.All(l => l.Count == 0)) { return false; }
+
+		_currentTabSet = tabs;
+		_clickedItem = item;
 
 		// We only want to update and show tabs that are relevant (i.e., they have content).
 		_activeTabs.Clear();
@@ -229,14 +280,51 @@ public class UIQERState : UIState
 		}
 
 		_tabBar.Activate();
+		SwitchToTab(0);
 
-		ShowTab(0);
+		return true;
 	}
 
-	// Try to display the active tab with index `i`, if it exists.
-	private void ShowTab(int i)
+	/*
+	 * Try to switch the page. If there was something to show, push a history entry on the top of
+	 * the history stack. If successful, the page will show results for item `item` with tabs taken
+	 * from `tabs`. If the item and tab set are the same as the currently active one, then the page
+	 * layout will be reset, but a new history entry will not be added.
+	 */
+	private void TryPushPage(List<RecipeTab> tabs, Item item)
+	{
+		/*
+		 * If there is no tab set active, then we are still on the blank page, so there's no history
+		 * item we can actually push on the stack.
+		 */
+		if (_currentTabSet == null || _currentTabSet == tabs && _clickedItem.type == item.type)
+		{
+			TryShowRelevantTabs(tabs, item);
+			return;
+		}
+
+		var historyEntry = new HistoryEntry{
+			Tabs = _currentTabSet,
+			ClickedItem = _clickedItem,
+			TabIndex = _tabIndex,
+			ScrollViewPosition = _activeTabs[_tabIndex].Scrollbar.ViewPosition
+		};
+
+		if (TryShowRelevantTabs(tabs, item))
+		{
+			_history.Push(historyEntry);
+		}
+	}
+
+	/*
+	 * Display the content associated with tab `i`. This does not actually switch the tab in the tab
+	 * bar.
+	 */
+	private void ShowTabContent(int i)
 	{
 		if (i < 0 || i >= _activeTabs.Count) { return; }
+
+		_tabIndex = i;
 
 		_recipeListContainer.RemoveAllChildren();
 		_recipeListContainer.Append(_activeTabs[i].RecipeList);
@@ -253,6 +341,9 @@ public class UIQERState : UIState
 
 		Recalculate();
 	}
+
+	// Change the active tab to `i`.
+	private void SwitchToTab(int i) => _tabBar.SwitchToTab(i);
 
 	// If a search bar is focused, stop taking input from it.
 	private void StopTakingInput()

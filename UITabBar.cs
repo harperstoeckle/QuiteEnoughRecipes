@@ -118,9 +118,16 @@ public class UITabBar : UIElement
 		// I'm not sure if this is the "correct" way to do things.
 		if (e.Target is Tab t)
 		{
-			foreach (var tab in _tabs) { tab.Selected = false; }
-			t.Selected = true;
-			OnTabSelected?.Invoke(t.Index);
+			SwitchToTab(t.Index);
 		}
+	}
+
+	// This will trigger the `OnTabSelected` event.
+	public void SwitchToTab(int i)
+	{
+		if (i >= _tabs.Count) { return; }
+		foreach (var tab in _tabs) { tab.Selected = false; }
+		_tabs[i].Selected = true;
+		OnTabSelected?.Invoke(i);
 	}
 }

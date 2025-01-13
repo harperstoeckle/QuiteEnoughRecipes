@@ -13,12 +13,14 @@ public class UISystem : ModSystem
 	public static ModKeybind OpenUIKey { get; private set; }
 	public static ModKeybind HoverSourcesKey { get; private set; }
 	public static ModKeybind HoverUsesKey { get; private set; }
+	public static ModKeybind BackKey { get; private set; }
 
 	public override void Load()
 	{
 		OpenUIKey = KeybindLoader.RegisterKeybind(Mod, "OpenUI", "OemTilde");
 		HoverSourcesKey = KeybindLoader.RegisterKeybind(Mod, "HoverSources", "OemOpenBrackets");
 		HoverUsesKey = KeybindLoader.RegisterKeybind(Mod, "HoverUses", "OemCloseBrackets");
+		BackKey = KeybindLoader.RegisterKeybind(Mod, "Back", "Back");
 	}
 
 	public override void OnWorldLoad()
