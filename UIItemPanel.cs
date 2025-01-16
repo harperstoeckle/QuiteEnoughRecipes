@@ -2,7 +2,10 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using System;
+using Terraria.GameContent;
+using Terraria.ID;
 using Terraria.ModLoader;
+using Terraria.UI.Chat;
 using Terraria.UI;
 using Terraria;
 
@@ -29,17 +32,46 @@ public class UIItemPanel : UIElement
 		_scale = width / 50;
 	}
 
+	/*
+	 * This is a stripped-down version of the vanilla drawing code. It doesn't have to do any of
+	 * the "fancy" stuff that vanilla has to do to handle item slots in specific contexts.
+	 */
 	protected override void DrawSelf(SpriteBatch sb)
 	{
 		if (DisplayedItem == null) { return; }
 
-		float prevScale = Main.inventoryScale;
-		Main.inventoryScale = _scale;
+		var pos = GetDimensions().Position();
 
-		// TODO: Change the context to something other than -1.
-		ItemSlot.Draw(sb, ref DisplayedItem, -1, GetInnerDimensions().Position());
+		var inventoryBack = TextureAssets.InventoryBack.Value;
+		sb.Draw(inventoryBack, pos, null, Color.White, 0, Vector2.Zero, _scale, 0, 0);
 
-		Main.inventoryScale = prevScale;
+		ItemSlot.DrawItemIcon(DisplayedItem, -1, sb, pos + inventoryBack.Size() * _scale / 2,
+			_scale, 32, Color.White);
+
+		// Draw trapped chest indicator.
+		if (ItemID.Sets.TrapSigned[DisplayedItem.type])
+		{
+			sb.Draw(TextureAssets.Wire.Value, pos + new Vector2(40) * _scale,
+				new Rectangle(4, 58, 8, 8), Color.White, 0f, new Vector2(4), 1, 0, 0);
+		}
+
+		// Draw unsafe wall indicator.
+		if (ItemID.Sets.DrawUnsafeIndicator[DisplayedItem.type])
+		{
+			var indicator = TextureAssets.Extra[ExtrasID.UnsafeIndicator].Value;
+			var frame = indicator.Frame();
+			sb.Draw(indicator, pos + new Vector2(36) * _scale, frame, Color.White, 0,
+				frame.Size() / 2, 1, 0, 0);
+		}
+
+		// TODO: Add rubblemaker indicator?
+
+		if (DisplayedItem.stack != 1)
+		{
+			ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.ItemStack.Value,
+				DisplayedItem.stack.ToString(), pos + new Vector2(10, 26) * _scale, Color.White, 0,
+				Vector2.Zero, new Vector2(_scale), -1, _scale);
+		}
 
 		if (IsMouseHovering)
 		{
