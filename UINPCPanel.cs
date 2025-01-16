@@ -68,6 +68,7 @@ public class UINPCPanel : UIElement
 	{
 		_icon = new(npcID);
 		_npcID = npcID;
+		OverflowHidden = true;
 	}
 
 	public override void OnInitialize()
