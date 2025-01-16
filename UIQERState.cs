@@ -47,6 +47,9 @@ public class UIQERState : UIState
 		public float ScrollViewPosition;
 	}
 
+	private const float BarHeight = 40;
+	private const float ScrollBarWidth = 30;
+
 	// Keeps track of the recipe pages that have been viewed, not including the current one.
 	private Stack<HistoryEntry> _history = new();
 
@@ -105,74 +108,8 @@ public class UIQERState : UIState
 		AddUsageHandler(new RecipeHandlers.ShimmerUsageHandler());
 		AddUsageHandler(new RecipeHandlers.ItemDropUsageHandler());
 
-		var recipePanel = new UIPanel();
-		recipePanel.Left.Percent = 0.04f;
-		recipePanel.Width.Percent = 0.45f;
-		recipePanel.Height.Percent = 0.8f;
-		recipePanel.VAlign = 0.5f;
-
-		const float BarHeight = 40;
-		const float ScrollBarWidth = 30;
-
-		var itemPanel = new UIPanel();
-		itemPanel.Left.Percent = 0.51f;
-		itemPanel.Width.Percent = 0.45f;
-		itemPanel.Height.Percent = 0.8f;
-		itemPanel.VAlign = 0.5f;
-
-		var scroll = new UIScrollbar();
-		scroll.Height = new StyleDimension(-BarHeight, 1);
-		scroll.Width.Pixels = ScrollBarWidth;
-		scroll.HAlign = 1;
-		scroll.VAlign = 1;
-
-		var list = new UIItemList();
-		list.Scrollbar = scroll;
-		list.Items = _filteredItems;
-		list.Width = new StyleDimension(-ScrollBarWidth, 1);
-		list.Height = new StyleDimension(-BarHeight, 1);
-		list.VAlign = 1;
-
-		_recipeScrollContainer.Height.Percent = 1;
-		_recipeScrollContainer.Width.Pixels = ScrollBarWidth;
-		_recipeScrollContainer.HAlign = 1;
-
-		_recipeListContainer.Width = new StyleDimension(-ScrollBarWidth, 1);
-		_recipeListContainer.Height.Percent = 1;
-
-		const float TabHeight = 50;
-
-		_tabBar.Width = new StyleDimension(-10, 0.45f);
-		_tabBar.Height.Pixels = TabHeight;
-		_tabBar.Left = new StyleDimension(5, 0.04f);
-		_tabBar.Top = new StyleDimension(-TabHeight, 0.1f);
-
-		_tabBar.OnTabSelected += ShowTabContent;
-
-		var search = new UIQERSearchBar();
-		search.OnStartTakingInput += () => {
-			_activeSearchBar = search;
-		};
-		search.OnEndTakingInput += () => {
-			_activeSearchBar = null;
-		};
-		search.OnContentsChanged += s => {
-			var sNorm = s.ToLower();
-			_filteredItems.Clear();
-			_filteredItems.AddRange(_allItems.Where(i => i.Name.ToLower().Contains(sNorm)));
-			list.Items = _filteredItems;
-		};
-
-		recipePanel.Append(_recipeListContainer);
-		recipePanel.Append(_recipeScrollContainer);
-
-		Append(_tabBar);
-		itemPanel.Append(list);
-		itemPanel.Append(scroll);
-		itemPanel.Append(search);
-
-		Append(recipePanel);
-		Append(itemPanel);
+		InitRecipePanel();
+		InitItemPanel();
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
@@ -350,5 +287,79 @@ public class UIQERState : UIState
 	{
 		_activeSearchBar?.SetTakingInput(false);
 		_activeSearchBar = null;
+	}
+
+	// The left panel that displays recipes.
+	private void InitRecipePanel()
+	{
+		var recipePanel = new UIPanel();
+		recipePanel.Left.Percent = 0.04f;
+		recipePanel.Width.Percent = 0.45f;
+		recipePanel.Height.Percent = 0.8f;
+		recipePanel.VAlign = 0.5f;
+
+		_recipeScrollContainer.Height.Percent = 1;
+		_recipeScrollContainer.Width.Pixels = ScrollBarWidth;
+		_recipeScrollContainer.HAlign = 1;
+
+		_recipeListContainer.Width = new StyleDimension(-ScrollBarWidth, 1);
+		_recipeListContainer.Height.Percent = 1;
+
+		const float TabHeight = 50;
+
+		_tabBar.Width = new StyleDimension(-10, 0.45f);
+		_tabBar.Height.Pixels = TabHeight;
+		_tabBar.Left = new StyleDimension(5, 0.04f);
+		_tabBar.Top = new StyleDimension(-TabHeight, 0.1f);
+
+		_tabBar.OnTabSelected += ShowTabContent;
+
+		recipePanel.Append(_recipeListContainer);
+		recipePanel.Append(_recipeScrollContainer);
+
+		Append(recipePanel);
+		Append(_tabBar);
+	}
+
+	private void InitItemPanel()
+	{
+		var itemPanel = new UIPanel();
+		itemPanel.Left.Percent = 0.51f;
+		itemPanel.Width.Percent = 0.45f;
+		itemPanel.Height.Percent = 0.8f;
+		itemPanel.VAlign = 0.5f;
+
+		var scroll = new UIScrollbar();
+		scroll.Height = new StyleDimension(-BarHeight, 1);
+		scroll.Width.Pixels = ScrollBarWidth;
+		scroll.HAlign = 1;
+		scroll.VAlign = 1;
+
+		var list = new UIItemList();
+		list.Scrollbar = scroll;
+		list.Items = _filteredItems;
+		list.Width = new StyleDimension(-ScrollBarWidth, 1);
+		list.Height = new StyleDimension(-BarHeight, 1);
+		list.VAlign = 1;
+
+		var search = new UIQERSearchBar();
+		search.OnStartTakingInput += () => {
+			_activeSearchBar = search;
+		};
+		search.OnEndTakingInput += () => {
+			_activeSearchBar = null;
+		};
+		search.OnContentsChanged += s => {
+			var sNorm = s.ToLower();
+			_filteredItems.Clear();
+			_filteredItems.AddRange(_allItems.Where(i => i.Name.ToLower().Contains(sNorm)));
+			list.Items = _filteredItems;
+		};
+
+		itemPanel.Append(list);
+		itemPanel.Append(scroll);
+		itemPanel.Append(search);
+
+		Append(itemPanel);
 	}
 }
