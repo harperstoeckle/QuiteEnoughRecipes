@@ -62,6 +62,7 @@ public class UIItemList : UIElement
 
 	public override void ScrollWheel(UIScrollWheelEvent e)
 	{
+		base.ScrollWheel(e);
 		if (Scrollbar != null)
 		{
 			Scrollbar.ViewPosition -= e.ScrollWheelValue;
