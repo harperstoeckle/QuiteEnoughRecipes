@@ -441,7 +441,7 @@ public class UIQERState : UIState
 		var scroll = new UIScrollbar();
 		scroll.Height.Percent = 1;
 		scroll.Width.Percent = 1;
-		scroll.VAlign = 0.5f;
+		scroll.HAlign = 0.5f;
 
 		var scrollContainer = new UIElement();
 		scrollContainer.Width.Pixels = ScrollBarWidth;
