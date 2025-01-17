@@ -5,7 +5,10 @@ Keybinds: {
 	Back.DisplayName: Go to previous recipe page
 }
 
-UI.SearchBarDefault: Search
+UI: {
+	SearchBarDefault: Search
+	FilterHover: Filters
+}
 
 Tabs: {
 	Recipes: Recipes
@@ -15,4 +18,13 @@ Tabs: {
 	ItemDrops: Item Loot
 	NPCDrops: NPC Loot
 	GlobalDrops: Global Loot
+}
+
+Filters: {
+	Blocks: Blocks
+	MeleeWeapons: Melee Weapons
+	RangedWeapons: Ranged Weapons
+	MagicWeapons: Magic Weapons
+	SummonWeapons: Summoner Weapons
+	BossSummons: Boss Summons
 }

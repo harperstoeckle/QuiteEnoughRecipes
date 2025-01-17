@@ -14,6 +14,14 @@ namespace QuiteEnoughRecipes;
 
 public class UIQERState : UIState
 {
+	private struct Filter
+	{
+		// The item displayed on the filter.
+		public Item IconItem;
+		public string HoverName;
+		public Predicate<Item> Pred;
+	}
+
 	// A tab that may or may not be displayed.
 	private class RecipeTab
 	{
@@ -47,6 +55,31 @@ public class UIQERState : UIState
 		public float ScrollViewPosition;
 	}
 
+	private class FilterPanelToggleButton : UIElement
+	{
+		public FilterPanelToggleButton()
+		{
+			Width.Pixels = Height.Pixels = 22;
+		}
+
+		protected override void DrawSelf(SpriteBatch sb)
+		{
+			base.DrawSelf(sb);
+
+			var pos = GetDimensions().Position();
+			var filterIcon = Main.Assets.Request<Texture2D>(
+				"Images/UI/Bestiary/Button_Filtering").Value;
+
+			// We only want the icon part of the texture without the part that usually has the text.
+			sb.Draw(filterIcon, pos, new Rectangle(4, 4, 22, 22), Color.White);
+
+			if (IsMouseHovering)
+			{
+				Main.instance.MouseText(Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
+			}
+		}
+	}
+
 	private const float BarHeight = 40;
 	private const float ScrollBarWidth = 30;
 
@@ -60,6 +93,8 @@ public class UIQERState : UIState
 	private List<RecipeTab> _activeTabs = new();
 	private List<RecipeTab> _sourceTabs = new();
 	private List<RecipeTab> _usageTabs = new();
+
+	private UIItemList _itemList;
 
 	/*
 	 * This refers either to `_sourceTabs` or `_usageTabs`, and is used to keep track of tab
@@ -79,6 +114,9 @@ public class UIQERState : UIState
 	// Contains the recipe list scrollbar as a child.
 	private UIElement _recipeScrollContainer = new();
 
+	// Panel with the item list. This is needed so the filter panel can be added and removed.
+	private UIPanel _itemListPanel;
+
 	/*
 	 * When an item panel is being hovered, this keeps track of it. This is needed so that we can
 	 * have the panel do tooltip modifications.
@@ -87,6 +125,10 @@ public class UIQERState : UIState
 
 	// Gives us access to the active search bar so it can be canceled.
 	private UIQERSearchBar? _activeSearchBar = null;
+	private string? _searchText = null;
+
+	private List<Filter> _filters = new();
+	private UIFilterPanel _filterPanel;
 
 	public override void OnInitialize()
 	{
@@ -108,6 +150,41 @@ public class UIQERState : UIState
 		AddUsageHandler(new RecipeHandlers.ShimmerUsageHandler());
 		AddUsageHandler(new RecipeHandlers.ItemDropUsageHandler());
 
+		AddInternalFilter(ItemID.Wood, "Blocks", ItemPredicates.IsBlock);
+		AddInternalFilter(ItemID.SuspiciousLookingEye, "BossSummons", ItemPredicates.IsBossSummon);
+
+		AddInternalFilter(ItemID.CopperShortsword, "MeleeWeapons", ItemPredicates.IsMeleeWeapon);
+		AddInternalFilter(ItemID.WoodenBow, "RangedWeapons", ItemPredicates.IsRangedWeapon);
+		AddInternalFilter(ItemID.WandofSparking, "MagicWeapons", ItemPredicates.IsMagicWeapon);
+		AddInternalFilter(ItemID.BabyBirdStaff, "SummonWeapons", ItemPredicates.IsSummonWeapon);
+
+		var moddedDamageClasses =
+			Enumerable.Range(0, DamageClassLoader.DamageClassCount)
+			.Select(i => DamageClassLoader.GetDamageClass(i))
+			.Where(c => !(c is VanillaDamageClass))
+			.ToList();
+
+		foreach (var dc in moddedDamageClasses)
+		{
+			/*
+			 * We only want modded damage classes that are "pure" in that they don't inherit other
+			 * modded damage classes. For example, Calamity has a "true melee no speed" class that
+			 * we don't want to also appear.
+			 */
+			if (moddedDamageClasses.Any(c => dc.GetEffectInheritance(c)))
+			{
+				continue;
+			}
+
+			var icon = FindIconItemForDamageClass(dc) ?? new Item(ItemID.Zenith);
+
+			// This damage class has no items, so we can't really make a filter for it.
+			if (icon == null) { continue; }
+
+			AddFilter(icon, $"{dc.DisplayName.Value} Weapons",
+				i => i.CountsAsClass(dc) && !ItemPredicates.IsTool(i));
+		}
+
 		InitRecipePanel();
 		InitItemPanel();
 	}
@@ -126,6 +203,12 @@ public class UIQERState : UIState
 
 	public void ShowSources(Item i) => TryPushPage(_sourceTabs, i);
 	public void ShowUses(Item i) => TryPushPage(_usageTabs, i);
+
+	// This must be called before the filter panel is initialized.
+	public void AddFilter(Item icon, string hoverName, Predicate<Item> pred)
+	{
+		_filters.Add(new Filter{ IconItem = icon, HoverName = hoverName, Pred = pred });
+	}
 
 	// If it exists, load the top of the history stack and pop it.
 	public void TryPopHistory()
@@ -149,6 +232,15 @@ public class UIQERState : UIState
 			StopTakingInput();
 		}
 
+		/*
+		 * Don't close the filter panel while we're in the middle of opening it, but close it with
+		 * any other click.
+		 */
+		if (!(e.Target is FilterPanelToggleButton) && !_filterPanel.IsMouseHovering)
+		{
+			CloseFilterPanel();
+		}
+
 		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
 		{
 			ShowSources(p.DisplayedItem);
@@ -162,9 +254,26 @@ public class UIQERState : UIState
 			StopTakingInput();
 		}
 
+		if (!_filterPanel.IsMouseHovering)
+		{
+			CloseFilterPanel();
+		}
+
 		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
 		{
 			ShowUses(p.DisplayedItem);
+		}
+	}
+
+	public override void ScrollWheel(UIScrollWheelEvent e)
+	{
+		/*
+		 * Even just scrolling will close the filter window; the player scrolling means they
+		 * probably want to look at items now instead of the filter thing.
+		 */
+		if (!_filterPanel.IsMouseHovering)
+		{
+			CloseFilterPanel();
 		}
 	}
 
@@ -323,11 +432,11 @@ public class UIQERState : UIState
 
 	private void InitItemPanel()
 	{
-		var itemPanel = new UIPanel();
-		itemPanel.Left.Percent = 0.51f;
-		itemPanel.Width.Percent = 0.45f;
-		itemPanel.Height.Percent = 0.8f;
-		itemPanel.VAlign = 0.5f;
+		_itemListPanel = new UIPanel();
+		_itemListPanel.Left.Percent = 0.51f;
+		_itemListPanel.Width.Percent = 0.45f;
+		_itemListPanel.Height.Percent = 0.8f;
+		_itemListPanel.VAlign = 0.5f;
 
 		var scroll = new UIScrollbar();
 		scroll.Height.Percent = 1;
@@ -341,14 +450,35 @@ public class UIQERState : UIState
 		scrollContainer.VAlign = 1;
 		scrollContainer.Append(scroll);
 
-		var list = new UIItemList();
-		list.Scrollbar = scroll;
-		list.Items = _filteredItems;
-		list.Width = new StyleDimension(-ScrollBarWidth, 1);
-		list.Height = new StyleDimension(-BarHeight, 1);
-		list.VAlign = 1;
+		_itemList = new();
+		_itemList.Scrollbar = scroll;
+		_itemList.Items = _filteredItems;
+		_itemList.Width = new StyleDimension(-ScrollBarWidth, 1);
+		_itemList.Height = new StyleDimension(-BarHeight, 1);
+		_itemList.VAlign = 1;
+
+		var filterToggleButton = new FilterPanelToggleButton();
+		filterToggleButton.Left = new StyleDimension(
+			-ScrollBarWidth - filterToggleButton.Width.Pixels, 1);
+
+		_filterPanel = new();
+		_filterPanel.Width.Percent = 0.3f;
+		_filterPanel.Height.Percent = 0.3f;
+		// This should put it just to the left of the toggle button.
+		_filterPanel.Top.Pixels = BarHeight;
+		_filterPanel.HAlign = 1;
+
+		foreach (var filter in _filters)
+		{
+			_filterPanel.AddItemIconFilter(filter.IconItem, filter.HoverName);
+		}
+
+		_filterPanel.OnFiltersChanged += UpdateDisplayedItems;
+
+		filterToggleButton.OnLeftClick += (b, e) => ToggleFilterPanel();
 
 		var search = new UIQERSearchBar();
+		search.Width = new StyleDimension(-filterToggleButton.Width.Pixels - ScrollBarWidth - 10, 1);
 		search.OnStartTakingInput += () => {
 			_activeSearchBar = search;
 		};
@@ -356,16 +486,74 @@ public class UIQERState : UIState
 			_activeSearchBar = null;
 		};
 		search.OnContentsChanged += s => {
-			var sNorm = s.ToLower();
-			_filteredItems.Clear();
-			_filteredItems.AddRange(_allItems.Where(i => i.Name.ToLower().Contains(sNorm)));
-			list.Items = _filteredItems;
+			_searchText = s;
+			UpdateDisplayedItems();
 		};
 
-		itemPanel.Append(list);
-		itemPanel.Append(scrollContainer);
-		itemPanel.Append(search);
+		_itemListPanel.Append(_itemList);
+		_itemListPanel.Append(scrollContainer);
+		_itemListPanel.Append(search);
+		_itemListPanel.Append(filterToggleButton);
 
-		Append(itemPanel);
+		Append(_itemListPanel);
+	}
+
+	// Update what items are being displayed based on the search bar and filters.
+	private void UpdateDisplayedItems()
+	{
+		var activeFilterPreds = _filters
+			.Where((f, i) => _filterPanel.IsFilterEnabled(i))
+			.Select(f => f.Pred)
+			.ToList();
+
+		/*
+		 * If there are no filters enabled, we don't want to filter. If there *are*, then we want to
+		 * take the disjunction of them.
+		 */
+		Predicate<Item> filterPred = activeFilterPreds.Count == 0
+			? i => true
+			: i => activeFilterPreds.Any(p => p(i));
+
+		var sNorm = _searchText?.ToLower() ?? "";
+		_filteredItems.Clear();
+		_filteredItems.AddRange(
+			_allItems.Where(i => i.Name.ToLower().Contains(sNorm) && filterPred(i)));
+
+		_itemList.Items = _filteredItems;
+	}
+
+	// Add a filter using a localization key.
+	private void AddInternalFilter(int itemID, string key, Predicate<Item> pred)
+	{
+		AddFilter(new Item(itemID), Language.GetTextValue($"Mods.QuiteEnoughRecipes.Filters.{key}"),
+			pred);
+	}
+
+	private void ToggleFilterPanel()
+	{
+		if (_itemListPanel.HasChild(_filterPanel))
+		{
+			_itemListPanel.RemoveChild(_filterPanel);
+		}
+		else
+		{
+			_itemListPanel.Append(_filterPanel);
+			_filterPanel.Activate();
+			_filterPanel.Recalculate();
+		}
+	}
+
+	private void CloseFilterPanel()
+	{
+		_itemListPanel.RemoveChild(_filterPanel);
+	}
+
+	// Tries to find a low-rarity item to use as an icon for a damage class filter.
+	private static Item? FindIconItemForDamageClass(DamageClass d)
+	{
+		return Enumerable.Range(0, ItemLoader.ItemCount)
+			.Select(i => new Item(i))
+			.Where(i => i.CountsAsClass(d) && !ItemPredicates.IsTool(i))
+			.MinBy(i => i.rare);
 	}
 }
