@@ -107,7 +107,7 @@ public class UIItemList : UIElement
 
 		// Extra space added on the top and left to keep the contents centered.
 		float leftOffset = (d.Width - NumCols * ItemWidth - (NumCols - 1) * Padding) / 2;
-		float topOffset = (d.Height - NumRows * ItemWidth - (NumRows - 1) * Padding) / 2;
+		float topOffset = 0;
 
 		for (int i = 0; i < NumRows; ++i)
 		{
