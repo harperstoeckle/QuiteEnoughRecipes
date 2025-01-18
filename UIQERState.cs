@@ -16,14 +16,6 @@ namespace QuiteEnoughRecipes;
 
 public class UIQERState : UIState
 {
-	private struct Filter
-	{
-		// The item displayed on the filter.
-		public Item IconItem;
-		public string HoverName;
-		public Predicate<Item> Pred;
-	}
-
 	// A tab that may or may not be displayed.
 	private class RecipeTab
 	{
@@ -129,8 +121,8 @@ public class UIQERState : UIState
 	private UIQERSearchBar? _activeSearchBar = null;
 	private string? _searchText = null;
 
-	private List<Filter> _filters = new();
-	private UIFilterPanel _filterPanel;
+	private UIOptionPanel<Predicate<Item>> _filterPanel = new();
+	private Predicate<Item>? _activeFilter = null;
 
 	public override void OnInitialize()
 	{
@@ -212,7 +204,7 @@ public class UIQERState : UIState
 	// This must be called before the filter panel is initialized.
 	public void AddFilter(Item icon, string hoverName, Predicate<Item> pred)
 	{
-		_filters.Add(new Filter{ IconItem = icon, HoverName = hoverName, Pred = pred });
+		_filterPanel.AddItemIconOption(icon, hoverName, pred);
 	}
 
 	// If it exists, load the top of the history stack and pop it.
@@ -466,19 +458,17 @@ public class UIQERState : UIState
 		filterToggleButton.Left = new StyleDimension(
 			-ScrollBarWidth - filterToggleButton.Width.Pixels, 1);
 
-		_filterPanel = new();
 		_filterPanel.Width.Percent = 0.3f;
 		_filterPanel.Height.Percent = 0.3f;
+
 		// This should put it just to the left of the toggle button.
 		_filterPanel.Top.Pixels = BarHeight;
 		_filterPanel.HAlign = 1;
 
-		foreach (var filter in _filters)
-		{
-			_filterPanel.AddItemIconFilter(filter.IconItem, filter.HoverName);
-		}
-
-		_filterPanel.OnFiltersChanged += UpdateDisplayedItems;
+		_filterPanel.OnSelectionChanged += pred => {
+			_activeFilter = pred;
+			UpdateDisplayedItems();
+		};
 
 		filterToggleButton.OnLeftClick += (b, e) => ToggleFilterPanel();
 
@@ -506,23 +496,11 @@ public class UIQERState : UIState
 	// Update what items are being displayed based on the search bar and filters.
 	private void UpdateDisplayedItems()
 	{
-		var activeFilterPreds = _filters
-			.Where((f, i) => _filterPanel.IsFilterEnabled(i))
-			.Select(f => f.Pred)
-			.ToList();
-
-		/*
-		 * If there are no filters enabled, we don't want to filter. If there *are*, then we want to
-		 * take the disjunction of them.
-		 */
-		Predicate<Item> filterPred = activeFilterPreds.Count == 0
-			? i => true
-			: i => activeFilterPreds.Any(p => p(i));
-
 		var sNorm = _searchText?.ToLower() ?? "";
 		_filteredItems.Clear();
 		_filteredItems.AddRange(
-			_allItems.Where(i => i.Name.ToLower().Contains(sNorm) && filterPred(i)));
+			_allItems.Where(i =>
+				i.Name.ToLower().Contains(sNorm) && (_activeFilter?.Invoke(i) ?? true)));
 
 		_itemList.Items = _filteredItems;
 	}
