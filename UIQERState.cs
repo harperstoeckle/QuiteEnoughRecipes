@@ -74,7 +74,7 @@ public class UIQERState : UIState
 		}
 	}
 
-	private const float BarHeight = 40;
+	private const float BarHeight = 50;
 	private const float ScrollBarWidth = 30;
 
 	// Keeps track of the recipe pages that have been viewed, not including the current one.
@@ -182,6 +182,21 @@ public class UIQERState : UIState
 				i => i.CountsAsClass(dc) && !ItemPredicates.IsTool(i));
 		}
 
+		/*
+		 * This should put the panel just to the left of the item list panel, which will keep it out
+		 * of the way for the most part. Since it's not inside the bounds of the item list panel, it
+		 * has to be appended directly to the main element.
+		 */
+		_filterPanel.Width.Percent = 0.25f;
+		_filterPanel.Height.Percent = 0.25f;
+		_filterPanel.Top.Percent = 0.1f;
+		_filterPanel.Left.Percent = 0.26f;
+		_filterPanel.OnSelectionChanged += pred => {
+			_activeFilter = pred;
+			UpdateDisplayedItems();
+		};
+
+
 		InitRecipePanel();
 		InitItemPanel();
 	}
@@ -259,18 +274,6 @@ public class UIQERState : UIState
 		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
 		{
 			ShowUses(p.DisplayedItem);
-		}
-	}
-
-	public override void ScrollWheel(UIScrollWheelEvent e)
-	{
-		/*
-		 * Even just scrolling will close the filter window; the player scrolling means they
-		 * probably want to look at items now instead of the filter thing.
-		 */
-		if (!_filterPanel.IsMouseHovering)
-		{
-			CloseFilterPanel();
 		}
 	}
 
@@ -455,25 +458,11 @@ public class UIQERState : UIState
 		_itemList.VAlign = 1;
 
 		var filterToggleButton = new FilterPanelToggleButton();
-		filterToggleButton.Left = new StyleDimension(
-			-ScrollBarWidth - filterToggleButton.Width.Pixels, 1);
-
-		_filterPanel.Width.Percent = 0.3f;
-		_filterPanel.Height.Percent = 0.3f;
-
-		// This should put it just to the left of the toggle button.
-		_filterPanel.Top.Pixels = BarHeight;
-		_filterPanel.HAlign = 1;
-
-		_filterPanel.OnSelectionChanged += pred => {
-			_activeFilter = pred;
-			UpdateDisplayedItems();
-		};
-
 		filterToggleButton.OnLeftClick += (b, e) => ToggleFilterPanel();
 
 		var search = new UIQERSearchBar();
-		search.Width = new StyleDimension(-filterToggleButton.Width.Pixels - ScrollBarWidth - 10, 1);
+		search.Width = new StyleDimension(-filterToggleButton.Width.Pixels - 10, 1);
+		search.HAlign = 1;
 		search.OnStartTakingInput += () => {
 			_activeSearchBar = search;
 		};
@@ -514,13 +503,13 @@ public class UIQERState : UIState
 
 	private void ToggleFilterPanel()
 	{
-		if (_itemListPanel.HasChild(_filterPanel))
+		if (HasChild(_filterPanel))
 		{
-			_itemListPanel.RemoveChild(_filterPanel);
+			RemoveChild(_filterPanel);
 		}
 		else
 		{
-			_itemListPanel.Append(_filterPanel);
+			Append(_filterPanel);
 			_filterPanel.Activate();
 			_filterPanel.Recalculate();
 		}
@@ -528,7 +517,7 @@ public class UIQERState : UIState
 
 	private void CloseFilterPanel()
 	{
-		_itemListPanel.RemoveChild(_filterPanel);
+		RemoveChild(_filterPanel);
 	}
 
 	// Tries to find a low-rarity item to use as an icon for a damage class filter.
