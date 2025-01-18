@@ -1,7 +1,9 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System;
 using Terraria.GameContent.UI.Elements;
 using Terraria.ID;
@@ -181,7 +183,10 @@ public class UIQERState : UIState
 			// This damage class has no items, so we can't really make a filter for it.
 			if (icon == null) { continue; }
 
-			AddFilter(icon, $"{dc.DisplayName.Value} Weapons",
+			// Adjust the name so instead of "rogue damage Weapons", we get "Rogue Weapons".
+			var name = Language.GetText("Mods.QuiteEnoughRecipes.Filters.OtherWeapons")
+				.Format(BaseDamageClassName(dc.DisplayName.Value));
+			AddFilter(icon, $"{BaseDamageClassName(dc.DisplayName.Value)} Weapons",
 				i => i.CountsAsClass(dc) && !ItemPredicates.IsTool(i));
 		}
 
@@ -555,5 +560,22 @@ public class UIQERState : UIState
 			.Select(i => new Item(i))
 			.Where(i => i.CountsAsClass(d) && !ItemPredicates.IsTool(i))
 			.MinBy(i => i.rare);
+	}
+
+	/*
+	 * Tries to turn something like "rogue damage" into "Rogue", i.e., a single capitalized word.
+	 *
+	 * TODO: Try to figure out how to make this work with all languages. I currently assume that the
+	 * display name will end with the word "damage", but this clearly doesn't work for other
+	 * languages. One possibility is to just cut the last word off, regardless of what it is. This
+	 * doesn't work for languages where the "damage" equivalent is at the start of the name, though.
+	 * Alternatively, maybe I could just determine the common suffix and prefix text from the
+	 * vanilla display names for the current localization and strip it.
+	 */
+	private static string BaseDamageClassName(string name)
+	{
+		var ti = new CultureInfo("en-US", false).TextInfo;
+		return ti.ToTitleCase(
+			Regex.Replace(name, @"^\s*(.*?)\s*damage\s*$", @"$1", RegexOptions.IgnoreCase));
 	}
 }

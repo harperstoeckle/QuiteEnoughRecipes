@@ -22,6 +22,8 @@ Tabs: {
 
 Filters: {
 	Blocks: Blocks
+	# Used to format other damage types.
+	OtherWeapons: "{0} Weapons"
 	MeleeWeapons: Melee Weapons
 	RangedWeapons: Ranged Weapons
 	MagicWeapons: Magic Weapons
