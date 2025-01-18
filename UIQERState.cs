@@ -121,6 +121,9 @@ public class UIQERState : UIState
 	private UIQERSearchBar? _activeSearchBar = null;
 	private string? _searchText = null;
 
+	// This will contain at most one of the options panels (sort, filter).
+	private UIElement _optionPanelContainer = new();
+
 	private UIOptionPanel<Predicate<Item>> _filterPanel = new();
 	private Predicate<Item>? _activeFilter = null;
 
@@ -187,10 +190,21 @@ public class UIQERState : UIState
 		 * of the way for the most part. Since it's not inside the bounds of the item list panel, it
 		 * has to be appended directly to the main element.
 		 */
-		_filterPanel.Width.Percent = 0.25f;
-		_filterPanel.Height.Percent = 0.25f;
-		_filterPanel.Top.Percent = 0.1f;
-		_filterPanel.Left.Percent = 0.26f;
+		_optionPanelContainer.Width.Percent = 0.25f;
+		_optionPanelContainer.Height.Percent = 0.25f;
+		_optionPanelContainer.Top.Percent = 0.1f;
+		_optionPanelContainer.Left.Percent = 0.26f;
+
+		/*
+		 * If we don't do this, then `_optionPanelContainer` will absorb any mouse interactions even
+		 * if there's no active option panel, which creates a sort of "dead zone" in the recipe
+		 * panel. Note that this has to get set to false whenever an option panel is opened, so that
+		 * the active option panel can actually be used.
+		 */
+		_optionPanelContainer.IgnoresMouseInteraction = true;
+
+		_filterPanel.Width.Percent = 1;
+		_filterPanel.Height.Percent = 1;
 		_filterPanel.OnSelectionChanged += pred => {
 			_activeFilter = pred;
 			UpdateDisplayedItems();
@@ -199,6 +213,7 @@ public class UIQERState : UIState
 
 		InitRecipePanel();
 		InitItemPanel();
+		Append(_optionPanelContainer);
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
@@ -248,9 +263,9 @@ public class UIQERState : UIState
 		 * Don't close the filter panel while we're in the middle of opening it, but close it with
 		 * any other click.
 		 */
-		if (!(e.Target is FilterPanelToggleButton) && !_filterPanel.IsMouseHovering)
+		if (!(e.Target is FilterPanelToggleButton) && !_optionPanelContainer.IsMouseHovering)
 		{
-			CloseFilterPanel();
+			CloseOptionPanel();
 		}
 
 		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
@@ -266,9 +281,9 @@ public class UIQERState : UIState
 			StopTakingInput();
 		}
 
-		if (!_filterPanel.IsMouseHovering)
+		if (!(e.Target is FilterPanelToggleButton) && !_optionPanelContainer.IsMouseHovering)
 		{
-			CloseFilterPanel();
+			CloseOptionPanel();
 		}
 
 		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
@@ -503,21 +518,28 @@ public class UIQERState : UIState
 
 	private void ToggleFilterPanel()
 	{
-		if (HasChild(_filterPanel))
+		if (_optionPanelContainer.HasChild(_filterPanel))
 		{
-			RemoveChild(_filterPanel);
+			CloseOptionPanel();
 		}
 		else
 		{
-			Append(_filterPanel);
-			_filterPanel.Activate();
-			_filterPanel.Recalculate();
+			OpenOptionPanel(_filterPanel);
 		}
 	}
 
-	private void CloseFilterPanel()
+	private void OpenOptionPanel(UIElement e)
 	{
-		RemoveChild(_filterPanel);
+		_optionPanelContainer.Append(e);
+		e.Activate();
+		e.Recalculate();
+		_optionPanelContainer.IgnoresMouseInteraction = false;
+	}
+
+	private void CloseOptionPanel()
+	{
+		_optionPanelContainer.RemoveAllChildren();
+		_optionPanelContainer.IgnoresMouseInteraction = true;
 	}
 
 	// Tries to find a low-rarity item to use as an icon for a damage class filter.
