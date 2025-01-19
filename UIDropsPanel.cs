@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Terraria.GameContent.ItemDropRules;
 using Terraria.UI;
 
@@ -19,7 +20,11 @@ public class UIDropsPanel : UIAutoExtend
 			HAlign = 1
 		};
 
-		foreach (var drop in drops)
+		/*
+		 * TODO: Instead of using `Distinct` here, the actual combined probabilities should be
+		 * calculated for each item and displayed.
+		 */
+		foreach (var drop in drops.DistinctBy(d => d.itemId))
 		{
 			// TODO: Show the percentage and range of quantities.
 			grid.Append(new UIItemPanel(new(drop.itemId, drop.stackMin)));
