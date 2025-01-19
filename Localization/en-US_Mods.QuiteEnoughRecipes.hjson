@@ -8,6 +8,7 @@ Keybinds: {
 UI: {
 	SearchBarDefault: Search
 	FilterHover: Filters
+	SortHover: Sort Options
 }
 
 Tabs: {
@@ -29,4 +30,11 @@ Filters: {
 	MagicWeapons: Magic Weapons
 	SummonWeapons: Summoner Weapons
 	BossSummons: Boss Summons
+}
+
+Sorts: {
+	ID: Sort by ID
+	Alphabetical: Sort Alphabetically
+	Rarity: Sort by Rarity
+	Value: Sort by Value
 }

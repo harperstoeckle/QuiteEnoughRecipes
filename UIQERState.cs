@@ -49,10 +49,19 @@ public class UIQERState : UIState
 		public float ScrollViewPosition;
 	}
 
-	private class FilterPanelToggleButton : UIElement
+	private class OptionPanelToggleButton : UIElement
 	{
-		public FilterPanelToggleButton()
+		private string _iconPath;
+		private string _name;
+
+		/*
+		 * `image` is supposed to be either the bestiary filtering or sorting button, since the icon
+		 * can be easily cut out of them from a specific location.
+		 */
+		public OptionPanelToggleButton(string texturePath, string name)
 		{
+			_iconPath = texturePath;
+			_name = name;
 			Width.Pixels = Height.Pixels = 22;
 		}
 
@@ -61,15 +70,14 @@ public class UIQERState : UIState
 			base.DrawSelf(sb);
 
 			var pos = GetDimensions().Position();
-			var filterIcon = Main.Assets.Request<Texture2D>(
-				"Images/UI/Bestiary/Button_Filtering").Value;
+			var filterIcon = Main.Assets.Request<Texture2D>(_iconPath).Value;
 
 			// We only want the icon part of the texture without the part that usually has the text.
 			sb.Draw(filterIcon, pos, new Rectangle(4, 4, 22, 22), Color.White);
 
 			if (IsMouseHovering)
 			{
-				Main.instance.MouseText(Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
+				Main.instance.MouseText(_name);
 			}
 		}
 	}
@@ -127,11 +135,22 @@ public class UIQERState : UIState
 	private UIOptionPanel<Predicate<Item>> _filterPanel = new();
 	private Predicate<Item>? _activeFilter = null;
 
+	private UIOptionPanel<Comparison<Item>> _sortPanel = new();
+	private Comparison<Item>? _activeSortComparison = null;
+
 	public override void OnInitialize()
 	{
+		/*
+		 * Our "master list" of items is sorted by creative order first and item ID second, so this
+		 * is the order that will be used if no sort order is chosen.
+		 */
 		_allItems = Enumerable.Range(0, ItemLoader.ItemCount)
 			.Select(i => new Item(i))
 			.Where(i => i.type != 0)
+			.OrderBy(i => {
+				var itemGroup = ContentSamples.CreativeHelper.GetItemGroup(i, out int orderInGroup);
+				return (itemGroup, orderInGroup, i.type);
+			})
 			.ToList();
 		_filteredItems = new(_allItems);
 
@@ -210,6 +229,25 @@ public class UIQERState : UIState
 			UpdateDisplayedItems();
 		};
 
+		_sortPanel.Width.Percent = 1;
+		_sortPanel.Height.Percent = 1;
+		_sortPanel.OnSelectionChanged += comp => {
+			_activeSortComparison = comp;
+			UpdateDisplayedItems();
+		};
+
+		_sortPanel.AddItemIconOption(new Item(ItemID.AlphabetStatue1),
+			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.ID"),
+			(x, y) => x.type.CompareTo(y.type));
+		_sortPanel.AddItemIconOption(new Item(ItemID.AlphabetStatueA),
+			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Alphabetical"),
+			(x, y) => x.Name.CompareTo(y.Name));
+		_sortPanel.AddItemIconOption(new Item(ItemID.StarStatue),
+			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Rarity"),
+			(x, y) => x.rare.CompareTo(y.rare));
+		_sortPanel.AddItemIconOption(new Item(ItemID.ChestStatue),
+			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Value"),
+			(x, y) => x.value.CompareTo(y.value));
 
 		InitRecipePanel();
 		InitItemPanel();
@@ -263,7 +301,7 @@ public class UIQERState : UIState
 		 * Don't close the filter panel while we're in the middle of opening it, but close it with
 		 * any other click.
 		 */
-		if (!(e.Target is FilterPanelToggleButton) && !_optionPanelContainer.IsMouseHovering)
+		if (!(e.Target is OptionPanelToggleButton) && !_optionPanelContainer.IsMouseHovering)
 		{
 			CloseOptionPanel();
 		}
@@ -281,7 +319,7 @@ public class UIQERState : UIState
 			StopTakingInput();
 		}
 
-		if (!(e.Target is FilterPanelToggleButton) && !_optionPanelContainer.IsMouseHovering)
+		if (!(e.Target is OptionPanelToggleButton) && !_optionPanelContainer.IsMouseHovering)
 		{
 			CloseOptionPanel();
 		}
@@ -472,11 +510,21 @@ public class UIQERState : UIState
 		_itemList.Height = new StyleDimension(-BarHeight, 1);
 		_itemList.VAlign = 1;
 
-		var filterToggleButton = new FilterPanelToggleButton();
-		filterToggleButton.OnLeftClick += (b, e) => ToggleFilterPanel();
+		var filterToggleButton = new OptionPanelToggleButton("Images/UI/Bestiary/Button_Filtering",
+			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
+		filterToggleButton.OnLeftClick += (b, e) => ToggleOptionPanel(_filterPanel);
+
+		float offset = filterToggleButton.Width.Pixels + 10;
+
+		var sortToggleButton = new OptionPanelToggleButton("Images/UI/Bestiary/Button_Sorting",
+			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SortHover"));
+		sortToggleButton.Left.Pixels = offset;
+		sortToggleButton.OnLeftClick += (b, e) => ToggleOptionPanel(_sortPanel);
+
+		offset += sortToggleButton.Width.Pixels + 10;
 
 		var search = new UIQERSearchBar();
-		search.Width = new StyleDimension(-filterToggleButton.Width.Pixels - 10, 1);
+		search.Width = new StyleDimension(-offset, 1);
 		search.HAlign = 1;
 		search.OnStartTakingInput += () => {
 			_activeSearchBar = search;
@@ -491,8 +539,9 @@ public class UIQERState : UIState
 
 		_itemListPanel.Append(_itemList);
 		_itemListPanel.Append(scrollContainer);
-		_itemListPanel.Append(search);
 		_itemListPanel.Append(filterToggleButton);
+		_itemListPanel.Append(sortToggleButton);
+		_itemListPanel.Append(search);
 
 		Append(_itemListPanel);
 	}
@@ -506,6 +555,11 @@ public class UIQERState : UIState
 			_allItems.Where(i =>
 				i.Name.ToLower().Contains(sNorm) && (_activeFilter?.Invoke(i) ?? true)));
 
+		if (_activeSortComparison != null)
+		{
+			_filteredItems.Sort(_activeSortComparison);
+		}
+
 		_itemList.Items = _filteredItems;
 	}
 
@@ -516,20 +570,22 @@ public class UIQERState : UIState
 			pred);
 	}
 
-	private void ToggleFilterPanel()
+	// If option panel `panel` is already active, close it. If not, switch to it.
+	private void ToggleOptionPanel(UIElement panel)
 	{
-		if (_optionPanelContainer.HasChild(_filterPanel))
+		if (_optionPanelContainer.HasChild(panel))
 		{
 			CloseOptionPanel();
 		}
 		else
 		{
-			OpenOptionPanel(_filterPanel);
+			OpenOptionPanel(panel);
 		}
 	}
 
 	private void OpenOptionPanel(UIElement e)
 	{
+		_optionPanelContainer.RemoveAllChildren();
 		_optionPanelContainer.Append(e);
 		e.Activate();
 		e.Recalculate();
