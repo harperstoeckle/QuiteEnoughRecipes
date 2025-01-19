@@ -1,5 +1,6 @@
 using System;
 using Terraria.ID;
+using Terraria.ModLoader;
 using Terraria;
 
 namespace QuiteEnoughRecipes;
@@ -22,6 +23,7 @@ static class ItemPredicates
 		IsInGroup(i, ContentSamples.CreativeHelper.ItemGroup.Blocks);
 	public static bool IsBossSummon(Item i) =>
 		IsInGroup(i, ContentSamples.CreativeHelper.ItemGroup.BossItem);
+
 	public static bool IsMeleeWeapon(Item i) =>
 		IsInGroup(i, ContentSamples.CreativeHelper.ItemGroup.MeleeWeapon);
 	public static bool IsRangedWeapon(Item i) =>
@@ -30,6 +32,9 @@ static class ItemPredicates
 		IsInGroup(i, ContentSamples.CreativeHelper.ItemGroup.MagicWeapon);
 	public static bool IsSummonWeapon(Item i) =>
 		IsInGroup(i, ContentSamples.CreativeHelper.ItemGroup.SummonWeapon);
+
+	public static bool IsWeaponInDamageClass(Item i, DamageClass dc) =>
+		i.CountsAsClass(dc) && !IsTool(i);
 
 	public static bool IsTool(Item i) => i.axe > 0 || i.hammer > 0 || i.pick > 0;
 }

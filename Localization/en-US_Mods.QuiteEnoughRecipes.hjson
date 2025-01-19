@@ -29,6 +29,7 @@ Filters: {
 	RangedWeapons: Ranged Weapons
 	MagicWeapons: Magic Weapons
 	SummonWeapons: Summoner Weapons
+	ThrowingWeapons: Throwing Weapons
 	BossSummons: Boss Summons
 }
 

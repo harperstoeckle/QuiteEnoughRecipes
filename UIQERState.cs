@@ -174,6 +174,18 @@ public class UIQERState : UIState
 		AddInternalFilter(ItemID.WandofSparking, "MagicWeapons", ItemPredicates.IsMagicWeapon);
 		AddInternalFilter(ItemID.BabyBirdStaff, "SummonWeapons", ItemPredicates.IsSummonWeapon);
 
+		// We only add the thrower class filter if there are mods that add throwing weapons.
+		if (FindIconItemForDamageClass(DamageClass.Throwing) is Item iconItem)
+		{
+			/*
+			 * Unlike the other modded damage classes, we only want to show throwing weapons that
+			 * are *exactly* in the throwing class, since modded classes that just *derive* from
+			 * throwing (like rogue) will also be shown below with the other modded classes.
+			 */
+			AddInternalFilter(iconItem.type, "ThrowingWeapons",
+				i => i.DamageType == DamageClass.Throwing && !ItemPredicates.IsTool(i));
+		}
+
 		var moddedDamageClasses =
 			Enumerable.Range(0, DamageClassLoader.DamageClassCount)
 			.Select(i => DamageClassLoader.GetDamageClass(i))
@@ -201,7 +213,7 @@ public class UIQERState : UIState
 			var name = Language.GetText("Mods.QuiteEnoughRecipes.Filters.OtherWeapons")
 				.Format(BaseDamageClassName(dc.DisplayName.Value));
 			AddFilter(icon, $"{BaseDamageClassName(dc.DisplayName.Value)} Weapons",
-				i => i.CountsAsClass(dc) && !ItemPredicates.IsTool(i));
+				i => ItemPredicates.IsWeaponInDamageClass(i, dc));
 		}
 
 		/*
@@ -598,12 +610,17 @@ public class UIQERState : UIState
 		_optionPanelContainer.IgnoresMouseInteraction = true;
 	}
 
-	// Tries to find a low-rarity item to use as an icon for a damage class filter.
+	/*
+	 * Tries to find a low-rarity item to use as an icon for a damage class filter. When applying
+	 * the filter, any weapon that counts for this damage class will be shown, but for the purposes
+	 * of the icon, we only want something whose damage class is *exactly* `d`, in the hope that it
+	 * will be more representative of the class.
+	 */
 	private static Item? FindIconItemForDamageClass(DamageClass d)
 	{
 		return Enumerable.Range(0, ItemLoader.ItemCount)
 			.Select(i => new Item(i))
-			.Where(i => i.CountsAsClass(d) && !ItemPredicates.IsTool(i))
+			.Where(i => i.DamageType == d && !ItemPredicates.IsTool(i))
 			.MinBy(i => i.rare);
 	}
 
