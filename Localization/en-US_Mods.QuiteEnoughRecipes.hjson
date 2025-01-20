@@ -22,15 +22,28 @@ Tabs: {
 }
 
 Filters: {
-	Blocks: Blocks
-	# Used to format other damage types.
-	OtherWeapons: "{0} Weapons"
+	Tiles: Tiles
+	CraftingStations: Crafting Stations
+	LootItems: Loot Items
+	Fishing: Fishing
+	Dye: Dye
+	Accessories: Accessories
+	Tools: Tools
+	Armor: Armor
+	Potions: Potions
+	Food: Food
+	Wings: Wings
+	VanityPets: Vanity Pets
+	Mounts: Mounts
+	Hooks: Hooks
 	MeleeWeapons: Melee Weapons
 	RangedWeapons: Ranged Weapons
 	MagicWeapons: Magic Weapons
 	SummonWeapons: Summoner Weapons
 	ThrowingWeapons: Throwing Weapons
 	BossSummons: Boss Summons
+	# Used to format other damage types.
+	OtherWeapons: "{0} Weapons"
 }
 
 Sorts: {

@@ -166,8 +166,21 @@ public class UIQERState : UIState
 		AddUsageHandler(new RecipeHandlers.ShimmerUsageHandler());
 		AddUsageHandler(new RecipeHandlers.ItemDropUsageHandler());
 
-		AddInternalFilter(ItemID.Wood, "Blocks", ItemPredicates.IsBlock);
+		AddInternalFilter(ItemID.StoneBlock, "Tiles", ItemPredicates.IsTile);
+		AddInternalFilter(ItemID.Furnace, "CraftingStations", ItemPredicates.IsCraftingStation);
 		AddInternalFilter(ItemID.SuspiciousLookingEye, "BossSummons", ItemPredicates.IsBossSummon);
+		AddInternalFilter(ItemID.GoodieBag, "LootItems", ItemPredicates.IsLootItem);
+		AddInternalFilter(ItemID.InfernoPotion, "Potions", ItemPredicates.IsPotion);
+		AddInternalFilter(ItemID.Apple, "Food", ItemPredicates.IsFood);
+		AddInternalFilter(ItemID.WoodFishingPole, "Fishing", ItemPredicates.IsFishing);
+		AddInternalFilter(ItemID.RedDye, "Dye", ItemPredicates.IsDye);
+		AddInternalFilter(ItemID.AnkletoftheWind, "Accessories", ItemPredicates.IsAccessory);
+		AddInternalFilter(ItemID.ExoticEasternChewToy, "VanityPets", ItemPredicates.IsVanityPet);
+		AddInternalFilter(ItemID.SlimySaddle, "Mounts", ItemPredicates.IsMount);
+		AddInternalFilter(ItemID.CreativeWings, "Wings", ItemPredicates.IsWings);
+		AddInternalFilter(ItemID.GrapplingHook, "Hooks", ItemPredicates.IsHook);
+		AddInternalFilter(ItemID.CopperPickaxe, "Tools", ItemPredicates.IsTool);
+		AddInternalFilter(ItemID.CopperChainmail, "Armor", ItemPredicates.IsArmor);
 
 		AddInternalFilter(ItemID.CopperShortsword, "MeleeWeapons", ItemPredicates.IsMeleeWeapon);
 		AddInternalFilter(ItemID.WoodenBow, "RangedWeapons", ItemPredicates.IsRangedWeapon);
