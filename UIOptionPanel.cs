@@ -19,7 +19,10 @@ public class UIOptionPanel<T> : UIPanel
 	// A button that can be toggled on or off.
 	public class OptionButton : UIElement
 	{
+		private static int NextIndex = 0;
+
 		private string _hoverText;
+		private int _index = NextIndex++;
 
 		public bool Selected = false;
 		public T Val;
@@ -30,6 +33,19 @@ public class UIOptionPanel<T> : UIPanel
 			Val = val;
 			Width.Pixels = 40;
 			Height.Pixels = 40;
+		}
+
+		// Hack to prevent `UIGrid` from reordering these buttons.
+		public override int CompareTo(object? other)
+		{
+			if (other is OptionButton b)
+			{
+				return _index.CompareTo(b._index);
+			}
+			else
+			{
+				return 0;
+			}
 		}
 
 		protected override void DrawSelf(SpriteBatch sb)
