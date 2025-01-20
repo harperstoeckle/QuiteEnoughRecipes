@@ -175,7 +175,7 @@ public class UIQERState : UIState
 		AddInternalFilter(ItemID.WoodFishingPole, "Fishing", ItemPredicates.IsFishing);
 		AddInternalFilter(ItemID.RedDye, "Dye", ItemPredicates.IsDye);
 		AddInternalFilter(ItemID.AnkletoftheWind, "Accessories", ItemPredicates.IsAccessory);
-		AddInternalFilter(ItemID.ExoticEasternChewToy, "VanityPets", ItemPredicates.IsVanityPet);
+		AddInternalFilter(ItemID.ExoticEasternChewToy, "Pets", ItemPredicates.IsPet);
 		AddInternalFilter(ItemID.SlimySaddle, "Mounts", ItemPredicates.IsMount);
 		AddInternalFilter(ItemID.CreativeWings, "Wings", ItemPredicates.IsWings);
 		AddInternalFilter(ItemID.GrapplingHook, "Hooks", ItemPredicates.IsHook);
