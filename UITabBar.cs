@@ -21,7 +21,6 @@ public class UITabBar : UIElement
 		private static readonly Color UnselectedBackgroundColor = new Color(63, 82, 151) * 0.7f;
 
 		private LocalizedText _text;
-		private Item _item;
 
 		public bool Selected = false;
 		public int Index { get; private set; }
@@ -29,13 +28,8 @@ public class UITabBar : UIElement
 		public Tab(LocalizedText text, Item item, int index)
 		{
 			_text = text;
-			_item = item;
 			Index = index;
-		}
-
-		public override void OnInitialize()
-		{
-			Append(new UIItemIcon(_item, false){ IgnoresMouseInteraction = true, VAlign = 0.5f });
+			Append(new UIItemIcon(item, false){ IgnoresMouseInteraction = true, VAlign = 0.5f });
 		}
 
 		protected override void DrawSelf(SpriteBatch sb)

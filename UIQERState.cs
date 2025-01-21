@@ -96,14 +96,14 @@ public class UIQERState : UIState
 	private List<RecipeTab> _sourceTabs = new();
 	private List<RecipeTab> _usageTabs = new();
 
-	private UIItemList _itemList;
+	private UIItemList _itemList = new();
 
 	/*
 	 * This refers either to `_sourceTabs` or `_usageTabs`, and is used to keep track of tab
 	 * history.
 	 */
-	private List<RecipeTab>? _currentTabSet;
-	private Item? _clickedItem;
+	private List<RecipeTab>? _currentTabSet = null;
+	private Item? _clickedItem = null;
 
 	// Index of currently active tab in `_activeTabs`.
 	private int _tabIndex = 0;
@@ -117,7 +117,7 @@ public class UIQERState : UIState
 	private UIElement _recipeScrollContainer = new();
 
 	// Panel with the item list. This is needed so the filter panel can be added and removed.
-	private UIPanel _itemListPanel;
+	private UIPanel _itemListPanel = new();
 
 	/*
 	 * When an item panel is being hovered, this keeps track of it. This is needed so that we can
@@ -138,7 +138,7 @@ public class UIQERState : UIState
 	private UIOptionPanel<Comparison<Item>> _sortPanel = new();
 	private Comparison<Item>? _activeSortComparison = null;
 
-	public override void OnInitialize()
+	public UIQERState()
 	{
 		/*
 		 * Our "master list" of items is sorted by creative order first and item ID second, so this
@@ -510,7 +510,6 @@ public class UIQERState : UIState
 
 	private void InitItemPanel()
 	{
-		_itemListPanel = new UIPanel();
 		_itemListPanel.Left.Percent = 0.51f;
 		_itemListPanel.Width.Percent = 0.45f;
 		_itemListPanel.Height.Percent = 0.8f;
@@ -528,7 +527,6 @@ public class UIQERState : UIState
 		scrollContainer.VAlign = 1;
 		scrollContainer.Append(scroll);
 
-		_itemList = new();
 		_itemList.Scrollbar = scroll;
 		_itemList.Items = _filteredItems;
 		_itemList.Width = new StyleDimension(-ScrollBarWidth, 1);

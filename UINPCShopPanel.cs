@@ -6,17 +6,11 @@ namespace QuiteEnoughRecipes;
 // Displays an NPC along with the items they sell.
 public class UINPCShopPanel : UIAutoExtend
 {
-	AbstractNPCShop _shop;
-
 	public UINPCShopPanel(AbstractNPCShop shop)
 	{
-		_shop = shop;
 		Width.Percent = 1;
-	}
 
-	public override void OnInitialize()
-	{
-		Append(new UINPCPanel(_shop.NpcType){
+		Append(new UINPCPanel(shop.NpcType){
 			Width = new StyleDimension(82, 0),
 			Height = new StyleDimension(82, 0)
 		});
@@ -26,7 +20,7 @@ public class UINPCShopPanel : UIAutoExtend
 			HAlign = 1
 		};
 
-		foreach (var entry in _shop.ActiveEntries)
+		foreach (var entry in shop.ActiveEntries)
 		{
 			grid.Append(new UIItemPanel(entry.Item));
 		}
