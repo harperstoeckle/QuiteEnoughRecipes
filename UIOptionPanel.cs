@@ -131,4 +131,15 @@ public class UIOptionPanel<T> : UIPanel
 			OnSelectionChanged?.Invoke(newSelectedState ? pressedButton.Val : default(T?));
 		}
 	}
+
+	// Disable all active options. This function *will* activate the `OnSelectionChanged` event.
+	public void DisableAllOptions()
+	{
+		foreach (var b in _optionGrid._items.OfType<OptionButton>())
+		{
+			b.Selected = false;
+		}
+
+		OnSelectionChanged?.Invoke(default(T?));
+	}
 }

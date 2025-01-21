@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System;
 using Terraria.GameContent.UI.Elements;
+using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
@@ -55,6 +56,12 @@ public class UIQERState : UIState
 		private string _name;
 
 		/*
+		 * Should be set to true to indicate that an option is currently enabled; this will show a
+		 * little red dot and add some text to the tooltip.
+		 */
+		public bool OptionSelected = false;
+
+		/*
 		 * `image` is supposed to be either the bestiary filtering or sorting button, since the icon
 		 * can be easily cut out of them from a specific location.
 		 */
@@ -75,9 +82,20 @@ public class UIQERState : UIState
 			// We only want the icon part of the texture without the part that usually has the text.
 			sb.Draw(filterIcon, pos, new Rectangle(4, 4, 22, 22), Color.White);
 
+			/*
+			 * This is the same indicator used for trapped chests. It's about the right shape and
+			 * size, so it's good enough.
+			 */
+			if (OptionSelected)
+			{
+				sb.Draw(TextureAssets.Wire.Value, pos + new Vector2(4),
+					new Rectangle(4, 58, 8, 8), Color.White, 0f, new Vector2(4), 1, 0, 0);
+			}
+
 			if (IsMouseHovering)
 			{
-				Main.instance.MouseText(_name);
+				var c = Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.RightClickToClear");
+				Main.instance.MouseText(_name + (OptionSelected ? '\n' + c : ""));
 			}
 		}
 	}
@@ -141,9 +159,13 @@ public class UIQERState : UIState
 	// This will contain at most one of the options panels (sort, filter).
 	private UIElement _optionPanelContainer = new();
 
+	private OptionPanelToggleButton _filterToggleButton = new("Images/UI/Bestiary/Button_Filtering",
+			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
 	private UIOptionPanel<Predicate<Item>> _filterPanel = new();
 	private Predicate<Item>? _activeFilter = null;
 
+	private OptionPanelToggleButton _sortToggleButton = new("Images/UI/Bestiary/Button_Sorting",
+			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SortHover"));
 	private UIOptionPanel<Comparison<Item>> _sortPanel = new();
 	private Comparison<Item>? _activeSortComparison = null;
 
@@ -259,6 +281,7 @@ public class UIQERState : UIState
 		_filterPanel.Width.Percent = 1;
 		_filterPanel.Height.Percent = 1;
 		_filterPanel.OnSelectionChanged += pred => {
+			_filterToggleButton.OptionSelected = pred != null;
 			_activeFilter = pred;
 			UpdateDisplayedItems();
 		};
@@ -266,6 +289,7 @@ public class UIQERState : UIState
 		_sortPanel.Width.Percent = 1;
 		_sortPanel.Height.Percent = 1;
 		_sortPanel.OnSelectionChanged += comp => {
+			_sortToggleButton.OptionSelected = comp != null;
 			_activeSortComparison = comp;
 			UpdateDisplayedItems();
 		};
@@ -549,18 +573,16 @@ public class UIQERState : UIState
 		_itemList.Height = new StyleDimension(-BarHeight, 1);
 		_itemList.VAlign = 1;
 
-		var filterToggleButton = new OptionPanelToggleButton("Images/UI/Bestiary/Button_Filtering",
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
-		filterToggleButton.OnLeftClick += (b, e) => ToggleOptionPanel(_filterPanel);
+		_filterToggleButton.OnLeftClick += (b, e) => ToggleOptionPanel(_filterPanel);
+		_filterToggleButton.OnRightClick += (b, e) => _filterPanel.DisableAllOptions();
 
-		float offset = filterToggleButton.Width.Pixels + 10;
+		float offset = _filterToggleButton.Width.Pixels + 10;
 
-		var sortToggleButton = new OptionPanelToggleButton("Images/UI/Bestiary/Button_Sorting",
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SortHover"));
-		sortToggleButton.Left.Pixels = offset;
-		sortToggleButton.OnLeftClick += (b, e) => ToggleOptionPanel(_sortPanel);
+		_sortToggleButton.Left.Pixels = offset;
+		_sortToggleButton.OnLeftClick += (b, e) => ToggleOptionPanel(_sortPanel);
+		_sortToggleButton.OnRightClick += (b, e) => _sortPanel.DisableAllOptions();
 
-		offset += sortToggleButton.Width.Pixels + 10;
+		offset += _sortToggleButton.Width.Pixels + 10;
 
 		var search = new UIQERSearchBar();
 		search.Width = new StyleDimension(-offset, 1);
@@ -578,8 +600,8 @@ public class UIQERState : UIState
 
 		_itemListPanel.Append(_itemList);
 		_itemListPanel.Append(scrollContainer);
-		_itemListPanel.Append(filterToggleButton);
-		_itemListPanel.Append(sortToggleButton);
+		_itemListPanel.Append(_filterToggleButton);
+		_itemListPanel.Append(_sortToggleButton);
 		_itemListPanel.Append(search);
 
 		Append(_itemListPanel);

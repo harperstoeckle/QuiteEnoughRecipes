@@ -9,6 +9,7 @@ UI: {
 	SearchBarDefault: Search
 	FilterHover: Filters
 	SortHover: Sort Options
+	RightClickToClear: Right click to clear
 }
 
 Tabs: {
