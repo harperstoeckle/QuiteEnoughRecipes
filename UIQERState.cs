@@ -85,8 +85,17 @@ public class UIQERState : UIState
 	private const float BarHeight = 50;
 	private const float ScrollBarWidth = 30;
 
+	/*
+	 * The maximum amount of history entries that will actively be stored. Once the history stack
+	 * reaches this size, old history entries will be removed from the bottom of the stack to make
+	 * room for new ones.
+	 *
+	 * TODO: This should probably be a config option.
+	 */
+	private const int MaxHistorySize = 100;
+
 	// Keeps track of the recipe pages that have been viewed, not including the current one.
-	private Stack<HistoryEntry> _history = new();
+	private List<HistoryEntry> _history = new();
 
 	private List<Item> _allItems;
 	private List<Item> _filteredItems;
@@ -305,11 +314,13 @@ public class UIQERState : UIState
 	{
 		if (_history.Count == 0) { return; }
 
+		var top = _history[_history.Count - 1];
+		_history.RemoveAt(_history.Count - 1);
+
 		/*
 		 * It would be weird if the page showed something the first time, but didn't have anything
 		 * to show this time, so we'll just assume it will always work.
 		 */
-		var top = _history.Pop();
 		TryShowRelevantTabs(top.Tabs, top.ClickedItem);
 		SwitchToTab(top.TabIndex);
 		_activeTabs[_tabIndex].Scrollbar.ViewPosition = top.ScrollViewPosition;
@@ -436,7 +447,12 @@ public class UIQERState : UIState
 
 		if (TryShowRelevantTabs(tabs, item))
 		{
-			_history.Push(historyEntry);
+			_history.Add(historyEntry);
+		}
+
+		if (_history.Count > MaxHistorySize)
+		{
+			_history.RemoveRange(0, _history.Count - MaxHistorySize);
 		}
 	}
 
