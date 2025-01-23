@@ -30,7 +30,7 @@ public class UIQERState : UIState
 		// Each tab has its own associated scrollbar.
 		public UIScrollbar Scrollbar = new(){
 			Height = new(0, 1),
-			HAlign = 0.5f
+			HAlign = 1
 		};
 
 		public RecipeTab(IRecipeHandler handler)
@@ -556,16 +556,9 @@ public class UIQERState : UIState
 		_itemListPanel.VAlign = 0.5f;
 
 		var scroll = new UIScrollbar();
-		scroll.Height.Percent = 1;
-		scroll.Width.Percent = 1;
-		scroll.HAlign = 0.5f;
-
-		var scrollContainer = new UIElement();
-		scrollContainer.Width.Pixels = ScrollBarWidth;
-		scrollContainer.Height = new StyleDimension(-BarHeight, 1);
-		scrollContainer.HAlign = 1;
-		scrollContainer.VAlign = 1;
-		scrollContainer.Append(scroll);
+		scroll.Height = new StyleDimension(-BarHeight, 1);
+		scroll.HAlign = 1;
+		scroll.VAlign = 1;
 
 		_itemList.Scrollbar = scroll;
 		_itemList.Items = _filteredItems;
@@ -599,7 +592,7 @@ public class UIQERState : UIState
 		};
 
 		_itemListPanel.Append(_itemList);
-		_itemListPanel.Append(scrollContainer);
+		_itemListPanel.Append(scroll);
 		_itemListPanel.Append(_filterToggleButton);
 		_itemListPanel.Append(_sortToggleButton);
 		_itemListPanel.Append(search);

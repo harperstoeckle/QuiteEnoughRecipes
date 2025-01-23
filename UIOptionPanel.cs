@@ -95,8 +95,6 @@ public class UIOptionPanel<T> : UIPanel
 
 	public UIOptionPanel()
 	{
-		const float ScrollBarWidth = 20;
-
 		var scroll = new UIScrollbar();
 		scroll.Height.Percent = 1;
 		scroll.HAlign = 1;
