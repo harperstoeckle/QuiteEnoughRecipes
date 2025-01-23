@@ -266,7 +266,7 @@ public class UIQERState : UIState
 		 * has to be appended directly to the main element.
 		 */
 		_optionPanelContainer.Width.Percent = 0.25f;
-		_optionPanelContainer.Height.Percent = 0.25f;
+		_optionPanelContainer.Height.Percent = 0.5f;
 		_optionPanelContainer.Top.Percent = 0.1f;
 		_optionPanelContainer.Left.Percent = 0.26f;
 
