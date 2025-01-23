@@ -41,6 +41,7 @@ Filters: {
 	RangedWeapons: Ranged Weapons
 	MagicWeapons: Magic Weapons
 	SummonWeapons: Summoner Weapons
+	ClasslessWeapons: Classless Weapons
 	ThrowingWeapons: Throwing Weapons
 	BossSummons: Boss Summons
 	# Used to format other damage types.

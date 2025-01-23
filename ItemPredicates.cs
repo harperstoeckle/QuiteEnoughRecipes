@@ -54,9 +54,13 @@ static class ItemPredicates
 	public static bool IsMagicWeapon(Item i) => IsInGroup(i, ItemGroup.MagicWeapon);
 	public static bool IsSummonWeapon(Item i) => IsInGroup(i, ItemGroup.SummonWeapon);
 
+	public static bool IsClasslessWeapon(Item i) => IsWeaponInDamageClass(i, DamageClass.Default);
+
 	public static bool IsWeaponInDamageClass(Item i, DamageClass dc) =>
-		i.CountsAsClass(dc) && !IsTool(i);
+		i.CountsAsClass(dc) && IsWeapon(i);
 
 	public static bool IsTool(Item i) => IsInGroup(i, ItemGroup.Pickaxe, ItemGroup.Axe,
 		ItemGroup.Hammer);
+
+	public static bool IsWeapon(Item i) => !IsTool(i) && i.damage > 0 && i.ammo == AmmoID.None;
 }

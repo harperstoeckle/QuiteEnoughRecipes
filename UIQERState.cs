@@ -218,6 +218,8 @@ public class UIQERState : UIState
 		AddInternalFilter(ItemID.WandofSparking, "MagicWeapons", ItemPredicates.IsMagicWeapon);
 		AddInternalFilter(ItemID.BabyBirdStaff, "SummonWeapons", ItemPredicates.IsSummonWeapon);
 
+		AddInternalFilter(ItemID.FlareGun, "ClasslessWeapons", ItemPredicates.IsClasslessWeapon);
+
 		// We only add the thrower class filter if there are mods that add throwing weapons.
 		if (FindIconItemForDamageClass(DamageClass.Throwing) is Item iconItem)
 		{
@@ -227,37 +229,36 @@ public class UIQERState : UIState
 			 * throwing (like rogue) will also be shown below with the other modded classes.
 			 */
 			AddInternalFilter(iconItem.type, "ThrowingWeapons",
-				i => i.DamageType == DamageClass.Throwing && !ItemPredicates.IsTool(i));
+				i => i.DamageType == DamageClass.Throwing && ItemPredicates.IsWeapon(i));
 		}
 
-		var moddedDamageClasses =
+		/*
+		 * Modded damage classes, grouped by name. An item will be considered to fit into a group if
+		 * it counts as any of the damage classes in that group. Note that if two mods add damage
+		 * classes with the same name, they will be grouped together even if they're completely
+		 * unrelated.
+		 */
+		var moddedDamageClassSets =
 			Enumerable.Range(0, DamageClassLoader.DamageClassCount)
 			.Select(i => DamageClassLoader.GetDamageClass(i))
-			.Where(c => !(c is VanillaDamageClass))
-			.ToList();
+			.GroupBy(c => BaseDamageClassName(c.DisplayName.Value))
+			.Select(g => g.ToList())
+			.Where(g => g.All(d => !(d is VanillaDamageClass)))
+			.OrderBy(g => g[0].Mod?.Name ?? "");
 
-		foreach (var dc in moddedDamageClasses)
+		foreach (var dcs in moddedDamageClassSets)
 		{
-			/*
-			 * We only want modded damage classes that are "pure" in that they don't inherit other
-			 * modded damage classes. For example, Calamity has a "true melee no speed" class that
-			 * we don't want to also appear.
-			 */
-			if (moddedDamageClasses.Any(c => dc.GetEffectInheritance(c)))
-			{
-				continue;
-			}
-
-			var icon = FindIconItemForDamageClass(dc) ?? new Item(ItemID.Zenith);
+			var icon = dcs.Select(d => FindIconItemForDamageClass(d))
+				.FirstOrDefault(n => n != null, null);
 
 			// This damage class has no items, so we can't really make a filter for it.
 			if (icon == null) { continue; }
 
 			// Adjust the name so instead of "rogue damage Weapons", we get "Rogue Weapons".
 			var name = Language.GetText("Mods.QuiteEnoughRecipes.Filters.OtherWeapons")
-				.Format(BaseDamageClassName(dc.DisplayName.Value));
-			AddFilter(icon, $"{BaseDamageClassName(dc.DisplayName.Value)} Weapons",
-				i => ItemPredicates.IsWeaponInDamageClass(i, dc));
+				.Format(BaseDamageClassName(dcs[0].DisplayName.Value));
+			AddFilter(icon, $"{name}",
+				i => dcs.Any(dc => ItemPredicates.IsWeaponInDamageClass(i, dc)));
 		}
 
 		/*
@@ -662,7 +663,7 @@ public class UIQERState : UIState
 	{
 		return Enumerable.Range(0, ItemLoader.ItemCount)
 			.Select(i => new Item(i))
-			.Where(i => i.DamageType == d && !ItemPredicates.IsTool(i))
+			.Where(i => i.DamageType == d && ItemPredicates.IsWeapon(i))
 			.MinBy(i => i.rare);
 	}
 
