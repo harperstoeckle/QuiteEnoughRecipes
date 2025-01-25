@@ -1,3 +1,4 @@
-displayName = Quite Enough Recipes
 author = divqii
+displayName = Quite Enough Recipes
 version = 0.1
+homepage = https://github.com/harperstoeckle/QuiteEnoughRecipes
