@@ -7,12 +7,12 @@ the right side allows you to look through all of the items in the game. You can 
 filters, and change the order the items are sorted in.
 
 If you left click on an item, the left panel will show you the ways that you can obtain that item.
-Each tab is a different source type. For example, if there is a recipe for that item, then the
-"Recipes" tab will show you a list of recipes that can be used to craft the item; similarly, the
-"NPC Shops" tab will show NPCs that sell the item.
+Each tab is a different source type. For example, the "Recipes" tab will show you a list of recipes
+that can be used to craft the item; similarly, the "NPC Shops" tab will show NPCs that sell the
+item. There are also tabs for shimmer and loot drops, among other things.
 
-If you *right click* an item, the left panel will list ways that the item can be used. For example,
-when right clicking, the "Recipes" tab will list recipes that use the item as an ingredient.
+If you *right click* an item, then the left panel will list ways that the item can be used. For
+example, the "Recipes" tab will list recipes that use the item as an ingredient.
 
 If you want to go back to the previous item you were looking at, then you can do so with the `Go to
 previous recipe page` hotkey. This makes it much easier to look through large, complex crafting
