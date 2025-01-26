@@ -24,3 +24,6 @@ trees.
 
 You can see sources and uses for any item you're hovering at any point in the game by using the
 `Show sources for hovered item` and `Show uses for hovered item` hotkeys, respectively.
+
+## Suggestions and Bug Reports
+If you want to report a bug or suggest a new feature, please submit an issue on this repository.

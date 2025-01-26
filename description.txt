@@ -10,3 +10,6 @@ If you *right click* an item, then the left panel will list ways that the item c
 If you want to go back to the previous item you were looking at, then you can do so with the `Go to previous recipe page` hotkey. This makes it much easier to look through large, complex crafting trees.
 
 You can see sources and uses for any item you're hovering at any point in the game by using the `Show sources for hovered item` and `Show uses for hovered item` hotkeys, respectively.
+
+[c/32FF82:Suggestions and Bug Reports]
+If you want to report a bug or suggest a new feature, please submit an issue at https://github.com/harperstoeckle/QuiteEnoughRecipes.
