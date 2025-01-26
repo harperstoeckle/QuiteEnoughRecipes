@@ -2,3 +2,4 @@ author = divqii
 displayName = Quite Enough Recipes
 version = 0.1
 homepage = https://github.com/harperstoeckle/QuiteEnoughRecipes
+buildIgnore = readme_images/*, README.md, LICENSE
