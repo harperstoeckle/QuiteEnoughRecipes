@@ -14,7 +14,7 @@ UI: {
 
 Tabs: {
 	Recipes: Recipes
-	Tiles: Required Tiles
+	Tiles: Recipes Requiring this Crafting Station
 	Shimmer: Shimmer Transmutations
 	Shops: NPC Shops
 	ItemDrops: Item Loot
