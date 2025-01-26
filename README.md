@@ -11,12 +11,16 @@ Each tab is a different source type. For example, the "Recipes" tab will show yo
 that can be used to craft the item; similarly, the "NPC Shops" tab will show NPCs that sell the
 item. There are also tabs for shimmer and loot drops, among other things.
 
+![Source tabs](/readme_images/source_tabs.gif)
+
 If you *right click* an item, then the left panel will list ways that the item can be used. For
 example, the "Recipes" tab will list recipes that use the item as an ingredient.
 
 If you want to go back to the previous item you were looking at, then you can do so with the `Go to
 previous recipe page` hotkey. This makes it much easier to look through large, complex crafting
 trees.
+
+![Go back](/readme_images/go_back.gif)
 
 You can see sources and uses for any item you're hovering at any point in the game by using the
 `Show sources for hovered item` and `Show uses for hovered item` hotkeys, respectively.
