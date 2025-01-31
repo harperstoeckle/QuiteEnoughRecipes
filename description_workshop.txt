@@ -1,7 +1,7 @@
 Quite Enough Recipes allows you to explore items and recipes with an intuitive UI reminiscent of Minecraft recipe viewers like NEI and JEI.
 
 [h2]Usage[/h2]
-Press the "Open QER Browser" hotkey to open the browser. You can close it with escape. The panel on the right side allows you to look through all of the items in the game. You can also search, apply filters, and change the order the items are sorted in.
+Press the `Toggle QER Browser` hotkey to open the browser. The panel on the right side allows you to look through all of the items in the game. You can also search, apply filters, and change the order the items are sorted in.
 
 If you left click on an item, the left panel will show you the ways that you can obtain that item. Each tab is a different source type. For example, the "Recipes" tab will show you a list of recipes that can be used to craft the item; similarly, the "NPC Shops" tab will show NPCs that sell the item. There are also tabs for shimmer and loot drops, among other things.
 

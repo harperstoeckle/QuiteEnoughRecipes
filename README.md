@@ -2,9 +2,9 @@ Quite Enough Recipes allows you to explore items and recipes with an intuitive U
 Minecraft recipe viewers like NEI and JEI.
 
 ## Usage
-Press the `Open QER Browser` hotkey to open the browser. You can close it with escape. The panel on
-the right side allows you to look through all of the items in the game. You can also search, apply
-filters, and change the order the items are sorted in.
+Press the `Toggle QER Browser` hotkey to open the browser. The panel on the right side allows you
+to look through all of the items in the game. You can also search, apply filters, and change the
+order the items are sorted in.
 
 If you left click on an item, the left panel will show you the ways that you can obtain that item.
 Each tab is a different source type. For example, the "Recipes" tab will show you a list of recipes

@@ -37,7 +37,14 @@ public class UISystem : ModSystem
 	{
 		if (OpenUIKey.JustPressed)
 		{
-			IngameFancyUI.OpenUIState(_ui);
+			if (Main.InGameUI.CurrentState == _ui)
+			{
+				IngameFancyUI.Close();
+			}
+			else
+			{
+				IngameFancyUI.OpenUIState(_ui);
+			}
 		}
 
 		if (HoverSourcesKey.JustPressed && Main.HoverItem != null && !Main.HoverItem.IsAir)
