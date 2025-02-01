@@ -212,6 +212,7 @@ public class UIQERState : UIState
 		AddInternalFilter(ItemID.GrapplingHook, "Hooks", ItemPredicates.IsHook);
 		AddInternalFilter(ItemID.CopperPickaxe, "Tools", ItemPredicates.IsTool);
 		AddInternalFilter(ItemID.CopperChainmail, "Armor", ItemPredicates.IsArmor);
+		AddInternalFilter(ItemID.RedHat, "Vanity", ItemPredicates.IsVanity);
 
 		AddInternalFilter(ItemID.CopperShortsword, "MeleeWeapons", ItemPredicates.IsMeleeWeapon);
 		AddInternalFilter(ItemID.WoodenBow, "RangedWeapons", ItemPredicates.IsRangedWeapon);

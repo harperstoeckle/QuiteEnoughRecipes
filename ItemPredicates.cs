@@ -44,7 +44,8 @@ static class ItemPredicates
 	public static bool IsPet(Item i) => IsInGroup(i, ItemGroup.VanityPet);
 	public static bool IsMount(Item i) => IsInGroup(i, ItemGroup.Mount, ItemGroup.Minecart);
 	public static bool IsArmor(Item i) => IsInGroup(i, ItemGroup.Headgear, ItemGroup.Torso,
-		ItemGroup.Pants);
+		ItemGroup.Pants) && !IsVanity(i);
+	public static bool IsVanity(Item i) => i.vanity;
 	public static bool IsPotion(Item i) => IsInGroup(i, ItemGroup.LifePotions,
 		ItemGroup.ManaPotions, ItemGroup.BuffPotion, ItemGroup.Flask);
 	public static bool IsFood(Item i) => IsInGroup(i, ItemGroup.Food);
