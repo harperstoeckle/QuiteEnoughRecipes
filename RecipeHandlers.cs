@@ -89,7 +89,7 @@ public static class RecipeHandlers
 			{
 				if (ShimmerTransformResult(id) == i.type)
 				{
-					yield return new UIRecipePanel(i, new List<Item>{new(id)});
+					yield return new UIRecipePanel(new(i.type), new List<Item>{new(id)});
 				}
 			}
 		}
@@ -107,7 +107,7 @@ public static class RecipeHandlers
 		{
 			int id = ShimmerTransformResult(i.type);
 			if (id == -1) { yield break; }
-			yield return new UIRecipePanel(new(id), new List<Item>{i});
+			yield return new UIRecipePanel(new(id), new List<Item>{new(i.type)});
 		}
 	}
 
