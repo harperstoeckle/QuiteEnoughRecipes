@@ -1,0 +1,5 @@
+[h2]Changes in {ModVersion}[/h2]
+
+[list]
+	[*] Made the mod client-side.
+[/list]
