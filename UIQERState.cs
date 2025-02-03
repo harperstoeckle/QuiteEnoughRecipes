@@ -383,6 +383,11 @@ public class UIQERState : UIState
 		Append(_optionPanelContainer);
 	}
 
+	public override void Update(GameTime t)
+	{
+		Main.LocalPlayer.mouseInterface = true;
+	}
+
 	protected override void DrawSelf(SpriteBatch sb)
 	{
 		// TODO: Is this actually the right place to handle input?
