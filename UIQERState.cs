@@ -136,7 +136,7 @@ public class UIQERState : UIState
 		public bool Matches(Item i)
 		{
 			if (Mod != null &&
-				(i.ModItem == null || !NormalizeForSearch(i.ModItem.Mod.DisplayNameClean).Contains(Mod)))
+				(i.ModItem == null || !NormalizeForSearch(RemoveWhitespace(i.ModItem.Mod.DisplayNameClean)).Contains(Mod)))
 			{
 				return false;
 			}
@@ -166,6 +166,13 @@ public class UIQERState : UIState
 			}
 
 			return i.Name.ToLower().Contains(Name);
+		}
+
+		// Used to remove whitespace
+		private static readonly Regex WhitespaceRegex = new(@"\s+");
+		private string RemoveWhitespace(string s)
+		{
+			return WhitespaceRegex.Replace(s, "");
 		}
 	}
 

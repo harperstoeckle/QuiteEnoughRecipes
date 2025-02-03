@@ -16,8 +16,7 @@ UI: {
 		Any text following a [c/3B95DA:#] will be searched for in item tooltips.
 
 		To search by mod, include [c/3B95DA:@ModName] in your search, where
-		[c/3B95DA:ModName] is in the name of the mod. The mod name may not
-		contain spaces.
+		[c/3B95DA:ModName] is in the name of the mod with any spaces removed.
 		'''
 }
 
