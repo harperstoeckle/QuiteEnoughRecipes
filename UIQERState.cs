@@ -157,9 +157,17 @@ public class UIQERState : UIState
 				var lines = ItemLoader.ModifyTooltips(i, ref numLines, tooltipNames, ref tooltipLines,
 					ref prefixLines, ref badPrefixLines, ref yoyoLogo, out Color?[] o, p);
 
+				/*
+				 * We have to remove the item name line (which is the item name, so it's not "part
+				 * of the description". We also have to remove any tooltip lines specific to this
+				 * mod. Since QER tooltips depend on what slot is being hovered, this can create
+				 * weird behavior where hovering over an item in the browser changes search results.
+				 */
+				var cleanLines = lines.Where(l => l.Name != "ItemName" && !(l.Mod is QuiteEnoughRecipes));
+
 				// Needed since we can't capture `Tooltip`.
 				var tooltip = Tooltip;
-				if (!lines.Take(numLines).Any(l => NormalizeForSearch(l.Text).Contains(tooltip)))
+				if (!cleanLines.Any(l => NormalizeForSearch(l.Text).Contains(tooltip)))
 				{
 					return false;
 				}
@@ -483,9 +491,12 @@ public class UIQERState : UIState
 		if (e.Target == _hoveredItemPanel) { _hoveredItemPanel = null; }
 	}
 
-	public void ModifyTooltips(Mod mod, List<TooltipLine> tooltips)
+	public void ModifyTooltips(Mod mod, Item item, List<TooltipLine> tooltips)
 	{
-		_hoveredItemPanel?.ModifyTooltips(mod, tooltips);
+		// Prevent weird situations where the wrong tooltip can be modified.
+		if ((_hoveredItemPanel?.DisplayedItem?.type ?? 0) != item.type) { return; }
+
+		_hoveredItemPanel.ModifyTooltips(mod, tooltips);
 	}
 
 	/*

@@ -10,7 +10,7 @@ public class Tooltips : GlobalItem
 	{
 		if (Main.InGameUI.CurrentState is UIQERState s)
 		{
-			s.ModifyTooltips(Mod, tooltips);
+			s.ModifyTooltips(Mod, item, tooltips);
 		}
 	}
 }
