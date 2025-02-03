@@ -84,7 +84,15 @@ public class UIItemPanel : UIElement
 	 * Special item panels can override this to display their own tooltips when they are being
 	 * hovered. This is only called for item panels in the QER browser.
 	 */
-	public virtual void ModifyTooltips(Mod mod, List<TooltipLine> tooltips) {}
+	public virtual void ModifyTooltips(Mod mod, List<TooltipLine> tooltips)
+	{
+		if (DisplayedItem == null || tooltips.Count <= 0) { return; }
+
+		if (DisplayedItem.ModItem != null)
+		{
+			tooltips[0].Text += $" [{DisplayedItem.ModItem.Mod.DisplayNameClean}]";
+		}
+	}
 }
 
 // Displays an item group by cycling through items in that group.
@@ -125,6 +133,8 @@ public class UIRecipeGroupPanel : UIItemPanel
 
 	public override void ModifyTooltips(Mod mod, List<TooltipLine> tooltips)
 	{
+		base.ModifyTooltips(mod, tooltips);
+
 		if (tooltips.Count <= 0) { return; }
 		tooltips.Insert(0, new(mod, "QER: recipe group", _displayedGroup.GetText()){
 			OverrideColor = Main.OurFavoriteColor
