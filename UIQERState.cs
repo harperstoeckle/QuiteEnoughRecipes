@@ -9,6 +9,7 @@ using Terraria.GameContent.UI.Elements;
 using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.Localization;
+using Terraria.ModLoader.UI;
 using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria;
@@ -97,6 +98,74 @@ public class UIQERState : UIState
 				var c = Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.RightClickToClear");
 				Main.instance.MouseText(_name + (OptionSelected ? '\n' + c : ""));
 			}
+		}
+	}
+
+	// Icon that provides help when hovered.
+	private class HelpIcon : UIElement
+	{
+		public HelpIcon()
+		{
+			Width.Pixels = Height.Pixels = 22;
+			Append(new UIText("?", 0.8f){
+				HAlign = 0.5f,
+				VAlign = 0.5f,
+				TextColor = new Color(0.7f, 0.7f, 0.7f)
+			});
+		}
+
+		protected override void DrawSelf(SpriteBatch sb)
+		{
+			// Kind of a silly way to draw the text on top.
+			base.DrawSelf(sb);
+
+			if (IsMouseHovering)
+			{
+				UICommon.TooltipMouseText(
+					Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SearchHelp"));
+			}
+		}
+	}
+
+	private struct SearchQuery
+	{
+		public string Name;
+		public string? Mod;
+		public string? Tooltip;
+
+		public bool Matches(Item i)
+		{
+			if (Mod != null &&
+				(i.ModItem == null || !NormalizeForSearch(i.ModItem.Mod.DisplayNameClean).Contains(Mod)))
+			{
+				return false;
+			}
+
+			if (Tooltip != null)
+			{
+				int yoyoLogo = -1;
+				int researchLine = -1;
+				int numLines = 1;
+				var tooltipNames = new string[30];
+				var tooltipLines = new string[30];
+				var prefixLines = new bool[30];
+				var badPrefixLines = new bool[30];
+
+				Main.MouseText_DrawItemTooltip_GetLinesInfo(i, ref yoyoLogo, ref researchLine, i.knockBack,
+					ref numLines, tooltipLines, prefixLines, badPrefixLines, tooltipNames, out var p);
+
+				var lines = ItemLoader.ModifyTooltips(i, ref numLines, tooltipNames, ref tooltipLines,
+					ref prefixLines, ref badPrefixLines, ref yoyoLogo, out Color?[] o, p);
+
+				// Needed since we can't capture `Tooltip`.
+				var tooltip = Tooltip;
+				if (!lines.Take(numLines).Any(l => NormalizeForSearch(l.Text).Contains(tooltip)))
+				{
+					return false;
+				}
+			}
+
+			return i.Name.ToLower().Contains(Name);
 		}
 	}
 
@@ -579,9 +648,13 @@ public class UIQERState : UIState
 
 		offset += _sortToggleButton.Width.Pixels + 10;
 
+		var helpIcon = new HelpIcon();
+		helpIcon.HAlign = 1;
+
 		var search = new UIQERSearchBar();
-		search.Width = new StyleDimension(-offset, 1);
-		search.HAlign = 1;
+		// Make room for the filters on the left and the help icon on the right.
+		search.Width = new StyleDimension(-offset - helpIcon.Width.Pixels - 10, 1);
+		search.Left.Pixels = offset;
 		search.OnStartTakingInput += () => {
 			_activeSearchBar = search;
 		};
@@ -598,18 +671,59 @@ public class UIQERState : UIState
 		_itemListPanel.Append(_filterToggleButton);
 		_itemListPanel.Append(_sortToggleButton);
 		_itemListPanel.Append(search);
+		_itemListPanel.Append(helpIcon);
 
 		Append(_itemListPanel);
+	}
+
+	/*
+	 * Put text in a standard form so that searching can be effectively done using
+	 * `string.Contains`.
+	 */
+	private static string NormalizeForSearch(string s)
+	{
+		return s.Trim().ToLower();
+	}
+
+	private static SearchQuery ParseSearchText(string text)
+	{
+		var query = new SearchQuery();
+		var parts = text.Split("#", 2);
+
+		if (parts.Length >= 2)
+		{
+			query.Tooltip = NormalizeForSearch(parts[1]);
+		}
+
+		/*
+		 * TODO: These could be made more efficient by not re-compiling the regexes every time, but
+		 * it's probably fine since this only happens once when the search is changed.
+		 *
+		 * This will just use the first specified mod and ignore the rest.
+		 */
+		var modCaptures = Regex.Matches(parts[0], @"@(\S+)");
+		if (modCaptures.Count >= 1)
+		{
+			query.Mod = NormalizeForSearch(modCaptures[modCaptures.Count - 1].Groups[1].Value);
+		}
+
+		/*
+		 * We remove *any* @ from the name, even if it doesn't have any characters after it that
+		 * might be part of a mod.
+		 */
+		query.Name = NormalizeForSearch(Regex.Replace(parts[0], @"@\S*\s*", ""));
+
+		return query;
 	}
 
 	// Update what items are being displayed based on the search bar and filters.
 	private void UpdateDisplayedItems()
 	{
-		var sNorm = _searchText?.ToLower() ?? "";
+		var query = ParseSearchText(_searchText ?? "");
+
 		_filteredItems.Clear();
 		_filteredItems.AddRange(
-			_allItems.Where(i =>
-				i.Name.ToLower().Contains(sNorm) && (_activeFilter?.Invoke(i) ?? true)));
+			_allItems.Where(i => query.Matches(i) && (_activeFilter?.Invoke(i) ?? true)));
 
 		if (_activeSortComparison != null)
 		{
