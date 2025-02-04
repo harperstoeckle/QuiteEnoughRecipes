@@ -727,7 +727,7 @@ public class UIQERState : UIState
 		var modCaptures = Regex.Matches(parts[0], @"@(\S+)");
 		if (modCaptures.Count >= 1)
 		{
-			query.Mod = NormalizeForSearch(modCaptures[modCaptures.Count - 1].Groups[1].Value);
+			query.Mod = NormalizeForSearch(modCaptures[0].Groups[1].Value);
 		}
 
 		/*
