@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using System.Linq;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.UI;
@@ -31,6 +32,19 @@ public class UISystem : ModSystem
 		 * differently in each world.
 		 */
 		_ui = new();
+
+		// Loading items beforehand ensures that they *aren't* being loaded while scrolling.
+		if (QERConfig.Instance.ShouldPreloadItems)
+		{
+			/*
+			 * TODO: Since modded items are already loaded, should I only do this with vanilla
+			 * items? Also, is `OnLocalizationsLoaded` the right place?
+			 */
+			for (int i = 0; i < ItemLoader.ItemCount; ++i)
+			{
+				Main.instance.LoadItem(i);
+			}
+		}
 	}
 
 	public override void UpdateUI(GameTime t)
