@@ -400,6 +400,7 @@ public class UIQERState : UIState
 
 	public override void Update(GameTime t)
 	{
+		base.Update(t);
 		Main.LocalPlayer.mouseInterface = true;
 	}
 

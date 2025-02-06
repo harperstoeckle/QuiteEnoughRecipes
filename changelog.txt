@@ -1,5 +1,2 @@
 Version {ModVersion}
-[list]
-	[*] Added searching by mod name and tooltip using @ and #, respectively, in the search bar. Also added a ? icon to the right of the search bar that gives an explanation of the search syntax when hovered.
-	[*] Modded items now list the mod they came from in their tooltips.
-[/list]
+- Fixed a bug where the interface wasn't being updated properly.
