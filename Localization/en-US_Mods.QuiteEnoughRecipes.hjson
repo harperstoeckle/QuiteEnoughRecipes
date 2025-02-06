@@ -20,6 +20,22 @@ UI: {
 		'''
 }
 
+Configs: {
+	QERConfig: {
+		ShouldPreloadItems: {
+			Label: Preload Item Textures
+			Tooltip:
+				'''
+				If this option is enabled, item textures will be preloaded when a world is started.
+				This may significantly increase the time it takes to load a world the first time in
+				a session.
+				'''
+		}
+
+		DisplayName: QER Config
+	}
+}
+
 Tabs: {
 	Recipes: Recipes
 	Tiles: Recipes Requiring this Crafting Station
