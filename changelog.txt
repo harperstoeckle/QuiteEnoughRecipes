@@ -1,2 +1,2 @@
 Version {ModVersion}
-- Fixed a bug where the interface wasn't being updated properly.
+- Added a config option to preload item textures, which should fix scroll lag but increase world loading time.
