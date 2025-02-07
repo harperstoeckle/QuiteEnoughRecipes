@@ -1,0 +1,81 @@
+Keybinds: {
+	OpenUI.DisplayName: 打开极适合成表
+	HoverSources.DisplayName: 显示合成途径
+	HoverUses.DisplayName: 显示使用途径
+	Back.DisplayName: 回到上一个合成页面
+}
+
+UI: {
+	SearchBarDefault: 搜索
+	FilterHover: 筛选
+	SortHover: 排序
+	RightClickToClear: 右键清除
+	SearchHelp:
+		'''
+		[c/32FF82:搜索语法]
+		以[c/3B95DA:#]为开头将搜索物品描述
+
+		查找特定Mod需要在你的搜索文本中使用[c/3B95DA:@ModName]
+		[c/3B95DA:ModName]为Mod显示名称，但是需要手动删掉其中的空格
+		'''
+}
+
+Configs: {
+	QERConfig: {
+		ShouldPreloadItems: {
+			Label: Preload Item Textures
+			Tooltip:
+				'''
+				如果启用该选项，则将在加载世界的时候加载物品列表
+				这将减少在滚动项目列表时的延迟
+				但是可能会显著增加第一次加载世界的时间
+				'''
+		}
+
+		DisplayName: 极适合成表配置
+	}
+}
+
+Tabs: {
+	Recipes: 合成获得
+	Tiles: 合成所需合成站
+	Shimmer: 微光转化
+	Shops: NPC商店售卖
+	ItemDrops: 宝藏袋
+	NPCDrops: 掉落
+	GlobalDrops: 全局掉落
+}
+
+Filters: {
+	Tiles: 物块
+	CraftingStations: 合成站
+	LootItems: 掉落物
+	Fishing: 鱼获
+	Dye: 染料
+	Accessories: 配饰
+	Tools: 工具
+	Armor: 盔甲
+	Vanity: 时装
+	Potions: 药水
+	Food: 食物
+	Wings: 翅膀
+	Pets: 宠物
+	Mounts: 坐骑
+	Hooks: 抓钩
+	MeleeWeapons: 近战伤害武器
+	RangedWeapons: 远程伤害武器
+	MagicWeapons: 魔法伤害武器
+	SummonWeapons: 召唤伤害武器
+	ClasslessWeapons: 无职业伤害武器
+	ThrowingWeapons: 投掷伤害武器
+	BossSummons: Boss召唤物
+	# Used to format other damage types.
+	OtherWeapons: "{0}武器"
+}
+
+Sorts: {
+	ID: 按ID排序
+	Alphabetical: 按字母排序
+	Rarity: 按稀有度排序
+	Value: 按价值排序
+}
