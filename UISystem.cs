@@ -38,7 +38,7 @@ public class UISystem : ModSystem
 		{
 			/*
 			 * TODO: Since modded items are already loaded, should I only do this with vanilla
-			 * items? Also, is `OnLocalizationsLoaded` the right place?
+			 * items?
 			 */
 			for (int i = 0; i < ItemLoader.ItemCount; ++i)
 			{
