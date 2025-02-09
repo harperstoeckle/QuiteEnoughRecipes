@@ -1,2 +1,2 @@
 Version {ModVersion}
-- Added a config option to preload item textures, which should fix scroll lag but increase world loading time.
+- Added Chinese localization (credit: 虞悖「Yu Bell」)
