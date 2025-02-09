@@ -30,6 +30,9 @@ public class UIItemPanel : UIElement
 		Width.Pixels = width;
 		Height.Pixels = width;
 		_scale = width / 50;
+
+		// Extremely lazy way to handle text bounds.
+		SetPadding(3 * _scale);
 	}
 
 	/*
@@ -66,12 +69,7 @@ public class UIItemPanel : UIElement
 
 		// TODO: Add rubblemaker indicator?
 
-		if (DisplayedItem.stack != 1)
-		{
-			ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.ItemStack.Value,
-				DisplayedItem.stack.ToString(), pos + new Vector2(10, 26) * _scale, Color.White, 0,
-				Vector2.Zero, new Vector2(_scale), -1, _scale);
-		}
+		DrawOverlayText(sb);
 
 		if (IsMouseHovering)
 		{
@@ -92,6 +90,56 @@ public class UIItemPanel : UIElement
 		{
 			tooltips[0].Text += $" [{DisplayedItem.ModItem.Mod.DisplayNameClean}]";
 		}
+	}
+
+	/*
+	 * Draw the text on top of the item slot. This is usually just the stack size, but it can be
+	 * overridden.
+	 */
+	protected virtual void DrawOverlayText(SpriteBatch sb)
+	{
+		if (DisplayedItem != null && DisplayedItem.stack > 1)
+		{
+			DrawText(sb, DisplayedItem.stack.ToString(), new Vector2(10, 26));
+		}
+	}
+
+	/*
+	 * Draw text similar to the stack size text. `offset` is the unscaled offset of the text from
+	 * the top left corner of the slot. If the text would not fit, it will be shifted left or
+	 * shrunk as needed to fit.
+	 */
+	protected void DrawText(SpriteBatch sb, string s, Vector2 offset)
+	{
+		// Make this relative to the inner dimensions instead of the main dimensions.
+		offset.X -= PaddingLeft;
+		offset.Y -= PaddingTop;
+
+		var dims = GetInnerDimensions();
+		var scaledOffset = offset * _scale;
+		var textScale = _scale;
+		var defaultTextSize = ChatManager.GetStringSize(FontAssets.ItemStack.Value, s,
+			new Vector2(textScale));
+
+		/*
+		 * We assume that text less than a pixel wide just can't be drawn. This also ensures that
+		 * we don't have any weird division by zero issues.
+		 */
+		if (defaultTextSize.X < 1) { return; }
+
+		if (defaultTextSize.X > dims.Width)
+		{
+			textScale *= dims.Width / defaultTextSize.X;
+			scaledOffset.X = 0;
+		}
+		else if (defaultTextSize.X > dims.ToRectangle().Width - scaledOffset.X)
+		{
+			scaledOffset.X = dims.ToRectangle().Width - defaultTextSize.X;
+		}
+
+		ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.ItemStack.Value, s,
+			dims.Position() + scaledOffset, Color.White, 0, Vector2.Zero, new Vector2(textScale),
+			-1, textScale);
 	}
 }
 
