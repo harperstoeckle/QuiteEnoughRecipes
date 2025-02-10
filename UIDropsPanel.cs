@@ -22,13 +22,9 @@ public class UIDropsPanel : UIAutoExtend
 			HAlign = 1
 		};
 
-		var orderedDrops = drops
-			.Where(d => d.conditions?.All(c => c.CanShowItemDropInUI()) ?? true)
-			.OrderByDescending(d => d.dropRate);
-
-		foreach (var drop in orderedDrops)
+		// These are in reverse order of probability.
+		foreach (var drop in drops.OrderByDescending(d => d.dropRate))
 		{
-			// TODO: Show the percentage and range of quantities.
 			grid.Append(new UILootItemPanel(drop));
 		}
 

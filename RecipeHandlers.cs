@@ -251,39 +251,26 @@ public static class RecipeHandlers
 	// Get items that can be dropped when using the item with ID `itemID`.
 	private static List<DropRateInfo> GetItemDrops(int itemID)
 	{
-		var rules = Main.ItemDropsDB.GetRulesForItemID(itemID);
-		var results = new List<DropRateInfo>();
-		var feed = new DropRateInfoChainFeed(1);
-
-		foreach (var rule in rules)
-		{
-			rule.ReportDroprates(results, feed);
-		}
-
-		return results;
+		return GetDropsFromRules(Main.ItemDropsDB.GetRulesForItemID(itemID));
 	}
 
-	// Get items that can be dropped by the NPC with ID `id`.
+	/*
+	 * Get items that can be dropped by the NPC with ID `id`. Only items that would be displayed in
+	 * the bestiary are included.
+	 */
 	private static List<DropRateInfo> GetNPCDrops(int id)
 	{
 		// We want to ignore common drops.
-		var rules = Main.ItemDropsDB.GetRulesForNPCID(id, false);
-
-		var results = new List<DropRateInfo>();
-		var feed = new DropRateInfoChainFeed(1);
-
-		foreach (var rule in rules)
-		{
-			rule.ReportDroprates(results, feed);
-		}
-
-		return results;
+		return GetDropsFromRules(Main.ItemDropsDB.GetRulesForNPCID(id, false));
 	}
 
 	private static List<DropRateInfo> GetGlobalDrops()
 	{
-		var rules = new GlobalLoot(Main.ItemDropsDB).Get();
+		return GetDropsFromRules(new GlobalLoot(Main.ItemDropsDB).Get());
+	}
 
+	private static List<DropRateInfo> GetDropsFromRules(IEnumerable<IItemDropRule> rules)
+	{
 		var results = new List<DropRateInfo>();
 		var feed = new DropRateInfoChainFeed(1);
 
@@ -292,7 +279,7 @@ public static class RecipeHandlers
 			rule.ReportDroprates(results, feed);
 		}
 
+		results.RemoveAll(info => info.conditions?.Any(c => !c.CanShowItemDropInUI()) ?? false);
 		return results;
-
 	}
 }
