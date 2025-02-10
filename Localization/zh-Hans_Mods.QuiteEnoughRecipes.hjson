@@ -79,3 +79,5 @@ Sorts: {
 	Rarity: 按稀有度排序
 	Value: 按价值排序
 }
+
+// Conditions.BannerDrop: Every {0} killed

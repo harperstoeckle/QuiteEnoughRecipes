@@ -7,6 +7,7 @@ using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria;
+using System;
 
 namespace QuiteEnoughRecipes;
 
@@ -53,9 +54,9 @@ public static class RecipeHandlers
 	}
 
 	/*
- 	 * Shows recipes that require a tile to be crafted. The tile is selected from whatever tile the item
- 	 * will place.
- 	 */
+	 * Shows recipes that require a tile to be crafted. The tile is selected from whatever tile the item
+	 * will place.
+	 */
 	public class TileUsageHandler : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
@@ -195,6 +196,8 @@ public static class RecipeHandlers
 				if (Main.BestiaryDB.FindEntryByNPCID(id).Icon == null) { continue; }
 
 				var droppedItems = GetNPCDrops(id);
+				var bannerItem = GetBannerDrop(id);
+				droppedItems.Add(bannerItem);
 				if (droppedItems.Any(info => info.itemId == i.type))
 				{
 					yield return new UIDropsPanel(new UINPCPanel(id){
@@ -281,5 +284,22 @@ public static class RecipeHandlers
 
 		results.RemoveAll(info => info.conditions?.Any(c => !c.CanShowItemDropInUI()) ?? false);
 		return results;
+	}
+
+	private record BannerDropCondition(int Kills) : IItemDropRuleCondition
+	{
+		public bool CanDrop(DropAttemptInfo info) => true;
+
+		public bool CanShowItemDropInUI() => true;
+
+		public string GetConditionDescription() => Language.GetText("Mods.QuiteEnoughRecipes.Conditions.BannerDrop").WithFormatArgs(Kills).Value;
+	}
+	private static DropRateInfo GetBannerDrop(int id)
+	{
+		var banner = Item.NPCtoBanner(id);
+		if (banner == 0) return default;
+		var bannerItem = Item.BannerToItem(banner);
+		var killRequirement = ItemID.Sets.KillsToBanner[bannerItem];
+		return new DropRateInfo(bannerItem, 1, 1, 1, [new BannerDropCondition(killRequirement)]);
 	}
 }
