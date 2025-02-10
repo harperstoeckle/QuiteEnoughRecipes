@@ -2,8 +2,11 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using Terraria.GameContent.ItemDropRules;
+using Terraria.ModLoader;
 using Terraria.UI;
+using Terraria;
 
 namespace QuiteEnoughRecipes;
 
@@ -38,12 +41,32 @@ file class UILootItemPanel : UIItemPanel
 	private int _stackMin;
 	private int _stackMax;
 	private float _chance;
+	private string? _conditions = null;
 
 	public UILootItemPanel(DropRateInfo info) : base(new(info.itemId))
 	{
 		_stackMin = info.stackMin;
 		_stackMax = info.stackMax;
 		_chance = info.dropRate;
+
+		var conditionDescs = info.conditions
+			?.Select(c => c.GetConditionDescription())
+			?.Where(d => !string.IsNullOrWhiteSpace(d));
+		if (conditionDescs != null)
+		{
+			_conditions = string.Join("\n", conditionDescs);
+		}
+	}
+
+	public override void ModifyTooltips(Mod mod, List<TooltipLine> tooltips)
+	{
+		base.ModifyTooltips(mod, tooltips);
+		if (!string.IsNullOrWhiteSpace(_conditions))
+		{
+			tooltips.Add(new(mod, "QER: drop conditions", _conditions){
+				OverrideColor = Main.OurFavoriteColor
+			});
+		}
 	}
 
 	protected override void DrawOverlayText(SpriteBatch sb)
