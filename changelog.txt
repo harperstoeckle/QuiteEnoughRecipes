@@ -1,2 +1,4 @@
 Version {ModVersion}
-- Added Chinese localization (credit: 虞悖「Yu Bell」)
+- Items in the NPC shop tab now show buy prices and conditions in their tooltips.
+- The item and NPC loot tabs now show drop chances and ranges of amounts that can be dropped.
+- NPC loot has been adjusted to only show drops that would be shown in the current world's bestiary. For instance, bosses will not be shown to drop boss bags in a non-expert world.
