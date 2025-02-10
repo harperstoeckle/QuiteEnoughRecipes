@@ -197,7 +197,7 @@ public static class RecipeHandlers
 
 				var droppedItems = GetNPCDrops(id);
 				var bannerItem = GetBannerDrop(id);
-				droppedItems.Add(bannerItem);
+				if (bannerItem.HasValue) droppedItems.Add(bannerItem.Value);
 				if (droppedItems.Any(info => info.itemId == i.type))
 				{
 					yield return new UIDropsPanel(new UINPCPanel(id){
@@ -294,10 +294,10 @@ public static class RecipeHandlers
 
 		public string GetConditionDescription() => Language.GetText("Mods.QuiteEnoughRecipes.Conditions.BannerDrop").WithFormatArgs(Kills).Value;
 	}
-	private static DropRateInfo GetBannerDrop(int id)
+	private static DropRateInfo? GetBannerDrop(int id)
 	{
 		var banner = Item.NPCtoBanner(id);
-		if (banner == 0) return default;
+		if (banner == 0) return null;
 		var bannerItem = Item.BannerToItem(banner);
 		var killRequirement = ItemID.Sets.KillsToBanner[bannerItem];
 		return new DropRateInfo(bannerItem, 1, 1, 1, [new BannerDropCondition(killRequirement)]);
