@@ -48,6 +48,8 @@ file class UIShopItemPanel : UIItemPanel
 
 	public override void ModifyTooltips(Mod mod, List<TooltipLine> tooltips)
 	{
+		base.ModifyTooltips(mod, tooltips);
+
 		if (DisplayedItem == null) { return; }
 
 		var coinIds = new int[4]{
