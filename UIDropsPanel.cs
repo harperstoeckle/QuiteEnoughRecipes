@@ -1,3 +1,5 @@
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using System.Linq;
 using Terraria.GameContent.ItemDropRules;
@@ -20,17 +22,45 @@ public class UIDropsPanel : UIAutoExtend
 			HAlign = 1
 		};
 
-		/*
-		 * TODO: Instead of using `Distinct` here, the actual combined probabilities should be
-		 * calculated for each item and displayed.
-		 */
-		foreach (var drop in drops.DistinctBy(d => d.itemId))
+		var orderedDrops = drops
+			.Where(d => d.conditions?.All(c => c.CanShowItemDropInUI()) ?? true)
+			.OrderByDescending(d => d.dropRate);
+
+		foreach (var drop in orderedDrops)
 		{
 			// TODO: Show the percentage and range of quantities.
-			grid.Append(new UIItemPanel(new(drop.itemId, drop.stackMin)));
+			grid.Append(new UILootItemPanel(drop));
 		}
 
 		Append(left);
 		Append(grid);
+	}
+}
+
+file class UILootItemPanel : UIItemPanel
+{
+	private int _stackMin;
+	private int _stackMax;
+	private float _chance;
+
+	public UILootItemPanel(DropRateInfo info) : base(new(info.itemId))
+	{
+		_stackMin = info.stackMin;
+		_stackMax = info.stackMax;
+		_chance = info.dropRate;
+	}
+
+	protected override void DrawOverlayText(SpriteBatch sb)
+	{
+		if (_stackMax > 1 || _stackMin != _stackMax)
+		{
+			var text = _stackMin == _stackMax ? _stackMin.ToString() : $"{_stackMin}–{_stackMax}";
+			DrawText(sb, text, new Vector2(10, 26));
+		}
+
+		if (_chance < 0.9999f)
+		{
+			DrawText(sb, $"{_chance:p2}", new Vector2(25, 3));
+		}
 	}
 }
