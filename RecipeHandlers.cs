@@ -279,6 +279,27 @@ public static class RecipeHandlers
 		}
 	}
 
+	// Shows all the conversions used in the Chlorophyte Extractinator
+	public class ChlorophyteExtractinatorTileUsageHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.ChlorophyteExtractinator");
+
+		public Item TabItem { get; } = new(ItemID.ChlorophyteExtractinator);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			if (i.type != ItemID.ChlorophyteExtractinator) yield break;
+
+			var options = ItemTrader_options(ItemTrader.ChlorophyteExtractinator);
+			foreach (var option in options)
+			{
+				var (taking, giving) = ChlorophyteExtracinatorTrade(option);
+				yield return new UIRecipePanel(giving, [taking]);
+			}
+		}
+	}
+
 	private static bool RecipeAcceptsItem(Recipe r, Item i)
 	{
 		return r.requiredItem.Any(x => x.type == i.type)
