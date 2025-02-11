@@ -235,6 +235,7 @@ public static class RecipeHandlers
 	[UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_options")]
 	extern static ref List<ItemTrader.TradeOption> ItemTrader_options(ItemTrader self);
 
+	// Shows the conversions that produce the given item in the Chlorophyte Extractinator
 	public class ChlorophyteExtractinatorSourceHandler : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
@@ -256,6 +257,7 @@ public static class RecipeHandlers
 		}
 	}
 
+	// Shows the conversions that use the given item in the Chlorophyte Extractinator
 	public class ChlorophyteExtractinatorUsageHandler : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
@@ -296,6 +298,10 @@ public static class RecipeHandlers
 		return ItemID.Sets.ShimmerTransformToItem[id];
 	}
 
+	/*
+	 * Gets the input and output items for a given Chlorophyte Extracinator trade. Note that
+	 * the stack information is retained despite always being 1 in Vanilla.
+	 */
 	private static (Item taking, Item giving) ChlorophyteExtracinatorTrade(ItemTrader.TradeOption option)
 	{
 		var input = new Item(option.TakingItemType, option.TakingItemStack);
