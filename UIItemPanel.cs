@@ -48,7 +48,7 @@ public class UIItemPanel : UIElement
 		var inventoryBack = TextureAssets.InventoryBack.Value;
 		sb.Draw(inventoryBack, pos, null, Color.White, 0, Vector2.Zero, _scale, 0, 0);
 
-		ItemSlot.DrawItemIcon(DisplayedItem, -1, sb, pos + inventoryBack.Size() * _scale / 2,
+		QuiteEnoughRecipes.DrawItemIcon(DisplayedItem, -1, sb, pos + inventoryBack.Size() * _scale / 2,
 			_scale, 32, Color.White);
 
 		// Draw trapped chest indicator.

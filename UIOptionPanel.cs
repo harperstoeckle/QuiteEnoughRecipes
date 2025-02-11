@@ -80,7 +80,7 @@ public class UIOptionPanel<T> : UIPanel
 		{
 			base.DrawSelf(sb);
 			var dims = GetDimensions();
-			ItemSlot.DrawItemIcon(_item, -1, sb, dims.Center(), dims.Width / 50, 32, Color.White);
+			QuiteEnoughRecipes.DrawItemIcon(_item, -1, sb, dims.Center(), dims.Width / 50, 32, Color.White);
 		}
 	}
 

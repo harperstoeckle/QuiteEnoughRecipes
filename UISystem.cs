@@ -42,7 +42,7 @@ public class UISystem : ModSystem
 			 */
 			for (int i = 0; i < ItemLoader.ItemCount; ++i)
 			{
-				Main.instance.LoadItem(i);
+				QuiteEnoughRecipes.LoadItemAsync(i);
 			}
 		}
 	}
