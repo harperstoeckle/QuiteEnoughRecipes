@@ -229,6 +229,32 @@ public static class RecipeHandlers
 		}
 	}
 
+	// Shows the given item's usage in the reforge menu
+	public class ReforgeUsageHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Reforging");
+
+		public Item TabItem { get; } = new(ItemID.IronHammer);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item item)
+		{
+			if (!item.CanHavePrefixes()) yield break;
+
+			// Include the item with no prefixes
+			yield return new UIReforgePanel(new(item.type));
+
+			for (int i = 0; i < PrefixLoader.PrefixCount; i++)
+			{
+				var reforgeCopy = new Item(item.type);
+				if (reforgeCopy.Prefix(i))
+				{
+					yield return new UIReforgePanel(reforgeCopy);
+				}
+			}
+		}
+	}
+
 	private static bool RecipeAcceptsItem(Recipe r, Item i)
 	{
 		return r.requiredItem.Any(x => x.type == i.type)
