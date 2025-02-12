@@ -7,6 +7,7 @@ using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria;
+using Terraria.GameContent.UI;
 using System;
 
 namespace QuiteEnoughRecipes;
@@ -128,6 +129,35 @@ public static class RecipeHandlers
 				{
 					yield return new UINPCShopPanel(shop);
 				}
+			}
+		}
+	}
+
+	// Show NPC shops that use the given item as currency
+	public class NPCShopUsageHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Shops");
+
+		public Item TabItem { get; } = new(ItemID.GoldCoin);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			foreach (var shop in NPCShopDatabase.AllShops)
+			{
+				if (shop.ActiveEntries.Any(e => MatchesCurrency(i, e.Item)))
+				{
+					yield return new UINPCShopPanel(shop);
+				}
+			}
+
+			static bool MatchesCurrency(Item currency, Item shopEntry)
+			{
+				if (CustomCurrencyManager.TryGetCurrencySystem(shopEntry.shopSpecialCurrency, out var customCurrency))
+				{
+					return customCurrency.Accepts(currency);
+				}
+				return currency.IsACoin;
 			}
 		}
 	}
