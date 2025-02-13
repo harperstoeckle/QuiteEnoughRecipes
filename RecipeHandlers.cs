@@ -196,8 +196,6 @@ public static class RecipeHandlers
 				if (Main.BestiaryDB.FindEntryByNPCID(id).Icon == null) { continue; }
 
 				var droppedItems = GetNPCDrops(id);
-				var bannerItem = GetBannerDrop(id);
-				if (bannerItem.HasValue) droppedItems.Add(bannerItem.Value);
 				if (droppedItems.Any(info => info.itemId == i.type))
 				{
 					yield return new UIDropsPanel(new UINPCPanel(id){
@@ -257,14 +255,13 @@ public static class RecipeHandlers
 		return GetDropsFromRules(Main.ItemDropsDB.GetRulesForItemID(itemID));
 	}
 
-	/*
-	 * Get items that can be dropped by the NPC with ID `id`. Only items that would be displayed in
-	 * the bestiary are included.
-	 */
+	// Get items that will be listed as drops from an NPC with ID `id`.
 	private static List<DropRateInfo> GetNPCDrops(int id)
 	{
-		// We want to ignore common drops.
-		return GetDropsFromRules(Main.ItemDropsDB.GetRulesForNPCID(id, false));
+		var bestiaryDrops = GetDropsFromRules(Main.ItemDropsDB.GetRulesForNPCID(id, false));
+		var bannerDrop = GetBannerDrop(id);
+		if (bannerDrop != null) { bestiaryDrops.Add(bannerDrop.Value); }
+		return bestiaryDrops;
 	}
 
 	private static List<DropRateInfo> GetGlobalDrops()
@@ -274,6 +271,10 @@ public static class RecipeHandlers
 
 	private static List<DropRateInfo> GetDropsFromRules(IEnumerable<IItemDropRule> rules)
 	{
+		/*
+		 * TODO: It would be much more efficient to fill an existing list rather than making a new
+		 * one each time.
+		 */
 		var results = new List<DropRateInfo>();
 		var feed = new DropRateInfoChainFeed(1);
 
