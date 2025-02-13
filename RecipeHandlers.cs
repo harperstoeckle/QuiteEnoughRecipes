@@ -260,7 +260,16 @@ public static class RecipeHandlers
 	{
 		var bestiaryDrops = GetDropsFromRules(Main.ItemDropsDB.GetRulesForNPCID(id, false));
 		var bannerDrop = GetBannerDrop(id);
-		if (bannerDrop != null) { bestiaryDrops.Add(bannerDrop.Value); }
+
+		/*
+		 * TODO: Prepending the banner is slow, so do this a different way.
+		 *
+		 * The banner needs to be prepended to make sure it's the first item in the `UIDropsPanel`.
+		 * What should probably *eventually* happen is that `UIDropsPanel` should, on its own, sort
+		 * banners before other items. However, it's actually kind of hard to tell if an item is a
+		 * banner because there doesn't seem to be an `ItemToBanner` function.
+		 */
+		if (bannerDrop != null) { bestiaryDrops.Insert(0, bannerDrop.Value); }
 		return bestiaryDrops;
 	}
 
