@@ -80,4 +80,4 @@ Sorts: {
 	Value: Sort by Value
 }
 
-Conditions.BannerDrop: Every {0} killed
+Conditions.BannerDrop: Drops once for every {0} kills
