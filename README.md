@@ -27,5 +27,5 @@ You can see sources and uses for any item you're hovering at any point in the ga
 
 ![Show info for hovered item](/readme_images/hovered.gif)
 
-## Suggestions and Bug Reports
-If you want to report a bug or suggest a new feature, please submit an issue on this repository.
+## Links
+[Discord](https://discord.gg/FFTVuAnxsM)

@@ -17,5 +17,5 @@ You can see sources and uses for any item you're hovering at any point in the ga
 
 [img]https://raw.githubusercontent.com/harperstoeckle/QuiteEnoughRecipes/refs/heads/main/readme_images/hovered.gif[/img]
 
-[h2]Suggestions and Bug Reports[/h2]
-If you want to report a bug or suggest a new feature, please submit an issue on [url=https://github.com/harperstoeckle/QuiteEnoughRecipes]Github[/url].
+[h2]Links[/h2]
+If would like to report a bug or have any suggestions, please do so by submitting an issue on [url=https://github.com/harperstoeckle/QuiteEnoughRecipes]Github[/url], or by joining the [url=https://discord.gg/FFTVuAnxsM]Discord server[/url]
