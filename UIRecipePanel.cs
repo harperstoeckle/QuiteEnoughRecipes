@@ -78,6 +78,12 @@ public class UIRecipePanel : UIAutoExtend
 	{
 	}
 
+	public UIRecipePanel(FakeRecipe recipe) :
+	this(recipe.CreateItem, recipe.RequiredItems, recipe.AcceptedGroups, recipe.RequiredTiles,
+		recipe.Conditions)
+	{
+	}
+
 	private static string CraftingStationName(int tileID)
 	{
 		return tileID == -1
@@ -85,3 +91,7 @@ public class UIRecipePanel : UIAutoExtend
 			: Lang.GetMapObjectName(MapHelper.TileToLookup(tileID, Recipe.GetRequiredTileStyle(tileID)));
 	}
 }
+
+public record FakeRecipe(Item CreateItem, List<Item>? RequiredItems = null,
+		List<int>? AcceptedGroups = null, List<int>? RequiredTiles = null,
+		List<Condition>? Conditions = null);

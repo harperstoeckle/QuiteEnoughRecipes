@@ -80,4 +80,7 @@ Sorts: {
 	Value: Sort by Value
 }
 
-Conditions.BannerDrop: Drops once for every {0} kills
+Conditions: {
+	BannerDrop: Drops once for every {0} kills
+	CoinLuck: Provides {0} Coin Luck
+}

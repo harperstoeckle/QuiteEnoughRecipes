@@ -86,6 +86,14 @@ public static class RecipeHandlers
 
 		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
 		{
+			foreach (var recipe in ShimmerRecipes.GetAllRecipes())
+			{
+				if (recipe.CreateItem.type == i.type)
+				{
+					yield return new UIRecipePanel(recipe);
+				}
+			}
+
 			for (int id = 0; id < ItemID.Sets.ShimmerTransformToItem.Length; ++id)
 			{
 				if (ShimmerTransformResult(id) == i.type)
@@ -106,6 +114,20 @@ public static class RecipeHandlers
 
 		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
 		{
+			var coinLuck = ItemID.Sets.CoinLuckValue[i.type];
+			if (coinLuck > 0)
+			{
+				yield return new UIRecipePanel(new(), [new(i.type)], conditions: [CoinLuckCondition(coinLuck)]);
+			}
+
+			foreach (var recipe in ShimmerRecipes.GetAllRecipes())
+			{
+				if (recipe.RequiredItems.Any(item => item.type == i.type))
+				{
+					yield return new UIRecipePanel(recipe);
+				}
+			}
+
 			int id = ShimmerTransformResult(i.type);
 			if (id == -1) { yield break; }
 			yield return new UIRecipePanel(new(id), new List<Item>{new(i.type)});
@@ -244,9 +266,51 @@ public static class RecipeHandlers
 	 */
 	private static int ShimmerTransformResult(int inputItem)
 	{
+		/*
+		 * For some reason this item is in ShimmerTransformToItem despite having a special condition
+		 * this is the easiest way to prevent it showing up twice
+		 */
+		if (inputItem == ItemID.LihzahrdBrickWall) { return -1; }
 		int id = ItemID.Sets.ShimmerCountsAsItem[inputItem];
 		if (id == -1) { id = inputItem; }
 		return ItemID.Sets.ShimmerTransformToItem[id];
+	}
+
+	/*
+	 * Recipes derived from Item.GetShimmered()
+	 */
+	private static class ShimmerRecipes
+	{
+		public static readonly FakeRecipe LihzardBrickWallUnsafe = new(new(ItemID.LihzahrdWallUnsafe), [new(ItemID.LihzahrdBrickWall)], Conditions: [Condition.DownedGolem]);
+
+		public static readonly FakeRecipe RodOfHarmony = new(new(ItemID.RodOfHarmony), [new(ItemID.RodofDiscord)], Conditions: [Condition.DownedMoonLord]);
+		public static readonly FakeRecipe Terraformer = new(new(ItemID.Clentaminator2), [new(ItemID.Clentaminator)], Conditions: [Condition.DownedMoonLord]);
+		public static readonly FakeRecipe BottomlessShimmerBucket = new(new(ItemID.BottomlessShimmerBucket), [new(ItemID.BottomlessBucket)], Conditions: [Condition.DownedMoonLord]);
+		public static readonly FakeRecipe BottomlessWaterBucket = new(new(ItemID.BottomlessBucket), [new(ItemID.BottomlessShimmerBucket)], Conditions: [Condition.DownedMoonLord]);
+
+		public static readonly FakeRecipe HeavenforgeBrick = new(new(ItemID.HeavenforgeBrick), [new(ItemID.LunarBrick)], Conditions: [Condition.MoonPhaseFull]);
+		public static readonly FakeRecipe LunarRustBrick = new(new(ItemID.LunarRustBrick), [new(ItemID.LunarBrick)], Conditions: [Condition.MoonPhaseWaningGibbous]);
+		public static readonly FakeRecipe AstraBrick = new(new(ItemID.AstraBrick), [new(ItemID.LunarBrick)], Conditions: [Condition.MoonPhaseThirdQuarter]);
+		public static readonly FakeRecipe DarkCelestialBrick = new(new(ItemID.DarkCelestialBrick), [new(ItemID.LunarBrick)], Conditions: [Condition.MoonPhaseWaningCrescent]);
+		public static readonly FakeRecipe MercuryBrick = new(new(ItemID.MercuryBrick), [new(ItemID.LunarBrick)], Conditions: [Condition.MoonPhaseNew]);
+		public static readonly FakeRecipe StarRoyaleBrick = new(new(ItemID.StarRoyaleBrick), [new(ItemID.LunarBrick)], Conditions: [Condition.MoonPhaseWaxingCrescent]);
+		public static readonly FakeRecipe CryocoreBrick = new(new(ItemID.CryocoreBrick), [new(ItemID.LunarBrick)], Conditions: [Condition.MoonPhaseFirstQuarter]);
+		public static readonly FakeRecipe CosmicEmberBrick = new(new(ItemID.CosmicEmberBrick), [new(ItemID.LunarBrick)], Conditions: [Condition.MoonPhaseWaxingGibbous]);
+
+		private static IEnumerable<FakeRecipe>? _allRecipes = null;
+		public static IEnumerable<FakeRecipe> GetAllRecipes()
+		{
+			_allRecipes ??= typeof(ShimmerRecipes).GetFields()
+				.Where(field => field.FieldType == typeof(FakeRecipe))
+				.Select(field => field.GetValue(null) as FakeRecipe)
+				.Concat(MusicBoxRecipes());
+			return _allRecipes;
+		}
+
+		private static IEnumerable<FakeRecipe> MusicBoxRecipes() =>
+			ContentSamples.ItemsByType.Values
+				.Where(item => item.createTile == TileID.MusicBoxes)
+				.Select(item => new FakeRecipe(new(ItemID.MusicBox), [new(item.type)]));
 	}
 
 	// Get items that can be dropped when using the item with ID `itemID`.
@@ -312,4 +376,7 @@ public static class RecipeHandlers
 		var killRequirement = ItemID.Sets.KillsToBanner[bannerItem];
 		return new DropRateInfo(bannerItem, 1, 1, 1, [new BannerDropCondition(killRequirement)]);
 	}
+
+	private static Condition CoinLuckCondition(int amount) => 
+		new(Language.GetText("Mods.QuiteEnoughRecipes.Conditions.CoinLuck").WithFormatArgs(amount.ToString("N0")), () => true);
 }
