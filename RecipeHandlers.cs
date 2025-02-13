@@ -7,6 +7,8 @@ using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria;
+using Terraria.GameContent;
+using System.Runtime.CompilerServices;
 using System;
 
 namespace QuiteEnoughRecipes;
@@ -230,6 +232,74 @@ public static class RecipeHandlers
 		}
 	}
 
+	[UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_options")]
+	extern static ref List<ItemTrader.TradeOption> ItemTrader_options(ItemTrader self);
+
+	// Shows the conversions that produce the given item in the Chlorophyte Extractinator
+	public class ChlorophyteExtractinatorSourceHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.ChlorophyteExtractinator");
+
+		public Item TabItem { get; } = new(ItemID.ChlorophyteExtractinator);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			var options = ItemTrader_options(ItemTrader.ChlorophyteExtractinator);
+			foreach (var option in options)
+			{
+				if (option.GivingITemType == i.type)
+				{
+					var (taking, giving) = ChlorophyteExtracinatorTrade(option);
+					yield return new UIRecipePanel(giving, [taking]);
+				}
+			}
+		}
+	}
+
+	// Shows the conversions that use the given item in the Chlorophyte Extractinator
+	public class ChlorophyteExtractinatorUsageHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.ChlorophyteExtractinator");
+
+		public Item TabItem { get; } = new(ItemID.ChlorophyteExtractinator);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			var options = ItemTrader_options(ItemTrader.ChlorophyteExtractinator);
+			foreach (var option in options)
+			{
+				if (option.TakingItemType == i.type)
+				{
+					var (taking, giving) = ChlorophyteExtracinatorTrade(option);
+					yield return new UIRecipePanel(giving, [taking]);
+				}
+			}
+		}
+	}
+
+	// Shows all the conversions used in the Chlorophyte Extractinator
+	public class ChlorophyteExtractinatorTileUsageHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.ChlorophyteExtractinator");
+
+		public Item TabItem { get; } = new(ItemID.ChlorophyteExtractinator);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			if (i.type != ItemID.ChlorophyteExtractinator) yield break;
+
+			var options = ItemTrader_options(ItemTrader.ChlorophyteExtractinator);
+			foreach (var option in options)
+			{
+				var (taking, giving) = ChlorophyteExtracinatorTrade(option);
+				yield return new UIRecipePanel(giving, [taking]);
+			}
+		}
+	}
+
 	private static bool RecipeAcceptsItem(Recipe r, Item i)
 	{
 		return r.requiredItem.Any(x => x.type == i.type)
@@ -247,6 +317,17 @@ public static class RecipeHandlers
 		int id = ItemID.Sets.ShimmerCountsAsItem[inputItem];
 		if (id == -1) { id = inputItem; }
 		return ItemID.Sets.ShimmerTransformToItem[id];
+	}
+
+	/*
+	 * Gets the input and output items for a given Chlorophyte Extracinator trade. Note that
+	 * the stack information is retained despite always being 1 in Vanilla.
+	 */
+	private static (Item taking, Item giving) ChlorophyteExtracinatorTrade(ItemTrader.TradeOption option)
+	{
+		var input = new Item(option.TakingItemType, option.TakingItemStack);
+		var output = new Item(option.GivingITemType, option.GivingItemStack);
+		return (input, output);
 	}
 
 	// Get items that can be dropped when using the item with ID `itemID`.

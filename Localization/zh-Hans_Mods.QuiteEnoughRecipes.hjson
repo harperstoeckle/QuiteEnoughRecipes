@@ -44,6 +44,7 @@ Tabs: {
 	ItemDrops: 宝藏袋
 	NPCDrops: 掉落
 	GlobalDrops: 全局掉落
+	// ChlorophyteExtractinator: "{$ItemName.ChlorophyteExtractinator}"
 }
 
 Filters: {
