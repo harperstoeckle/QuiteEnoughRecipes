@@ -114,6 +114,12 @@ public static class RecipeHandlers
 
 		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
 		{
+			var coinLuck = ItemID.Sets.CoinLuckValue[i.type];
+			if (coinLuck > 0)
+			{
+				yield return new UIRecipePanel(new(), [new(i.type)], conditions: [CoinLuckCondition(coinLuck)]);
+			}
+
 			foreach (var recipe in ShimmerRecipes.GetAllRecipes())
 			{
 				if (recipe.RequiredItems.Any(item => item.type == i.type))
@@ -270,6 +276,9 @@ public static class RecipeHandlers
 		return ItemID.Sets.ShimmerTransformToItem[id];
 	}
 
+	/*
+	 * Recipes derived from Item.GetShimmered()
+	 */
 	private static class ShimmerRecipes
 	{
 		public static readonly FakeRecipe LihzardBrickWallUnsafe = new(new(ItemID.LihzahrdWallUnsafe), [new(ItemID.LihzahrdBrickWall)], Conditions: [Condition.DownedGolem]);
@@ -293,9 +302,15 @@ public static class RecipeHandlers
 		{
 			_allRecipes ??= typeof(ShimmerRecipes).GetFields()
 				.Where(field => field.FieldType == typeof(FakeRecipe))
-				.Select(field => field.GetValue(null) as FakeRecipe);
+				.Select(field => field.GetValue(null) as FakeRecipe)
+				.Concat(MusicBoxRecipes());
 			return _allRecipes;
 		}
+
+		private static IEnumerable<FakeRecipe> MusicBoxRecipes() =>
+			ContentSamples.ItemsByType.Values
+				.Where(item => item.createTile == TileID.MusicBoxes)
+				.Select(item => new FakeRecipe(new(ItemID.MusicBox), [new(item.type)]));
 	}
 
 	// Get items that can be dropped when using the item with ID `itemID`.
@@ -361,4 +376,7 @@ public static class RecipeHandlers
 		var killRequirement = ItemID.Sets.KillsToBanner[bannerItem];
 		return new DropRateInfo(bannerItem, 1, 1, 1, [new BannerDropCondition(killRequirement)]);
 	}
+
+	private static Condition CoinLuckCondition(int amount) => 
+		new(Language.GetText("Mods.QuiteEnoughRecipes.Conditions.CoinLuck").WithFormatArgs(amount.ToString("N0")), () => true);
 }
