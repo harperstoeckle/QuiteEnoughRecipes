@@ -7,6 +7,7 @@ using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria;
+using System;
 
 namespace QuiteEnoughRecipes;
 
@@ -53,9 +54,9 @@ public static class RecipeHandlers
 	}
 
 	/*
- 	 * Shows recipes that require a tile to be crafted. The tile is selected from whatever tile the item
- 	 * will place.
- 	 */
+	 * Shows recipes that require a tile to be crafted. The tile is selected from whatever tile the item
+	 * will place.
+	 */
 	public class TileUsageHandler : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
@@ -254,14 +255,22 @@ public static class RecipeHandlers
 		return GetDropsFromRules(Main.ItemDropsDB.GetRulesForItemID(itemID));
 	}
 
-	/*
-	 * Get items that can be dropped by the NPC with ID `id`. Only items that would be displayed in
-	 * the bestiary are included.
-	 */
+	// Get items that will be listed as drops from an NPC with ID `id`.
 	private static List<DropRateInfo> GetNPCDrops(int id)
 	{
-		// We want to ignore common drops.
-		return GetDropsFromRules(Main.ItemDropsDB.GetRulesForNPCID(id, false));
+		var bestiaryDrops = GetDropsFromRules(Main.ItemDropsDB.GetRulesForNPCID(id, false));
+		var bannerDrop = GetBannerDrop(id);
+
+		/*
+		 * TODO: Prepending the banner is slow, so do this a different way.
+		 *
+		 * The banner needs to be prepended to make sure it's the first item in the `UIDropsPanel`.
+		 * What should probably *eventually* happen is that `UIDropsPanel` should, on its own, sort
+		 * banners before other items. However, it's actually kind of hard to tell if an item is a
+		 * banner because there doesn't seem to be an `ItemToBanner` function.
+		 */
+		if (bannerDrop != null) { bestiaryDrops.Insert(0, bannerDrop.Value); }
+		return bestiaryDrops;
 	}
 
 	private static List<DropRateInfo> GetGlobalDrops()
@@ -271,6 +280,10 @@ public static class RecipeHandlers
 
 	private static List<DropRateInfo> GetDropsFromRules(IEnumerable<IItemDropRule> rules)
 	{
+		/*
+		 * TODO: It would be much more efficient to fill an existing list rather than making a new
+		 * one each time.
+		 */
 		var results = new List<DropRateInfo>();
 		var feed = new DropRateInfoChainFeed(1);
 
@@ -281,5 +294,22 @@ public static class RecipeHandlers
 
 		results.RemoveAll(info => info.conditions?.Any(c => !c.CanShowItemDropInUI()) ?? false);
 		return results;
+	}
+
+	private record BannerDropCondition(int Kills) : IItemDropRuleCondition
+	{
+		public bool CanDrop(DropAttemptInfo info) => true;
+
+		public bool CanShowItemDropInUI() => true;
+
+		public string GetConditionDescription() => Language.GetText("Mods.QuiteEnoughRecipes.Conditions.BannerDrop").WithFormatArgs(Kills).Value;
+	}
+	private static DropRateInfo? GetBannerDrop(int id)
+	{
+		var banner = Item.NPCtoBanner(id);
+		if (banner == 0) return null;
+		var bannerItem = Item.BannerToItem(banner);
+		var killRequirement = ItemID.Sets.KillsToBanner[bannerItem];
+		return new DropRateInfo(bannerItem, 1, 1, 1, [new BannerDropCondition(killRequirement)]);
 	}
 }

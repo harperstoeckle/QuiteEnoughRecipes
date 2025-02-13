@@ -79,3 +79,5 @@ Sorts: {
 	Rarity: Sort by Rarity
 	Value: Sort by Value
 }
+
+Conditions.BannerDrop: Drops once for every {0} kills
