@@ -118,7 +118,6 @@ public static class RecipeHandlers
 			if (coinLuck > 0)
 			{
 				yield return new UIRecipePanel(new(), [new(i.type)], conditions: [CoinLuckCondition(coinLuck)]);
-				yield break;
 			}
 
 			foreach (var recipe in ShimmerRecipes.GetAllRecipes())
@@ -126,7 +125,6 @@ public static class RecipeHandlers
 				if (recipe.RequiredItems.Any(item => item.type == i.type))
 				{
 					yield return new UIRecipePanel(recipe);
-					yield break;
 				}
 			}
 
