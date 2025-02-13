@@ -25,8 +25,8 @@ public class UIDropsPanel : UIAutoExtend
 			HAlign = 1
 		};
 
-		// These are in reverse order of probability.
-		foreach (var drop in drops.OrderByDescending(d => d.dropRate))
+		// These are in reverse order of probability, with smaller stacks listed first.
+		foreach (var drop in drops.OrderBy(d => (1 - d.dropRate, d.stackMax)))
 		{
 			grid.Append(new UILootItemPanel(drop));
 		}
