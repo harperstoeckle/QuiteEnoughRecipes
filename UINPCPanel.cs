@@ -69,7 +69,27 @@ public class UINPCPanel : UIElement
 		_icon = new(npcID);
 		_npcID = npcID;
 		OverflowHidden = true;
+
+		var slotBack = new UIImage(Main.Assets.Request<Texture2D>("Images/UI/Bestiary/Slot_Back")){
+			Width = new StyleDimension(0, 1),
+			Height = new StyleDimension(0, 1),
+			HAlign = 0.5f,
+			VAlign = 0.5f,
+			ScaleToFit = true,
+			IgnoresMouseInteraction = true
+		};
+		var slotFront = new UIImage(Main.Assets.Request<Texture2D>("Images/UI/Bestiary/Slot_Front")){
+			Width = new StyleDimension(0, 1),
+			Height = new StyleDimension(0, 1),
+			HAlign = 0.5f,
+			VAlign = 0.5f,
+			ScaleToFit = true,
+			IgnoresMouseInteraction = true
+		};
+
+		Append(slotBack);
 		Append(_icon);
+		Append(slotFront);
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
