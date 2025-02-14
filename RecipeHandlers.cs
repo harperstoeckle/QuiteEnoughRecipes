@@ -8,6 +8,7 @@ using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria;
 using System;
+using System.Reflection;
 
 namespace QuiteEnoughRecipes;
 
@@ -230,6 +231,24 @@ public static class RecipeHandlers
 		}
 	}
 
+	// Shows the tiles that a given item drops from
+	public class TileDropsSourceHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.GlobalDrops");
+
+		public Item TabItem { get; } = new(ItemID.StoneBlock);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			var tiles = GetTilesThatDropItem(i.type);
+			foreach (var (id, style) in tiles)
+			{
+				yield return new UIDropsPanel(new UITilePanel(id, style), [new(i.type, 1, 1, 1)]);
+			}
+		}
+	}
+
 	private static bool RecipeAcceptsItem(Recipe r, Item i)
 	{
 		return r.requiredItem.Any(x => x.type == i.type)
@@ -294,6 +313,20 @@ public static class RecipeHandlers
 
 		results.RemoveAll(info => info.conditions?.Any(c => !c.CanShowItemDropInUI()) ?? false);
 		return results;
+	}
+
+	internal static FieldInfo TileLoader_tileTypeAndTileStyleToItemType = typeof(TileLoader).GetField("tileTypeAndTileStyleToItemType", BindingFlags.Static | BindingFlags.NonPublic);
+	internal static Dictionary<(int, int), int> TileTypeAndTileStyleToItemType => TileLoader_tileTypeAndTileStyleToItemType.GetValue(null) as Dictionary<(int, int), int>;
+
+	private static IEnumerable<(int TileId, int Style)> GetTilesThatDropItem(int itemId)
+	{
+		foreach (var (tile, item) in TileTypeAndTileStyleToItemType)
+		{
+			if (item == itemId)
+			{
+				yield return tile;
+			}
+		}
 	}
 
 	private record BannerDropCondition(int Kills) : IItemDropRuleCondition

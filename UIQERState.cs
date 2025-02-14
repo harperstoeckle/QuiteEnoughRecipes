@@ -275,6 +275,7 @@ public class UIQERState : UIState
 		AddSourceHandler(new RecipeHandlers.ItemDropSourceHandler());
 		AddSourceHandler(new RecipeHandlers.NPCDropSourceHandler());
 		AddSourceHandler(new RecipeHandlers.GlobalLootSourceHandler());
+		AddSourceHandler(new RecipeHandlers.TileDropsSourceHandler());
 
 		AddUsageHandler(new RecipeHandlers.BasicUsageHandler());
 		AddUsageHandler(new RecipeHandlers.TileUsageHandler());
