@@ -199,8 +199,8 @@ public static class RecipeHandlers
 				if (droppedItems.Any(info => info.itemId == i.type))
 				{
 					yield return new UIDropsPanel(new UINPCPanel(id){
-						Width = new StyleDimension(82, 0),
-						Height = new StyleDimension(82, 0)
+						Width = new StyleDimension(72, 0),
+						Height = new StyleDimension(72, 0)
 					}, droppedItems);
 				}
 			}
