@@ -241,7 +241,7 @@ public class UIQERState : UIState
 	private string? _searchText = null;
 
 	// This will contain at most one of the options panels (sort, filter).
-	private UIElement _optionPanelContainer = new();
+	private UIPopupContainer _optionPanelContainer = new();
 
 	private OptionPanelToggleButton _filterToggleButton = new("Images/UI/Bestiary/Button_Filtering",
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
@@ -356,14 +356,6 @@ public class UIQERState : UIState
 		_optionPanelContainer.Top.Percent = 0.1f;
 		_optionPanelContainer.Left.Percent = 0.26f;
 
-		/*
-		 * If we don't do this, then `_optionPanelContainer` will absorb any mouse interactions even
-		 * if there's no active option panel, which creates a sort of "dead zone" in the recipe
-		 * panel. Note that this has to get set to false whenever an option panel is opened, so that
-		 * the active option panel can actually be used.
-		 */
-		_optionPanelContainer.IgnoresMouseInteraction = true;
-
 		_filterPanel.Width.Percent = 1;
 		_filterPanel.Height.Percent = 1;
 		_filterPanel.OnSelectionChanged += pred => {
@@ -455,7 +447,7 @@ public class UIQERState : UIState
 		 */
 		if (!(e.Target is OptionPanelToggleButton) && !_optionPanelContainer.IsMouseHovering)
 		{
-			CloseOptionPanel();
+			_optionPanelContainer.Close();
 		}
 
 		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
@@ -473,7 +465,7 @@ public class UIQERState : UIState
 
 		if (!(e.Target is OptionPanelToggleButton) && !_optionPanelContainer.IsMouseHovering)
 		{
-			CloseOptionPanel();
+			_optionPanelContainer.Close();
 		}
 
 		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
@@ -661,13 +653,13 @@ public class UIQERState : UIState
 		_itemList.Height = new StyleDimension(-BarHeight, 1);
 		_itemList.VAlign = 1;
 
-		_filterToggleButton.OnLeftClick += (b, e) => ToggleOptionPanel(_filterPanel);
+		_filterToggleButton.OnLeftClick += (b, e) => _optionPanelContainer.Toggle(_filterPanel);
 		_filterToggleButton.OnRightClick += (b, e) => _filterPanel.DisableAllOptions();
 
 		float offset = _filterToggleButton.Width.Pixels + 10;
 
 		_sortToggleButton.Left.Pixels = offset;
-		_sortToggleButton.OnLeftClick += (b, e) => ToggleOptionPanel(_sortPanel);
+		_sortToggleButton.OnLeftClick += (b, e) => _optionPanelContainer.Toggle(_sortPanel);
 		_sortToggleButton.OnRightClick += (b, e) => _sortPanel.DisableAllOptions();
 
 		offset += _sortToggleButton.Width.Pixels + 10;
@@ -762,34 +754,6 @@ public class UIQERState : UIState
 	{
 		AddFilter(new Item(itemID), Language.GetTextValue($"Mods.QuiteEnoughRecipes.Filters.{key}"),
 			pred);
-	}
-
-	// If option panel `panel` is already active, close it. If not, switch to it.
-	private void ToggleOptionPanel(UIElement panel)
-	{
-		if (_optionPanelContainer.HasChild(panel))
-		{
-			CloseOptionPanel();
-		}
-		else
-		{
-			OpenOptionPanel(panel);
-		}
-	}
-
-	private void OpenOptionPanel(UIElement e)
-	{
-		_optionPanelContainer.RemoveAllChildren();
-		_optionPanelContainer.Append(e);
-		e.Activate();
-		e.Recalculate();
-		_optionPanelContainer.IgnoresMouseInteraction = false;
-	}
-
-	private void CloseOptionPanel()
-	{
-		_optionPanelContainer.RemoveAllChildren();
-		_optionPanelContainer.IgnoresMouseInteraction = true;
 	}
 
 	/*
