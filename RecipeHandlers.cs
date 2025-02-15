@@ -244,7 +244,15 @@ public static class RecipeHandlers
 			var tiles = GetTilesThatDropItem(i.type);
 			foreach (var (id, style) in tiles)
 			{
-				yield return new UIDropsPanel(new UITilePanel(id, style), [new(i.type, 1, 1, 1)]);
+				/*
+				 * A style of -1 means that all styles drop the item (unless an explicit style entry exists)
+				 * But since -1 is an invalid style it has to be skipped
+				 * Note: style is ignored for unframed tiles
+				 */
+				if (style == -1 && Main.tileFrameImportant[id]) { continue; }
+
+				var safeStyle = Math.Max(0, style);
+				yield return new UIDropsPanel(new UITilePanel(id, safeStyle), [new(i.type, 1, 1, 1)]);
 			}
 		}
 	}
@@ -316,17 +324,25 @@ public static class RecipeHandlers
 	}
 
 	internal static FieldInfo TileLoader_tileTypeAndTileStyleToItemType = typeof(TileLoader).GetField("tileTypeAndTileStyleToItemType", BindingFlags.Static | BindingFlags.NonPublic);
-	internal static Dictionary<(int, int), int> TileTypeAndTileStyleToItemType => TileLoader_tileTypeAndTileStyleToItemType.GetValue(null) as Dictionary<(int, int), int>;
+	internal static Dictionary<(int TileId, int Style), int> TileTypeAndTileStyleToItemType => TileLoader_tileTypeAndTileStyleToItemType.GetValue(null) as Dictionary<(int, int), int>;
 
-	private static IEnumerable<(int TileId, int Style)> GetTilesThatDropItem(int itemId)
+	private static Dictionary<int, List<(int TileId, int Style)>>? _itemTypeToTileTypeAndTileStyle = null;
+	internal static Dictionary<int, List<(int TileId, int Style)>> ItemTypeToTileTypeAndTileStyle =>
+		_itemTypeToTileTypeAndTileStyle ??= TileTypeAndTileStyleToItemType.GroupBy(entry => entry.Value)
+			.ToDictionary(entry => entry.Key, entry => entry.Select(entry => entry.Key).ToList());
+
+	private static Dictionary<int, List<(int Style, int Item)>>? _tileTypeToTileStyleAndItemType = null;
+	internal static Dictionary<int, List<(int Style, int Item)>> TileTypeToTileStyleAndItemType =>
+		_tileTypeToTileStyleAndItemType ??= TileTypeAndTileStyleToItemType.GroupBy(entry => entry.Key.TileId)
+			.ToDictionary(entry => entry.Key, entry => entry.Select(entry => (entry.Key.Style, entry.Value)).ToList());
+
+	private static List<(int TileId, int Style)> GetTilesThatDropItem(int itemId)
 	{
-		foreach (var (tile, item) in TileTypeAndTileStyleToItemType)
+		if (ItemTypeToTileTypeAndTileStyle.TryGetValue(itemId, out var tile))
 		{
-			if (item == itemId)
-			{
-				yield return tile;
-			}
+			return tile;
 		}
+		return [];
 	}
 
 	private record BannerDropCondition(int Kills) : IItemDropRuleCondition
