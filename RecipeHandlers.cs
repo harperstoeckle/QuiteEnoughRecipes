@@ -235,7 +235,7 @@ public static class RecipeHandlers
 	public class TileDropsSourceHandler : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
-			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.GlobalDrops");
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.TileDrops");
 
 		public Item TabItem { get; } = new(ItemID.StoneBlock);
 
@@ -253,6 +253,23 @@ public static class RecipeHandlers
 
 				var safeStyle = Math.Max(0, style);
 				yield return new UIDropsPanel(new UITilePanel(id, safeStyle), [new(i.type, 1, 1, 1)]);
+			}
+		}
+	}
+
+	// Shows the tiles placed by a given item 
+	public class CreateTileUsageHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.CreatedTiles");
+
+		public Item TabItem { get; } = new(ItemID.StoneBlock);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			if (i.createTile != -1)
+			{
+				yield return new UIDropsPanel(new UITilePanel(i.createTile, i.placeStyle), [new(i.type, 1, 1, 1)]);
 			}
 		}
 	}

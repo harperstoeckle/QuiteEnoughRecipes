@@ -44,6 +44,8 @@ Tabs: {
 	ItemDrops: 宝藏袋
 	NPCDrops: 掉落
 	GlobalDrops: 全局掉落
+	// TileDrops: Tile Drops
+	// CreatedTiles: Created Tiles
 }
 
 Filters: {
