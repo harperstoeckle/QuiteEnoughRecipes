@@ -14,18 +14,21 @@ using Terraria.UI;
 namespace QuiteEnoughRecipes;
 public class UITilePanel : UIElement
 {
-	public int TileId;
-	public int TileStyle;
-	public string HoverText = "";
+	public int TileId { get; set; }
+	public int TileStyle { get; set; }
 
-	public UITilePanel(int tileId, int style)
+	public int Border { get; set; }
+	public string HoverText { get; set; } = "";
+
+	public UITilePanel(int tileId, int style, int size = 50)
 	{
 		TileId = tileId;
 		TileStyle = style;
 		HoverText = TileID.Search.GetName(tileId);
+		Border = 8;
 
-		Width.Pixels = 50;
-		Height.Pixels = 50;
+		Width.Pixels = size;
+		Height.Pixels = size;
 	}
 
 	protected override void DrawSelf(SpriteBatch spriteBatch)
@@ -52,7 +55,9 @@ public class UITilePanel : UIElement
 		}
 		else
 		{
-			DrawSingleTile(spriteBatch, new(9, 3));
+			// (9, 3), (9, 4), (9, 5) are all the single tile options
+			var spritePos = new Point(9, 3);
+			DrawSingleTile(spriteBatch, spritePos);
 		}
 		
 		if (IsMouseHovering)
@@ -75,8 +80,9 @@ public class UITilePanel : UIElement
 		var padding = 2;
 		var x = tileOnSheet.X * (size + padding);
 		var y = tileOnSheet.Y * (size + padding);
+		float drawScale = Math.Min((dimensions.Width - Border) / size, (dimensions.Height - Border) / size);
 
-		spriteBatch.Draw(texture.Value, dimensions.Center(), new(x, y, size, size), Color.White, 0f, Vector2.One * (size / 2), 2, SpriteEffects.None, 0);
+		spriteBatch.Draw(texture.Value, dimensions.Center(), new(x, y, size, size), Color.White, 0f, Vector2.One * (size / 2), drawScale, SpriteEffects.None, 0);
 	}
 
 	/*
@@ -91,11 +97,18 @@ public class UITilePanel : UIElement
 		spriteBatch.End();
 		spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, rasterizerState, null, Main.UIScaleMatrix);
 
-		Vector2 positionTopLeft = dimensions.Position() + new Vector2(4, 4);
-		float drawDimensionHeight = dimensions.Height - 8;
-		float drawDimensionWidth = dimensions.Width - 8;
-		// changing to Max fixes gaps in crates and chests but breaks most other things, there is something fishy here
-		float drawScale = Math.Min(drawDimensionWidth / (tileData.CoordinateWidth * tileData.Width), drawDimensionHeight / tileData.CoordinateHeights.Sum());
+		var border = Border;
+		Vector2 positionTopLeft = dimensions.Position() + new Vector2(border / 2, border / 2);
+		float drawDimensionHeight = dimensions.Height - border;
+		float drawDimensionWidth = dimensions.Width - border;
+		
+		/*
+		 * Tiles that have varying CoordinateHeights have gaps in their sprite when drawn
+		 * Increasing the scale by a small amount over scales the image and removes the gaps
+		 * TODO: figure out exactly why this is happening and implement a real solution
+		 */
+		float scaleFix = 0.1f;
+		float drawScale = Math.Min(drawDimensionWidth / (tileData.CoordinateWidth * tileData.Width), drawDimensionHeight / tileData.CoordinateHeights.Sum()) + scaleFix;
 		float adjustX = tileData.Width < tileData.Height ? (tileData.Height - tileData.Width) / (tileData.Height * 2f) : 0f;
 		float adjustY = tileData.Height < tileData.Width ? (tileData.Width - tileData.Height) / (tileData.Width * 2f) : 0f;
 
@@ -153,13 +166,16 @@ public class UITilePanel : UIElement
 				if (TileId == 114 && j == 1)
 					drawHeight += 2;
 
-				spriteBatch.Draw(
-					sourceRectangle: new Rectangle(x, y, drawWidth, drawHeight),
-					texture: tileTexture,
-					position: new Vector2(
+				var sourceRectangle = new Rectangle(x, y, drawWidth, drawHeight);
+				var position = new Vector2(
 						positionTopLeft.X + ((float)i / maxTileDimension + adjustX) * drawDimensionWidth,
 						positionTopLeft.Y + ((float)j / maxTileDimension + adjustY) * drawDimensionHeight
-					),
+				);
+
+				spriteBatch.Draw(
+					sourceRectangle: sourceRectangle,
+					texture: tileTexture,
+					position: position,
 					color: Color.White, rotation: 0f, origin: Vector2.Zero, scale: drawScale, effects: SpriteEffects.None, layerDepth: 0f);
 				y += drawHeight + tileData.CoordinatePadding;
 			}
