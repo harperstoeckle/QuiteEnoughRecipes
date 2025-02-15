@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Terraria;
 using Terraria.GameContent;
+using Terraria.ID;
 using Terraria.ObjectData;
 using Terraria.UI;
 
@@ -15,11 +16,13 @@ public class UITilePanel : UIElement
 {
 	public int TileId;
 	public int TileStyle;
+	public string HoverText = "";
 
 	public UITilePanel(int tileId, int style)
 	{
 		TileId = tileId;
 		TileStyle = style;
+		HoverText = TileID.Search.GetName(tileId);
 
 		Width.Pixels = 50;
 		Height.Pixels = 50;
@@ -52,6 +55,10 @@ public class UITilePanel : UIElement
 			DrawSingleTile(spriteBatch, new(9, 3));
 		}
 		
+		if (IsMouseHovering)
+		{
+			Main.instance.MouseText(HoverText);
+		}
 	}
 
 	private void DrawSingleTile(SpriteBatch spriteBatch, Point tileOnSheet)
