@@ -51,140 +51,6 @@ public class UIQERState : UIState
 		public float ScrollViewPosition;
 	}
 
-	private class OptionPanelToggleButton : UIElement
-	{
-		private string _iconPath;
-		private string _name;
-
-		/*
-		 * Should be set to true to indicate that an option is currently enabled; this will show a
-		 * little red dot and add some text to the tooltip.
-		 */
-		public bool OptionSelected = false;
-
-		/*
-		 * `image` is supposed to be either the bestiary filtering or sorting button, since the icon
-		 * can be easily cut out of them from a specific location.
-		 */
-		public OptionPanelToggleButton(string texturePath, string name)
-		{
-			_iconPath = texturePath;
-			_name = name;
-			Width.Pixels = Height.Pixels = 22;
-		}
-
-		protected override void DrawSelf(SpriteBatch sb)
-		{
-			base.DrawSelf(sb);
-
-			var pos = GetDimensions().Position();
-			var filterIcon = Main.Assets.Request<Texture2D>(_iconPath).Value;
-
-			// We only want the icon part of the texture without the part that usually has the text.
-			sb.Draw(filterIcon, pos, new Rectangle(4, 4, 22, 22), Color.White);
-
-			/*
-			 * This is the same indicator used for trapped chests. It's about the right shape and
-			 * size, so it's good enough.
-			 */
-			if (OptionSelected)
-			{
-				sb.Draw(TextureAssets.Wire.Value, pos + new Vector2(4),
-					new Rectangle(4, 58, 8, 8), Color.White, 0f, new Vector2(4), 1, 0, 0);
-			}
-
-			if (IsMouseHovering)
-			{
-				var c = Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.RightClickToClear");
-				Main.instance.MouseText(_name + (OptionSelected ? '\n' + c : ""));
-			}
-		}
-	}
-
-	// Icon that provides help when hovered.
-	private class HelpIcon : UIElement
-	{
-		public HelpIcon()
-		{
-			Width.Pixels = Height.Pixels = 22;
-			Append(new UIText("?", 0.8f){
-				HAlign = 0.5f,
-				VAlign = 0.5f,
-				TextColor = new Color(0.7f, 0.7f, 0.7f)
-			});
-		}
-
-		protected override void DrawSelf(SpriteBatch sb)
-		{
-			// Kind of a silly way to draw the text on top.
-			base.DrawSelf(sb);
-
-			if (IsMouseHovering)
-			{
-				UICommon.TooltipMouseText(
-					Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SearchHelp"));
-			}
-		}
-	}
-
-	private struct SearchQuery
-	{
-		public string Name;
-		public string? Mod;
-		public string? Tooltip;
-
-		public bool Matches(Item i)
-		{
-			if (Mod != null &&
-				(i.ModItem == null || !NormalizeForSearch(RemoveWhitespace(i.ModItem.Mod.DisplayNameClean)).Contains(Mod)))
-			{
-				return false;
-			}
-
-			if (Tooltip != null)
-			{
-				int yoyoLogo = -1;
-				int researchLine = -1;
-				int numLines = 1;
-				var tooltipNames = new string[30];
-				var tooltipLines = new string[30];
-				var prefixLines = new bool[30];
-				var badPrefixLines = new bool[30];
-
-				Main.MouseText_DrawItemTooltip_GetLinesInfo(i, ref yoyoLogo, ref researchLine, i.knockBack,
-					ref numLines, tooltipLines, prefixLines, badPrefixLines, tooltipNames, out var p);
-
-				var lines = ItemLoader.ModifyTooltips(i, ref numLines, tooltipNames, ref tooltipLines,
-					ref prefixLines, ref badPrefixLines, ref yoyoLogo, out Color?[] o, p);
-
-				/*
-				 * We have to remove the item name line (which is the item name, so it's not "part
-				 * of the description". We also have to remove any tooltip lines specific to this
-				 * mod. Since QER tooltips depend on what slot is being hovered, this can create
-				 * weird behavior where hovering over an item in the browser changes search results.
-				 */
-				var cleanLines = lines.Where(l => l.Name != "ItemName" && !(l.Mod is QuiteEnoughRecipes));
-
-				// Needed since we can't capture `Tooltip`.
-				var tooltip = Tooltip;
-				if (!cleanLines.Any(l => NormalizeForSearch(l.Text).Contains(tooltip)))
-				{
-					return false;
-				}
-			}
-
-			return i.Name.ToLower().Contains(Name);
-		}
-
-		// Used to remove whitespace
-		private static readonly Regex WhitespaceRegex = new(@"\s+");
-		private string RemoveWhitespace(string s)
-		{
-			return WhitespaceRegex.Replace(s, "");
-		}
-	}
-
-	private const float BarHeight = 50;
 	private const float ScrollBarWidth = 30;
 
 	/*
@@ -198,9 +64,6 @@ public class UIQERState : UIState
 
 	// Keeps track of the recipe pages that have been viewed, not including the current one.
 	private List<HistoryEntry> _history = new();
-
-	private List<Item> _allItems;
-	private List<Item> _filteredItems;
 
 	// Contains references to tabs in either _sourceTabs or _usageTabs.
 	private List<RecipeTab> _activeTabs = new();
@@ -230,44 +93,20 @@ public class UIQERState : UIState
 	// Panel with the item list. This is needed so the filter panel can be added and removed.
 	private UIPanel _itemListPanel = new();
 
+	private UIIngredientSearchPage _itemSearchPage;
+
 	/*
 	 * When an item panel is being hovered, this keeps track of it. This is needed so that we can
 	 * have the panel do tooltip modifications.
 	 */
 	private UIItemPanel? _hoveredItemPanel = null;
 
-	// Gives us access to the active search bar so it can be canceled.
-	private UIQERSearchBar? _activeSearchBar = null;
-	private string? _searchText = null;
-
 	// This will contain at most one of the options panels (sort, filter).
 	private UIPopupContainer _optionPanelContainer = new();
 
-	private OptionPanelToggleButton _filterToggleButton = new("Images/UI/Bestiary/Button_Filtering",
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
-	private UIOptionPanel<Predicate<Item>> _filterPanel = new();
-	private Predicate<Item>? _activeFilter = null;
-
-	private OptionPanelToggleButton _sortToggleButton = new("Images/UI/Bestiary/Button_Sorting",
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SortHover"));
-	private UIOptionPanel<Comparison<Item>> _sortPanel = new();
-	private Comparison<Item>? _activeSortComparison = null;
-
 	public UIQERState()
 	{
-		/*
-		 * Our "master list" of items is sorted by creative order first and item ID second, so this
-		 * is the order that will be used if no sort order is chosen.
-		 */
-		_allItems = Enumerable.Range(0, ItemLoader.ItemCount)
-			.Select(i => new Item(i))
-			.Where(i => i.type != 0)
-			.OrderBy(i => {
-				var itemGroup = ContentSamples.CreativeHelper.GetItemGroup(i, out int orderInGroup);
-				return (itemGroup, orderInGroup, i.type);
-			})
-			.ToList();
-		_filteredItems = new(_allItems);
+		_itemSearchPage = new(_optionPanelContainer);
 
 		AddSourceHandler(new RecipeHandlers.BasicSourceHandler());
 		AddSourceHandler(new RecipeHandlers.ShimmerSourceHandler());
@@ -356,32 +195,16 @@ public class UIQERState : UIState
 		_optionPanelContainer.Top.Percent = 0.1f;
 		_optionPanelContainer.Left.Percent = 0.26f;
 
-		_filterPanel.Width.Percent = 1;
-		_filterPanel.Height.Percent = 1;
-		_filterPanel.OnSelectionChanged += pred => {
-			_filterToggleButton.OptionSelected = pred != null;
-			_activeFilter = pred;
-			UpdateDisplayedItems();
-		};
-
-		_sortPanel.Width.Percent = 1;
-		_sortPanel.Height.Percent = 1;
-		_sortPanel.OnSelectionChanged += comp => {
-			_sortToggleButton.OptionSelected = comp != null;
-			_activeSortComparison = comp;
-			UpdateDisplayedItems();
-		};
-
-		_sortPanel.AddItemIconOption(new Item(ItemID.AlphabetStatue1),
+		_itemSearchPage.AddSort(new Item(ItemID.AlphabetStatue1),
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.ID"),
 			(x, y) => x.type.CompareTo(y.type));
-		_sortPanel.AddItemIconOption(new Item(ItemID.AlphabetStatueA),
+		_itemSearchPage.AddSort(new Item(ItemID.AlphabetStatueA),
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Alphabetical"),
 			(x, y) => x.Name.CompareTo(y.Name));
-		_sortPanel.AddItemIconOption(new Item(ItemID.StarStatue),
+		_itemSearchPage.AddSort(new Item(ItemID.StarStatue),
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Rarity"),
 			(x, y) => x.rare.CompareTo(y.rare));
-		_sortPanel.AddItemIconOption(new Item(ItemID.ChestStatue),
+		_itemSearchPage.AddSort(new Item(ItemID.ChestStatue),
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Value"),
 			(x, y) => x.value.CompareTo(y.value));
 
@@ -399,7 +222,7 @@ public class UIQERState : UIState
 	protected override void DrawSelf(SpriteBatch sb)
 	{
 		// TODO: Is this actually the right place to handle input?
-		if (UISystem.BackKey.JustPressed && _activeSearchBar == null)
+		if (UISystem.BackKey.JustPressed)
 		{
 			TryPopHistory();
 		}
@@ -414,7 +237,7 @@ public class UIQERState : UIState
 	// This must be called before the filter panel is initialized.
 	public void AddFilter(Item icon, string hoverName, Predicate<Item> pred)
 	{
-		_filterPanel.AddItemIconOption(icon, hoverName, pred);
+		_itemSearchPage.AddFilter(icon, hoverName, pred);
 	}
 
 	// If it exists, load the top of the history stack and pop it.
@@ -599,8 +422,7 @@ public class UIQERState : UIState
 	// If a search bar is focused, stop taking input from it.
 	private void StopTakingInput()
 	{
-		_activeSearchBar?.SetTakingInput(false);
-		_activeSearchBar = null;
+		_itemSearchPage.StopTakingInput();
 	}
 
 	// The left panel that displays recipes.
@@ -642,111 +464,8 @@ public class UIQERState : UIState
 		_itemListPanel.Height.Percent = 0.8f;
 		_itemListPanel.VAlign = 0.5f;
 
-		var scroll = new UIScrollbar();
-		scroll.Height = new StyleDimension(-BarHeight, 1);
-		scroll.HAlign = 1;
-		scroll.VAlign = 1;
-
-		_itemList.Scrollbar = scroll;
-		_itemList.Items = _filteredItems;
-		_itemList.Width = new StyleDimension(-ScrollBarWidth, 1);
-		_itemList.Height = new StyleDimension(-BarHeight, 1);
-		_itemList.VAlign = 1;
-
-		_filterToggleButton.OnLeftClick += (b, e) => _optionPanelContainer.Toggle(_filterPanel);
-		_filterToggleButton.OnRightClick += (b, e) => _filterPanel.DisableAllOptions();
-
-		float offset = _filterToggleButton.Width.Pixels + 10;
-
-		_sortToggleButton.Left.Pixels = offset;
-		_sortToggleButton.OnLeftClick += (b, e) => _optionPanelContainer.Toggle(_sortPanel);
-		_sortToggleButton.OnRightClick += (b, e) => _sortPanel.DisableAllOptions();
-
-		offset += _sortToggleButton.Width.Pixels + 10;
-
-		var helpIcon = new HelpIcon();
-		helpIcon.HAlign = 1;
-
-		var search = new UIQERSearchBar();
-		// Make room for the filters on the left and the help icon on the right.
-		search.Width = new StyleDimension(-offset - helpIcon.Width.Pixels - 10, 1);
-		search.Left.Pixels = offset;
-		search.OnStartTakingInput += () => {
-			_activeSearchBar = search;
-		};
-		search.OnEndTakingInput += () => {
-			_activeSearchBar = null;
-		};
-		search.OnContentsChanged += s => {
-			_searchText = s;
-			UpdateDisplayedItems();
-		};
-
-		_itemListPanel.Append(_itemList);
-		_itemListPanel.Append(scroll);
-		_itemListPanel.Append(_filterToggleButton);
-		_itemListPanel.Append(_sortToggleButton);
-		_itemListPanel.Append(search);
-		_itemListPanel.Append(helpIcon);
-
+		_itemListPanel.Append(_itemSearchPage);
 		Append(_itemListPanel);
-	}
-
-	/*
-	 * Put text in a standard form so that searching can be effectively done using
-	 * `string.Contains`.
-	 */
-	private static string NormalizeForSearch(string s)
-	{
-		return s.Trim().ToLower();
-	}
-
-	private static SearchQuery ParseSearchText(string text)
-	{
-		var query = new SearchQuery();
-		var parts = text.Split("#", 2);
-
-		if (parts.Length >= 2)
-		{
-			query.Tooltip = NormalizeForSearch(parts[1]);
-		}
-
-		/*
-		 * TODO: These could be made more efficient by not re-compiling the regexes every time, but
-		 * it's probably fine since this only happens once when the search is changed.
-		 *
-		 * This will just use the first specified mod and ignore the rest.
-		 */
-		var modCaptures = Regex.Matches(parts[0], @"@(\S+)");
-		if (modCaptures.Count >= 1)
-		{
-			query.Mod = NormalizeForSearch(modCaptures[0].Groups[1].Value);
-		}
-
-		/*
-		 * We remove *any* @ from the name, even if it doesn't have any characters after it that
-		 * might be part of a mod.
-		 */
-		query.Name = NormalizeForSearch(Regex.Replace(parts[0], @"@\S*\s*", ""));
-
-		return query;
-	}
-
-	// Update what items are being displayed based on the search bar and filters.
-	private void UpdateDisplayedItems()
-	{
-		var query = ParseSearchText(_searchText ?? "");
-
-		_filteredItems.Clear();
-		_filteredItems.AddRange(
-			_allItems.Where(i => query.Matches(i) && (_activeFilter?.Invoke(i) ?? true)));
-
-		if (_activeSortComparison != null)
-		{
-			_filteredItems.Sort(_activeSortComparison);
-		}
-
-		_itemList.Items = _filteredItems;
 	}
 
 	// Add a filter using a localization key.
