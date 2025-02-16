@@ -275,11 +275,15 @@ public class UIQERState : UIState
 		AddSourceHandler(new RecipeHandlers.ItemDropSourceHandler());
 		AddSourceHandler(new RecipeHandlers.NPCDropSourceHandler());
 		AddSourceHandler(new RecipeHandlers.GlobalLootSourceHandler());
+		AddSourceHandler(new RecipeHandlers.TileDropsSourceHandler());
+		AddSourceHandler(new RecipeHandlers.WallDropsSourceHandler());
 
 		AddUsageHandler(new RecipeHandlers.BasicUsageHandler());
 		AddUsageHandler(new RecipeHandlers.TileUsageHandler());
 		AddUsageHandler(new RecipeHandlers.ShimmerUsageHandler());
 		AddUsageHandler(new RecipeHandlers.ItemDropUsageHandler());
+		AddUsageHandler(new RecipeHandlers.CreateTileUsageHandler());
+		AddUsageHandler(new RecipeHandlers.CreateWallUsageHandler());
 
 		AddInternalFilter(ItemID.StoneBlock, "Tiles", ItemPredicates.IsTile);
 		AddInternalFilter(ItemID.Furnace, "CraftingStations", ItemPredicates.IsCraftingStation);
