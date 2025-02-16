@@ -37,4 +37,12 @@ public class QuiteEnoughRecipes : Mod
 			Main.Assets.Request<Texture2D>(TextureAssets.Tile[tileId].Name, AssetRequestMode.AsyncLoad);
 		}
 	}
+
+	public static void LoadWallAsync(int wallId)
+	{
+		if (TextureAssets.Wall[wallId].State == AssetState.NotLoaded)
+		{
+			Main.Assets.Request<Texture2D>(TextureAssets.Wall[wallId].Name, AssetRequestMode.AsyncLoad);
+		}
+	}
 }

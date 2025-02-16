@@ -46,6 +46,8 @@ Tabs: {
 	GlobalDrops: Global Loot
 	TileDrops: Tile Drops
 	CreatedTiles: Created Tiles
+	WallDrops: Wall Drops
+	CreatedWalls: Created Walls
 }
 
 Filters: {

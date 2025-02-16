@@ -9,6 +9,8 @@ using Terraria.UI;
 using Terraria;
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using Terraria.ModLoader.Core;
 
 namespace QuiteEnoughRecipes;
 
@@ -274,6 +276,41 @@ public static class RecipeHandlers
 		}
 	}
 
+	// Shows the walls that a given item drops from
+	public class WallDropsSourceHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.WallDrops");
+
+		public Item TabItem { get; } = new(ItemID.StoneWall);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			var walls = GetWallsThatDropItem(i.type);
+			foreach (var wall in walls)
+			{
+				yield return new UIDropsPanel(new UIWallPanel(wall), [new(i.type, 1, 1, 1)]);
+			}
+		}
+	}
+
+	// Shows the walls placed by a given item 
+	public class CreateWallUsageHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.CreatedWalls");
+
+		public Item TabItem { get; } = new(ItemID.StoneWall);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		{
+			if (i.createWall != -1)
+			{
+				yield return new UIDropsPanel(new UIWallPanel(i.createWall), [new(i.type, 1, 1, 1)]);
+			}
+		}
+	}
+
 	private static bool RecipeAcceptsItem(Recipe r, Item i)
 	{
 		return r.requiredItem.Any(x => x.type == i.type)
@@ -358,6 +395,48 @@ public static class RecipeHandlers
 		if (ItemTypeToTileTypeAndTileStyle.TryGetValue(itemId, out var tile))
 		{
 			return tile;
+		}
+		return [];
+	}
+
+	internal static FieldInfo WallLoader_wallTypeToItemType = typeof(WallLoader).GetField("wallTypeToItemType", BindingFlags.Static | BindingFlags.NonPublic);
+	internal static Dictionary<int, int> WallTypeToItemType => WallLoader_wallTypeToItemType.GetValue(null) as Dictionary<int, int>;
+
+	[UnsafeAccessor(UnsafeAccessorKind.StaticMethod, Name = "KillWall_GetItemDrops")]
+	extern static int WorldGen_KillWall_GetItemDrops(WorldGen self, Tile tile);
+
+	private static Dictionary<int, int> VanillaWallDrops()
+	{
+		Dictionary<int, int> lookup = [];
+		var tempTile = new Tile();
+		var wallIdCache = tempTile.WallType;
+		for (int i = 0; i < WallID.Count; i++)
+		{
+			tempTile.Get<WallTypeData>().Type = (ushort)i;
+			// Vanilla only checks WallType when determining the drop
+			var drop = WorldGen_KillWall_GetItemDrops(null, tempTile);
+			if (drop != 0)
+			{
+				lookup[i] = drop;
+			}
+		}
+		// Tiles are heavily manged by TML so resetting it to it's initial state is important
+		tempTile.Get<WallTypeData>().Type = wallIdCache;
+		return lookup;
+	}
+
+	private static Dictionary<int, List<int>>? _itemTypeToWallType = null;
+	internal static Dictionary<int, List<int>> ItemTypeToWallType => _itemTypeToWallType ??= WallTypeToItemType
+			.Where(entry => WallLoader.GetWall(entry.Value) != null && !LoaderUtils.HasOverride(WallLoader.GetWall(entry.Value), m => m.Drop))
+			.Concat(VanillaWallDrops())
+			.GroupBy(entry => entry.Value)
+			.ToDictionary(group => group.Key, group => group.Select(entry => entry.Key).ToList());
+
+	private static List<int> GetWallsThatDropItem(int itemId)
+	{
+		if (ItemTypeToWallType.TryGetValue(itemId, out var walls))
+		{
+			return walls;
 		}
 		return [];
 	}
