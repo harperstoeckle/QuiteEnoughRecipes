@@ -70,8 +70,6 @@ public class UIQERState : UIState
 	private List<RecipeTab> _sourceTabs = new();
 	private List<RecipeTab> _usageTabs = new();
 
-	private UIItemList _itemList = new();
-
 	/*
 	 * This refers either to `_sourceTabs` or `_usageTabs`, and is used to keep track of tab
 	 * history.
