@@ -385,11 +385,6 @@ public static class RecipeHandlers
 		_itemTypeToTileTypeAndTileStyle ??= TileTypeAndTileStyleToItemType.GroupBy(entry => entry.Value)
 			.ToDictionary(entry => entry.Key, entry => entry.Select(entry => entry.Key).ToList());
 
-	private static Dictionary<int, List<(int Style, int Item)>>? _tileTypeToTileStyleAndItemType = null;
-	internal static Dictionary<int, List<(int Style, int Item)>> TileTypeToTileStyleAndItemType =>
-		_tileTypeToTileStyleAndItemType ??= TileTypeAndTileStyleToItemType.GroupBy(entry => entry.Key.TileId)
-			.ToDictionary(entry => entry.Key, entry => entry.Select(entry => (entry.Key.Style, entry.Value)).ToList());
-
 	private static List<(int TileId, int Style)> GetTilesThatDropItem(int itemId)
 	{
 		if (ItemTypeToTileTypeAndTileStyle.TryGetValue(itemId, out var tile))
