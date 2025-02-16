@@ -46,7 +46,7 @@ public class UIQERState : UIState
 	{
 		// The tabs that were passed to `TryShowRelevantTabs`.
 		public List<RecipeTab> Tabs;
-		public Item ClickedItem;
+		public IIngredient ClickedIngredient;
 		public int TabIndex;
 		public float ScrollViewPosition;
 	}
@@ -75,7 +75,7 @@ public class UIQERState : UIState
 	 * history.
 	 */
 	private List<RecipeTab>? _currentTabSet = null;
-	private Item? _clickedItem = null;
+	private IIngredient? _clickedIngredient = null;
 
 	// Index of currently active tab in `_activeTabs`.
 	private int _tabIndex = 0;
@@ -229,8 +229,8 @@ public class UIQERState : UIState
 	public void AddSourceHandler(IRecipeHandler handler) => _sourceTabs.Add(new(handler));
 	public void AddUsageHandler(IRecipeHandler handler) => _usageTabs.Add(new(handler));
 
-	public void ShowSources(Item i) => TryPushPage(_sourceTabs, i);
-	public void ShowUses(Item i) => TryPushPage(_usageTabs, i);
+	public void ShowSources(IIngredient i) => TryPushPage(_sourceTabs, i);
+	public void ShowUses(IIngredient i) => TryPushPage(_usageTabs, i);
 
 	// This must be called before the filter panel is initialized.
 	public void AddFilter(Item icon, string hoverName, Predicate<Item> pred)
@@ -250,7 +250,7 @@ public class UIQERState : UIState
 		 * It would be weird if the page showed something the first time, but didn't have anything
 		 * to show this time, so we'll just assume it will always work.
 		 */
-		TryShowRelevantTabs(top.Tabs, top.ClickedItem);
+		TryShowRelevantTabs(top.Tabs, top.ClickedIngredient);
 		SwitchToTab(top.TabIndex);
 		_activeTabs[_tabIndex].Scrollbar.ViewPosition = top.ScrollViewPosition;
 	}
@@ -271,9 +271,9 @@ public class UIQERState : UIState
 			_optionPanelContainer.Close();
 		}
 
-		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
+		if (e.Target is IIngredientElement s && s.Ingredient != null)
 		{
-			ShowSources(p.DisplayedItem);
+			ShowSources(s.Ingredient);
 		}
 	}
 
@@ -289,9 +289,9 @@ public class UIQERState : UIState
 			_optionPanelContainer.Close();
 		}
 
-		if (e.Target is UIItemPanel p && p.DisplayedItem != null)
+		if (e.Target is IIngredientElement s && s.Ingredient != null)
 		{
-			ShowUses(p.DisplayedItem);
+			ShowUses(s.Ingredient);
 		}
 	}
 
@@ -314,19 +314,21 @@ public class UIQERState : UIState
 	}
 
 	/*
-	 * Try to show the subset of tabs in `tabs` that apply to the item `item`. If no tabs have any
-	 * elements for the given item, the view is not changed.
+	 * Try to show the subset of tabs in `tabs` that apply to the ingredient `ingredient`. If no
+	 * tabs have any elements for the given item, the view is not changed.
 	 */
-	private bool TryShowRelevantTabs(List<RecipeTab> tabs, Item item)
+	private bool TryShowRelevantTabs(List<RecipeTab> tabs, IIngredient ingredient)
 	{
 		// List of lists of things to display for each tab.
-		var displayLists = tabs.Select(t => t.Handler.GetRecipeDisplays(item).ToList()).ToList();
+		var displayLists = tabs
+			.Select(t => t.Handler.GetRecipeDisplays(ingredient).ToList())
+			.ToList();
 
 		// No tab has anything to display; don't do anything else.
 		if (displayLists.All(l => l.Count == 0)) { return false; }
 
 		_currentTabSet = tabs;
-		_clickedItem = item;
+		_clickedIngredient = ingredient;
 
 		// We only want to update and show tabs that are relevant (i.e., they have content).
 		_activeTabs.Clear();
@@ -354,30 +356,31 @@ public class UIQERState : UIState
 
 	/*
 	 * Try to switch the page. If there was something to show, push a history entry on the top of
-	 * the history stack. If successful, the page will show results for item `item` with tabs taken
-	 * from `tabs`. If the item and tab set are the same as the currently active one, then the page
-	 * layout will be reset, but a new history entry will not be added.
+	 * the history stack. If successful, the page will show results for ingredient `ingredient` with
+	 * tabs taken from `tabs`. If the ingredient and tab set are the same as the currently active
+	 * one, then the page layout will be reset, but a new history entry will not be added.
 	 */
-	private void TryPushPage(List<RecipeTab> tabs, Item item)
+	private void TryPushPage(List<RecipeTab> tabs, IIngredient ingredient)
 	{
 		/*
 		 * If there is no tab set active, then we are still on the blank page, so there's no history
-		 * item we can actually push on the stack.
+		 * ingredient we can actually push on the stack.
 		 */
-		if (_currentTabSet == null || _currentTabSet == tabs && _clickedItem.type == item.type)
+		if (_currentTabSet == null ||
+			_currentTabSet == tabs && _clickedIngredient.IsEquivalent(ingredient))
 		{
-			TryShowRelevantTabs(tabs, item);
+			TryShowRelevantTabs(tabs, ingredient);
 			return;
 		}
 
 		var historyEntry = new HistoryEntry{
 			Tabs = _currentTabSet,
-			ClickedItem = _clickedItem,
+			ClickedIngredient = _clickedIngredient,
 			TabIndex = _tabIndex,
 			ScrollViewPosition = _activeTabs[_tabIndex].Scrollbar.ViewPosition
 		};
 
-		if (TryShowRelevantTabs(tabs, item))
+		if (TryShowRelevantTabs(tabs, ingredient))
 		{
 			_history.Add(historyEntry);
 		}

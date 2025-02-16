@@ -16,12 +16,14 @@ namespace QuiteEnoughRecipes;
  * have any other special behavior when interacted with; this can be achieved by subscribing to the
  * events from `UIElement`.
  */
-public class UIItemPanel : UIElement
+public class UIItemPanel : UIElement, IIngredientElement
 {
 	private float _scale;
 
 	// The item to show. When this is set to `null`, nothing at all will be drawn.
 	public Item? DisplayedItem;
+
+	public IIngredient Ingredient => new ItemIngredient(DisplayedItem);
 
 	// The icon will be scaled to fit in a square with side length `width`.
 	public UIItemPanel(Item? displayedItem = null, float width = 50)

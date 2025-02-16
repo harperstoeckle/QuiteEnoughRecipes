@@ -21,11 +21,13 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.WorkBench);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
 		{
+			if (!(ing is ItemIngredient i)) { yield break; }
+
 			foreach (var r in Main.recipe)
 			{
-				if (r.createItem.type == i.type)
+				if (r.createItem.type == i.Item.type)
 				{
 					yield return new UIRecipePanel(r);
 				}
@@ -41,11 +43,13 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.WorkBench);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
 		{
+			if (!(ing is ItemIngredient i)) { yield break; }
+
 			foreach (var r in Main.recipe)
 			{
-				if (RecipeAcceptsItem(r, i))
+				if (RecipeAcceptsItem(r, i.Item))
 				{
 					yield return new UIRecipePanel(r);
 				}
@@ -64,11 +68,13 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.Furnace);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
 		{
+			if (!(ing is ItemIngredient i)) { yield break; }
+
 			foreach (var r in Main.recipe)
 			{
-				if (r.requiredTile.Contains(i.createTile))
+				if (r.requiredTile.Contains(i.Item.createTile))
 				{
 					yield return new UIRecipePanel(r);
 				}
@@ -84,13 +90,15 @@ public static class RecipeHandlers
 		
 		public Item TabItem { get; } = new(ItemID.BottomlessShimmerBucket);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
 		{
+			if (!(ing is ItemIngredient i)) { yield break; }
+
 			for (int id = 0; id < ItemID.Sets.ShimmerTransformToItem.Length; ++id)
 			{
-				if (ShimmerTransformResult(id) == i.type)
+				if (ShimmerTransformResult(id) == i.Item.type)
 				{
-					yield return new UIRecipePanel(new(i.type), new List<Item>{new(id)});
+					yield return new UIRecipePanel(new(i.Item.type), new List<Item>{new(id)});
 				}
 			}
 		}
@@ -104,11 +112,13 @@ public static class RecipeHandlers
 		
 		public Item TabItem { get; } = new(ItemID.BottomlessShimmerBucket);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
 		{
-			int id = ShimmerTransformResult(i.type);
+			if (!(ing is ItemIngredient i)) { yield break; }
+
+			int id = ShimmerTransformResult(i.Item.type);
 			if (id == -1) { yield break; }
-			yield return new UIRecipePanel(new(id), new List<Item>{new(i.type)});
+			yield return new UIRecipePanel(new(id), new List<Item>{new(i.Item.type)});
 		}
 	}
 
@@ -120,11 +130,13 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.GoldCoin);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
 		{
+			if (!(ing is ItemIngredient i)) { yield break; }
+
 			foreach (var shop in NPCShopDatabase.AllShops)
 			{
-				if (shop.ActiveEntries.Any(e => e.Item.type == i.type))
+				if (shop.ActiveEntries.Any(e => e.Item.type == i.Item.type))
 				{
 					yield return new UINPCShopPanel(shop);
 				}
@@ -140,8 +152,10 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.CultistBossBag);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
 		{
+			if (!(ing is ItemIngredient i)) { yield break; }
+
 			var item = new Item();
 
 			foreach (int itemID in Enumerable.Range(0, ItemLoader.ItemCount))
@@ -149,7 +163,7 @@ public static class RecipeHandlers
 				item.SetDefaults(itemID);
 
 				var droppedItems = GetItemDrops(item.type);
-				if (droppedItems.Any(info => info.itemId == i.type))
+				if (droppedItems.Any(info => info.itemId == i.Item.type))
 				{
 					yield return new UIDropsPanel(new UIItemPanel(item.Clone(), 70), droppedItems);
 				}
@@ -165,12 +179,14 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.CultistBossBag);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
 		{
-			var droppedItems = GetItemDrops(i.type);
+			if (!(ing is ItemIngredient i)) { yield break; }
+
+			var droppedItems = GetItemDrops(i.Item.type);
 			if (droppedItems.Count > 0)
 			{
-				yield return new UIDropsPanel(new UIItemPanel(i, 70), droppedItems);
+				yield return new UIDropsPanel(new UIItemPanel(i.Item, 70), droppedItems);
 			}
 		}
 	}
@@ -183,8 +199,10 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.ZombieArm);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
 		{
+			if (!(ing is ItemIngredient i)) { yield break; }
+
 			foreach (int id in Enumerable.Range(0, NPCLoader.NPCCount))
 			{
 				/*
@@ -196,7 +214,7 @@ public static class RecipeHandlers
 				if (Main.BestiaryDB.FindEntryByNPCID(id).Icon == null) { continue; }
 
 				var droppedItems = GetNPCDrops(id);
-				if (droppedItems.Any(info => info.itemId == i.type))
+				if (droppedItems.Any(info => info.itemId == i.Item.type))
 				{
 					yield return new UIDropsPanel(new UINPCPanel(id){
 						Width = new StyleDimension(72, 0),
@@ -215,11 +233,13 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.Heart);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(Item i)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
 		{
+			if (!(ing is ItemIngredient i)) { yield break; }
+
 			var drops = GetGlobalDrops();
 
-			if (drops.Any(info => info.itemId == i.type))
+			if (drops.Any(info => info.itemId == i.Item.type))
 			{
 				/*
 				 * Cheaty way to do this. The "left element" that would usually be a portrait is

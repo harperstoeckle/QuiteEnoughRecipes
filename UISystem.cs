@@ -63,13 +63,13 @@ public class UISystem : ModSystem
 
 		if (HoverSourcesKey.JustPressed && Main.HoverItem != null && !Main.HoverItem.IsAir)
 		{
-			_ui.ShowSources(Main.HoverItem);
+			_ui.ShowSources(new ItemIngredient(Main.HoverItem));
 			IngameFancyUI.OpenUIState(_ui);
 		}
 
 		if (HoverUsesKey.JustPressed && Main.HoverItem != null && !Main.HoverItem.IsAir)
 		{
-			_ui.ShowUses(Main.HoverItem);
+			_ui.ShowUses(new ItemIngredient(Main.HoverItem));
 			IngameFancyUI.OpenUIState(_ui);
 		}
 	}
