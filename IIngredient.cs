@@ -67,3 +67,10 @@ public record struct ItemIngredient(Item Item) : IIngredient
 		return other is ItemIngredient i && i.Item.type == Item.type;
 	}
 }
+
+public record struct NPCIngredient(int ID) : IIngredient
+{
+	public string? Name => Lang.GetNPCNameValue(ID);
+	public Mod? Mod => NPCLoader.GetNPC(ID)?.Mod;
+	public IEnumerable<string> GetTooltipLines() => null;
+}

@@ -11,7 +11,7 @@ namespace QuiteEnoughRecipes;
  * Displays an NPC. Similar to a bestiary button, but is never locked. Shows the name of the NPC
  * when hovered.
  */
-public class UINPCPanel : UIElement
+public class UINPCPanel : UIElement, IIngredientElement
 {
 	// This needs to be a child of the panel to handle overflow properly.
 	private class UINPCIcon : UIElement
@@ -63,6 +63,8 @@ public class UINPCPanel : UIElement
 
 	private UINPCIcon _icon;
 	private int _npcID;
+
+	public IIngredient Ingredient => new NPCIngredient(_npcID);
 
 	public UINPCPanel(int npcID)
 	{

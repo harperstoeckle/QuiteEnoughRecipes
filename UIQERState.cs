@@ -117,6 +117,7 @@ public class UIQERState : UIState
 		AddUsageHandler(new RecipeHandlers.TileUsageHandler());
 		AddUsageHandler(new RecipeHandlers.ShimmerUsageHandler());
 		AddUsageHandler(new RecipeHandlers.ItemDropUsageHandler());
+		AddUsageHandler(new RecipeHandlers.NPCDropUsageHandler());
 
 		AddInternalFilter(ItemID.StoneBlock, "Tiles", ItemPredicates.IsTile);
 		AddInternalFilter(ItemID.Furnace, "CraftingStations", ItemPredicates.IsCraftingStation);

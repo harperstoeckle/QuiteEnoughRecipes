@@ -225,6 +225,26 @@ public static class RecipeHandlers
 		}
 	}
 
+	// Shows what items are dropped by an NPC.
+	public class NPCDropUsageHandler : IRecipeHandler
+	{
+		public LocalizedText HoverName { get; }
+			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.NPCDrops");
+
+		public Item TabItem { get; } = new(ItemID.ZombieArm);
+
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
+		{
+			if (!(ing is NPCIngredient n)) { yield break; }
+			if (Main.BestiaryDB.FindEntryByNPCID(n.ID).Icon == null) { yield break; }
+
+			yield return new UIDropsPanel(new UINPCPanel(n.ID){
+				Width = new StyleDimension(72, 0),
+				Height = new StyleDimension(72, 0)
+			}, GetNPCDrops(n.ID));
+		}
+	}
+
 	// If the item can be dropped from any NPC, this tab will show.
 	public class GlobalLootSourceHandler : IRecipeHandler
 	{
