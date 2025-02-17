@@ -73,4 +73,9 @@ public record struct NPCIngredient(int ID) : IIngredient
 	public string? Name => Lang.GetNPCNameValue(ID);
 	public Mod? Mod => NPCLoader.GetNPC(ID)?.Mod;
 	public IEnumerable<string> GetTooltipLines() => null;
+
+	public bool IsEquivalent(IIngredient other)
+	{
+		return other is NPCIngredient n && n.ID == ID;
+	}
 }
