@@ -472,6 +472,7 @@ public class UIQERState : UIState
 
 		_ingredientTabBar.OnTabSelected += page => {
 			StopTakingInput();
+			_optionPanelContainer.Close();
 			ingredientListContainer.Open(page);
 		};
 
