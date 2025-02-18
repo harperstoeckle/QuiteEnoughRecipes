@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
+using System.Linq;
 using System;
 using Terraria.GameContent.UI.Elements;
 using Terraria.Localization;
@@ -10,10 +11,11 @@ using Terraria;
 namespace QuiteEnoughRecipes;
 
 /*
- * Provides a horizontal set of tabs that can be clicked through. `UITabBar` does *not* handle
- * actually switching the contents; this should be done by subscribing to the `OnTabSelected` event.
+ * Provides a horizontal set of tabs that can be clicked through, where each tab keeps track of a
+ * value of type `T`. Note that `UITabBar` doesn't actually handle the content switching; this
+ * should be handled by subscribing to `OnTabSelected`.
  */
-public class UITabBar : UIElement
+public class UITabBar<T> : UIElement
 {
 	private class Tab : UIPanel
 	{
@@ -23,12 +25,12 @@ public class UITabBar : UIElement
 		private LocalizedText _text;
 
 		public bool Selected = false;
-		public int Index { get; private set; }
+		public T  Value { get; private set; }
 
-		public Tab(LocalizedText text, Item item, int index)
+		public Tab(LocalizedText text, Item item, T value)
 		{
 			_text = text;
-			Index = index;
+			Value = value;
 			Append(new UIItemIcon(item, false){ IgnoresMouseInteraction = true, VAlign = 0.5f });
 		}
 
@@ -47,8 +49,11 @@ public class UITabBar : UIElement
 
 	private List<Tab> _tabs = new();
 
-	// Called with the index of the tab that was selected.
-	public event Action<int> OnTabSelected;
+	/*
+	 * Called as `OnTabSelected(v)` when a tab is selected, where `v` is the value associated with
+	 * the tab.
+	 */
+	public event Action<T> OnTabSelected;
 
 	public UITabBar()
 	{
@@ -63,21 +68,15 @@ public class UITabBar : UIElement
 	}
 
 	/*
-	 * Adds a tab to the right that displays `text` when hovered and returns its index. The tab
-	 * itself will display `item` as an icon.
+	 * Add a tab. The tab itself will use `item` as an icon and will display `text` when hovered.
+	 * This tab will be associated with the value `v`; when this tab is clicked, `OnTabSelected`
+	 * will be activated with `v` as the argument.
 	 */
-	public int AddTab(LocalizedText text, Item item)
+	public int AddTab(LocalizedText text, Item item, T v)
 	{
-		var tab = new Tab(text, item, _tabs.Count);
+		var tab = new Tab(text, item, v);
 		_tabs.Add(tab);
 		Append(tab);
-
-		// This is the first tab, so we want to select it by default.
-		if (_tabs.Count == 1)
-		{
-			tab.Selected = true;
-		}
-
 		Recalculate();
 		return _tabs.Count - 1;
 	}
@@ -112,16 +111,26 @@ public class UITabBar : UIElement
 		// I'm not sure if this is the "correct" way to do things.
 		if (e.Target is Tab t)
 		{
-			SwitchToTab(t.Index);
+			MakeTabCurrent(t);
 		}
 	}
 
-	// This will trigger the `OnTabSelected` event.
-	public void SwitchToTab(int i)
+	/*
+	 * Switch to the tab associated with the value `v`. This *will* activate the `OnTabSelected`
+	 * event. If multiple tabs have the value `v`, then the leftmost one will always be chosen.
+	 */
+	public bool OpenTabFor(T v)
 	{
-		if (i >= _tabs.Count) { return; }
+		var tab = _tabs.FirstOrDefault(t => Object.Equals(t.Value, v));
+		if (tab == null) { return false; }
+		MakeTabCurrent(tab);
+		return true;
+	}
+
+	private void MakeTabCurrent(Tab t)
+	{
 		foreach (var tab in _tabs) { tab.Selected = false; }
-		_tabs[i].Selected = true;
-		OnTabSelected?.Invoke(i);
+		t.Selected = true;
+		OnTabSelected?.Invoke(t.Value);
 	}
 }

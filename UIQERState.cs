@@ -18,26 +18,53 @@ namespace QuiteEnoughRecipes;
 
 public class UIQERState : UIState
 {
-	// A tab that may or may not be displayed.
-	private class RecipeTab
+	private class UIRecipePage : UIElement
 	{
-		public IRecipeHandler Handler;
-		public UIList RecipeList = new(){
-			Width = new(0, 1),
+		private IRecipeHandler _handler;
+		private UIList _recipeList = new(){
+			Width = new(-ScrollBarWidth, 1),
 			Height = new(0, 1),
 			ListPadding = 30
 		};
 
 		// Each tab has its own associated scrollbar.
-		public UIScrollbar Scrollbar = new(){
+		private UIScrollbar _scrollbar = new(){
 			Height = new(0, 1),
 			HAlign = 1
 		};
 
-		public RecipeTab(IRecipeHandler handler)
+		public float ScrollViewPosition
 		{
-			Handler = handler;
-			RecipeList.SetScrollbar(Scrollbar);
+			get => _scrollbar.ViewPosition;
+			set => _scrollbar.ViewPosition = value;
+		}
+
+		public LocalizedText HoverName => _handler.HoverName;
+		public Item TabItem => _handler.TabItem;
+
+		public UIRecipePage(IRecipeHandler handler)
+		{
+			_handler = handler;
+			_recipeList.SetScrollbar(_scrollbar);
+
+			Width.Percent = 1;
+			Height.Percent = 1;
+
+			Append(_recipeList);
+			Append(_scrollbar);
+		}
+
+		/*
+		 * Attempts to show recipes for `ingredient`. If there are no recipes, this element remains
+		 * unchanged and this function will return false.
+		 */
+		public bool ShowRecipes(IIngredient ingredient)
+		{
+			var recipeDisplays = _handler.GetRecipeDisplays(ingredient).ToList();
+			if (recipeDisplays.Count == 0) { return false; }
+			_recipeList.Clear();
+			_recipeList.AddRange(recipeDisplays);
+			return true;
 		}
 	}
 
@@ -45,13 +72,14 @@ public class UIQERState : UIState
 	private struct HistoryEntry
 	{
 		// The tabs that were passed to `TryShowRelevantTabs`.
-		public List<RecipeTab> Tabs;
+		public List<UIRecipePage> Tabs;
 		public IIngredient ClickedIngredient;
-		public int TabIndex;
+		public UIRecipePage RecipePage;
 		public float ScrollViewPosition;
 	}
 
 	private const float ScrollBarWidth = 30;
+	private const float TabHeight = 50;
 
 	/*
 	 * The maximum amount of history entries that will actively be stored. Once the history stack
@@ -65,28 +93,20 @@ public class UIQERState : UIState
 	// Keeps track of the recipe pages that have been viewed, not including the current one.
 	private List<HistoryEntry> _history = new();
 
-	// Contains references to tabs in either _sourceTabs or _usageTabs.
-	private List<RecipeTab> _activeTabs = new();
-	private List<RecipeTab> _sourceTabs = new();
-	private List<RecipeTab> _usageTabs = new();
+	private List<UIRecipePage> _sourceTabs = new();
+	private List<UIRecipePage> _usageTabs = new();
 
 	/*
 	 * This refers either to `_sourceTabs` or `_usageTabs`, and is used to keep track of tab
 	 * history.
 	 */
-	private List<RecipeTab>? _currentTabSet = null;
+	private List<UIRecipePage>? _currentTabSet = null;
 	private IIngredient? _clickedIngredient = null;
 
-	// Index of currently active tab in `_activeTabs`.
-	private int _tabIndex = 0;
+	// Recipe page currently being viewed.
+	private UIRecipePage? _recipePage = null;
 
-	private UITabBar _tabBar = new();
-
-	// Contains, as a child, the current recipe list tab being viewed.
-	private UIElement _recipeListContainer = new();
-
-	// Contains the recipe list scrollbar as a child.
-	private UIElement _recipeScrollContainer = new();
+	private UITabBar<UIRecipePage> _tabBar = new();
 
 	// Panel with the item list. This is needed so the filter panel can be added and removed.
 	private UIPanel _itemListPanel = new();
@@ -252,8 +272,8 @@ public class UIQERState : UIState
 		 * to show this time, so we'll just assume it will always work.
 		 */
 		TryShowRelevantTabs(top.Tabs, top.ClickedIngredient);
-		SwitchToTab(top.TabIndex);
-		_activeTabs[_tabIndex].Scrollbar.ViewPosition = top.ScrollViewPosition;
+		_tabBar.OpenTabFor(top.RecipePage);
+		top.RecipePage.ScrollViewPosition = top.ScrollViewPosition;
 	}
 
 	public override void LeftClick(UIMouseEvent e)
@@ -316,41 +336,26 @@ public class UIQERState : UIState
 
 	/*
 	 * Try to show the subset of tabs in `tabs` that apply to the ingredient `ingredient`. If no
-	 * tabs have any elements for the given item, the view is not changed.
+	 * tabs have any elements for the given ingredient, the view is not changed.
 	 */
-	private bool TryShowRelevantTabs(List<RecipeTab> tabs, IIngredient ingredient)
+	private bool TryShowRelevantTabs(List<UIRecipePage> tabs, IIngredient ingredient)
 	{
-		// List of lists of things to display for each tab.
-		var displayLists = tabs
-			.Select(t => t.Handler.GetRecipeDisplays(ingredient).ToList())
-			.ToList();
+		var pagesForIngredient = tabs.Where(t => t.ShowRecipes(ingredient)).ToList();
 
 		// No tab has anything to display; don't do anything else.
-		if (displayLists.All(l => l.Count == 0)) { return false; }
+		if (pagesForIngredient.Count == 0) { return false; }
 
 		_currentTabSet = tabs;
 		_clickedIngredient = ingredient;
 
-		// We only want to update and show tabs that are relevant (i.e., they have content).
-		_activeTabs.Clear();
-		for (int i = 0; i < tabs.Count; ++i)
-		{
-			if (displayLists[i].Count > 0)
-			{
-				tabs[i].RecipeList.Clear();
-				tabs[i].RecipeList.AddRange(displayLists[i]);
-				_activeTabs.Add(tabs[i]);
-			}
-		}
-
 		_tabBar.ClearTabs();
-		foreach (var tab in _activeTabs)
+		foreach (var page in pagesForIngredient)
 		{
-			_tabBar.AddTab(tab.Handler.HoverName, tab.Handler.TabItem);
+			_tabBar.AddTab(page.HoverName, page.TabItem, page);
 		}
 
 		_tabBar.Activate();
-		SwitchToTab(0);
+		_tabBar.OpenTabFor(pagesForIngredient[0]);
 
 		return true;
 	}
@@ -361,7 +366,7 @@ public class UIQERState : UIState
 	 * tabs taken from `tabs`. If the ingredient and tab set are the same as the currently active
 	 * one, then the page layout will be reset, but a new history entry will not be added.
 	 */
-	private void TryPushPage(List<RecipeTab> tabs, IIngredient ingredient)
+	private void TryPushPage(List<UIRecipePage> tabs, IIngredient ingredient)
 	{
 		/*
 		 * If there is no tab set active, then we are still on the blank page, so there's no history
@@ -377,8 +382,8 @@ public class UIQERState : UIState
 		var historyEntry = new HistoryEntry{
 			Tabs = _currentTabSet,
 			ClickedIngredient = _clickedIngredient,
-			TabIndex = _tabIndex,
-			ScrollViewPosition = _activeTabs[_tabIndex].Scrollbar.ViewPosition
+			RecipePage = _recipePage,
+			ScrollViewPosition = _recipePage.ScrollViewPosition
 		};
 
 		if (TryShowRelevantTabs(tabs, ingredient))
@@ -391,35 +396,6 @@ public class UIQERState : UIState
 			_history.RemoveRange(0, _history.Count - MaxHistorySize);
 		}
 	}
-
-	/*
-	 * Display the content associated with tab `i`. This does not actually switch the tab in the tab
-	 * bar.
-	 */
-	private void ShowTabContent(int i)
-	{
-		if (i < 0 || i >= _activeTabs.Count) { return; }
-
-		_tabIndex = i;
-
-		_recipeListContainer.RemoveAllChildren();
-		_recipeListContainer.Append(_activeTabs[i].RecipeList);
-
-		_recipeScrollContainer.RemoveAllChildren();
-		_recipeScrollContainer.Append(_activeTabs[i].Scrollbar);
-
-		/*
-		 * Just try to activate these every time since they won't be activated on the initial
-		 * initialization of the UI state.
-		 */
-		_activeTabs[i].RecipeList.Activate();
-		_activeTabs[i].Scrollbar.Activate();
-
-		Recalculate();
-	}
-
-	// Change the active tab to `i`.
-	private void SwitchToTab(int i) => _tabBar.SwitchToTab(i);
 
 	// If a search bar is focused, stop taking input from it.
 	private void StopTakingInput()
@@ -436,24 +412,21 @@ public class UIQERState : UIState
 		recipePanel.Height.Percent = 0.8f;
 		recipePanel.VAlign = 0.5f;
 
-		_recipeScrollContainer.Height.Percent = 1;
-		_recipeScrollContainer.Width.Pixels = ScrollBarWidth;
-		_recipeScrollContainer.HAlign = 1;
-
-		_recipeListContainer.Width = new StyleDimension(-ScrollBarWidth, 1);
-		_recipeListContainer.Height.Percent = 1;
-
-		const float TabHeight = 50;
+		var recipeContainer = new UIPopupContainer();
+		recipeContainer.Width.Percent = 1;
+		recipeContainer.Height.Percent = 1;
 
 		_tabBar.Width = new StyleDimension(-10, 0.45f);
 		_tabBar.Height.Pixels = TabHeight;
 		_tabBar.Left = new StyleDimension(5, 0.04f);
 		_tabBar.Top = new StyleDimension(-TabHeight, 0.1f);
 
-		_tabBar.OnTabSelected += ShowTabContent;
+		_tabBar.OnTabSelected += page => {
+			recipeContainer.Open(page);
+			_recipePage = page;
+		};
 
-		recipePanel.Append(_recipeListContainer);
-		recipePanel.Append(_recipeScrollContainer);
+		recipePanel.Append(recipeContainer);
 
 		Append(recipePanel);
 		Append(_tabBar);
