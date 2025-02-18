@@ -37,7 +37,7 @@ public class UIScrollableGrid<T, E> : UIElement
 		{
 			_values = value;
 			if (Scrollbar != null) { Scrollbar.ViewPosition = 0; }
-			SetDisplayedValues();
+			Recalculate();
 		}
 	}
 
