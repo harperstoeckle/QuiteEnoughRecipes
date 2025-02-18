@@ -440,7 +440,6 @@ public class UIQERState : UIState
 		_recipeTabBar.Top = new StyleDimension(-TabHeight, 0.1f);
 
 		_recipeTabBar.OnTabSelected += page => {
-			StopTakingInput();
 			recipeContainer.Open(page);
 			_recipePage = page;
 		};
@@ -471,7 +470,10 @@ public class UIQERState : UIState
 		_ingredientTabBar.AddTab(Language.GetText("Mods.QuiteEnoughRecipes.Tabs.NPCList"),
 			new Item(ItemID.Bunny), _npcSearchPage);
 
-		_ingredientTabBar.OnTabSelected += page => ingredientListContainer.Open(page);
+		_ingredientTabBar.OnTabSelected += page => {
+			StopTakingInput();
+			ingredientListContainer.Open(page);
+		};
 
 		_ingredientTabBar.OpenTabFor(_itemSearchPage);
 
