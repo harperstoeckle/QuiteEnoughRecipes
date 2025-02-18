@@ -172,10 +172,18 @@ public class UIIngredientSearchPage<T, E> : UIElement
 	private UIQERSearchBar _searchBar = new();
 	private string? _searchText = null;
 
-	public UIIngredientSearchPage(UIPopupContainer optionPanelContainer, List<T> allIngredients)
+	/*
+	 * `squareSideLength` is the side length of the grid squares, and `padding` is the amount of
+	 * padding between grid squares.
+	 */
+	public UIIngredientSearchPage(UIPopupContainer optionPanelContainer, List<T> allIngredients,
+		int squareSideLength = 50, int padding = 5)
 	{
 		const float BarHeight = 50;
 		const float ScrollBarWidth = 30;
+
+		_ingredientList.SquareSideLength = squareSideLength;
+		_ingredientList.Padding = padding;
 
 		_allIngredients = allIngredients;
 		_filteredIngredients = new(_allIngredients);
