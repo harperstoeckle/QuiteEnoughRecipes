@@ -13,21 +13,22 @@ namespace QuiteEnoughRecipes;
 
 public static class RecipeHandlers
 {
-	// Source handler for normal crafting.
-	public class BasicSourceHandler : IRecipeHandler
+	// Normal recipes.
+	public class Basic : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
 			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Recipes");
 
 		public Item TabItem { get; } = new(ItemID.WorkBench);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
 		{
 			if (!(ing is ItemIngredient i)) { yield break; }
 
 			foreach (var r in Main.recipe)
 			{
-				if (r.createItem.type == i.Item.type)
+				if (queryType == QueryType.Sources && r.createItem.type == i.Item.type
+					|| queryType == QueryType.Uses && RecipeAcceptsItem(r, i.Item))
 				{
 					yield return new UIRecipePanel(r);
 				}
@@ -35,42 +36,20 @@ public static class RecipeHandlers
 		}
 	}
 
-	// Usage handler for normal crafting.
-	public class BasicUsageHandler : IRecipeHandler
-	{
-		public LocalizedText HoverName { get; }
-			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Recipes");
-
-		public Item TabItem { get; } = new(ItemID.WorkBench);
-
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
-		{
-			if (!(ing is ItemIngredient i)) { yield break; }
-
-			foreach (var r in Main.recipe)
-			{
-				if (RecipeAcceptsItem(r, i.Item))
-				{
-					yield return new UIRecipePanel(r);
-				}
-			}
-		}
-	}
-
-	/*
-	 * Shows recipes that require a tile to be crafted. The tile is selected from whatever tile the item
-	 * will place.
-	 */
-	public class TileUsageHandler : IRecipeHandler
+	// Recipes requiring a crafting station.
+	public class CraftingStations : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
 			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Tiles");
 
 		public Item TabItem { get; } = new(ItemID.Furnace);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
 		{
-			if (!(ing is ItemIngredient i)) { yield break; }
+			if (!(queryType == QueryType.Uses && ing is ItemIngredient i))
+			{
+				yield break;
+			}
 
 			foreach (var r in Main.recipe)
 			{
@@ -82,57 +61,50 @@ public static class RecipeHandlers
 		}
 	}
 
-	// Show items that can be shimmered into the target item.
-	public class ShimmerSourceHandler : IRecipeHandler
+	public class ShimmerTransmutations : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
 			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Shimmer");
 		
 		public Item TabItem { get; } = new(ItemID.BottomlessShimmerBucket);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
 		{
 			if (!(ing is ItemIngredient i)) { yield break; }
 
-			for (int id = 0; id < ItemID.Sets.ShimmerTransformToItem.Length; ++id)
+			if (queryType == QueryType.Sources)
 			{
-				if (ShimmerTransformResult(id) == i.Item.type)
+				for (int id = 0; id < ItemID.Sets.ShimmerTransformToItem.Length; ++id)
 				{
-					yield return new UIRecipePanel(new(i.Item.type), new List<Item>{new(id)});
+					if (ShimmerTransformResult(id) == i.Item.type)
+					{
+						yield return new UIRecipePanel(new(i.Item.type), new List<Item>{new(id)});
+					}
 				}
+			}
+			else
+			{
+				int id = ShimmerTransformResult(i.Item.type);
+				if (id == -1) { yield break; }
+				yield return new UIRecipePanel(new(id), new List<Item>{new(i.Item.type)});
 			}
 		}
 	}
 
-	// Show the result of shimmering the target item.
-	public class ShimmerUsageHandler : IRecipeHandler
-	{
-		public LocalizedText HoverName { get; }
-			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Shimmer");
-		
-		public Item TabItem { get; } = new(ItemID.BottomlessShimmerBucket);
-
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
-		{
-			if (!(ing is ItemIngredient i)) { yield break; }
-
-			int id = ShimmerTransformResult(i.Item.type);
-			if (id == -1) { yield break; }
-			yield return new UIRecipePanel(new(id), new List<Item>{new(i.Item.type)});
-		}
-	}
-
-	// Shows NPC shops that sell the given item.
-	public class NPCShopSourceHandler : IRecipeHandler
+	// Shows NPC shops that sell the given item. TODO: Add NPC uses.
+	public class NPCShops : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
 			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.Shops");
 
 		public Item TabItem { get; } = new(ItemID.GoldCoin);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
 		{
-			if (!(ing is ItemIngredient i)) { yield break; }
+			if (!(queryType == QueryType.Sources && ing is ItemIngredient i))
+			{
+				yield break;
+			}
 
 			foreach (var shop in NPCShopDatabase.AllShops)
 			{
@@ -144,121 +116,108 @@ public static class RecipeHandlers
 		}
 	}
 
-	// Shows items that can drop the given item when used. I.e., treasure bags.
-	public class ItemDropSourceHandler : IRecipeHandler
+	// Result of opening loot items like treasure bags and goodie bags.
+	public class ItemDrops : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
 			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.ItemDrops");
 
 		public Item TabItem { get; } = new(ItemID.CultistBossBag);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
 		{
 			if (!(ing is ItemIngredient i)) { yield break; }
 
-			var item = new Item();
-
-			foreach (int itemID in Enumerable.Range(0, ItemLoader.ItemCount))
+			if (queryType == QueryType.Sources)
 			{
-				item.SetDefaults(itemID);
-
-				var droppedItems = GetItemDrops(item.type);
-				if (droppedItems.Any(info => info.itemId == i.Item.type))
+				var item = new Item();
+				foreach (int itemID in Enumerable.Range(0, ItemLoader.ItemCount))
 				{
-					yield return new UIDropsPanel(new UIItemPanel(item.Clone(), 70), droppedItems);
+					item.SetDefaults(itemID);
+
+					var droppedItems = GetItemDrops(item.type);
+					if (droppedItems.Any(info => info.itemId == i.Item.type))
+					{
+						yield return new UIDropsPanel(
+							new UIItemPanel(item.Clone(), 70), droppedItems);
+					}
+				}
+			}
+			else
+			{
+				var droppedItems = GetItemDrops(i.Item.type);
+				if (droppedItems.Count > 0)
+				{
+					yield return new UIDropsPanel(new UIItemPanel(i.Item, 70), droppedItems);
 				}
 			}
 		}
 	}
 
-	// Shows items dropped when using the given item.
-	public class ItemDropUsageHandler : IRecipeHandler
-	{
-		public LocalizedText HoverName { get; }
-			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.ItemDrops");
-
-		public Item TabItem { get; } = new(ItemID.CultistBossBag);
-
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
-		{
-			if (!(ing is ItemIngredient i)) { yield break; }
-
-			var droppedItems = GetItemDrops(i.Item.type);
-			if (droppedItems.Count > 0)
-			{
-				yield return new UIDropsPanel(new UIItemPanel(i.Item, 70), droppedItems);
-			}
-		}
-	}
-
-	// Shows what NPCs drop the given item.
-	public class NPCDropSourceHandler : IRecipeHandler
+	// Items dropped by NPCs when they are killed.
+	public class NPCDrops : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
 			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.NPCDrops");
 
 		public Item TabItem { get; } = new(ItemID.ZombieArm);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
 		{
-			if (!(ing is ItemIngredient i)) { yield break; }
-
-			foreach (int id in Enumerable.Range(0, NPCLoader.NPCCount))
+			switch (ing, queryType)
 			{
-				/*
-				 * TODO: Is there a better way to check whether a bestiary entry exists?
-				 *
-				 * For some reason, `FindEntryByNPCID` doesn't return null, but *does* return an
-				 * entry with a null icon.
-				 */
-				if (Main.BestiaryDB.FindEntryByNPCID(id).Icon == null) { continue; }
+				case (ItemIngredient i, QueryType.Sources):
+					foreach (int id in Enumerable.Range(0, NPCLoader.NPCCount))
+					{
+						/*
+						 * TODO: Is there a better way to check whether a bestiary entry exists?
+						 *
+						 * For some reason, `FindEntryByNPCID` doesn't return null, but *does*
+						 * return an entry with a null icon.
+						 */
+						if (Main.BestiaryDB.FindEntryByNPCID(id).Icon == null) { continue; }
 
-				var droppedItems = GetNPCDrops(id);
-				if (droppedItems.Any(info => info.itemId == i.Item.type))
-				{
-					yield return new UIDropsPanel(new UINPCPanel(id){
+						var droppedItems = GetNPCDrops(id);
+						if (droppedItems.Any(info => info.itemId == i.Item.type))
+						{
+							yield return new UIDropsPanel(new UINPCPanel(id){
+								Width = new StyleDimension(72, 0),
+								Height = new StyleDimension(72, 0)
+							}, droppedItems);
+						}
+					}
+
+					break;
+
+				case (NPCIngredient n, QueryType.Uses):
+					if (Main.BestiaryDB.FindEntryByNPCID(n.ID).Icon == null) { yield break; }
+
+					yield return new UIDropsPanel(new UINPCPanel(n.ID){
 						Width = new StyleDimension(72, 0),
-						Height = new StyleDimension(72, 0)
-					}, droppedItems);
-				}
+							  Height = new StyleDimension(72, 0)
+					}, GetNPCDrops(n.ID));
+
+					break;
 			}
 		}
 	}
 
-	// Shows what items are dropped by an NPC.
-	public class NPCDropUsageHandler : IRecipeHandler
-	{
-		public LocalizedText HoverName { get; }
-			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.NPCDrops");
-
-		public Item TabItem { get; } = new(ItemID.ZombieArm);
-
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
-		{
-			if (!(ing is NPCIngredient n)) { yield break; }
-			if (Main.BestiaryDB.FindEntryByNPCID(n.ID).Icon == null) { yield break; }
-
-			yield return new UIDropsPanel(new UINPCPanel(n.ID){
-				Width = new StyleDimension(72, 0),
-				Height = new StyleDimension(72, 0)
-			}, GetNPCDrops(n.ID));
-		}
-	}
-
-	// If the item can be dropped from any NPC, this tab will show.
-	public class GlobalLootSourceHandler : IRecipeHandler
+	// If the item can be dropped from *any* NPC, this tab will show.
+	public class GlobalDrops : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
 			= Language.GetText("Mods.QuiteEnoughRecipes.Tabs.GlobalDrops");
 
 		public Item TabItem { get; } = new(ItemID.Heart);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing)
+		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
 		{
-			if (!(ing is ItemIngredient i)) { yield break; }
+			if (!(queryType == QueryType.Sources && ing is ItemIngredient i))
+			{
+				yield break;
+			}
 
 			var drops = GetGlobalDrops();
-
 			if (drops.Any(info => info.itemId == i.Item.type))
 			{
 				/*

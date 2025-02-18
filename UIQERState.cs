@@ -58,9 +58,9 @@ public class UIQERState : UIState
 		 * Attempts to show recipes for `ingredient`. If there are no recipes, this element remains
 		 * unchanged and this function will return false.
 		 */
-		public bool ShowRecipes(IIngredient ingredient)
+		public bool ShowRecipes(IIngredient ingredient, QueryType queryType)
 		{
-			var recipeDisplays = _handler.GetRecipeDisplays(ingredient).ToList();
+			var recipeDisplays = _handler.GetRecipeDisplays(ingredient, queryType).ToList();
 			if (recipeDisplays.Count == 0) { return false; }
 			_recipeList.Clear();
 			_recipeList.AddRange(recipeDisplays);
@@ -71,8 +71,7 @@ public class UIQERState : UIState
 	// Enough to reconstruct (enough of) the recipe panel state.
 	private struct HistoryEntry
 	{
-		// The tabs that were passed to `TryShowRelevantTabs`.
-		public List<UIRecipePage> Tabs;
+		public QueryType QueryType;
 		public IIngredient ClickedIngredient;
 		public UIRecipePage RecipePage;
 		public float ScrollViewPosition;
@@ -93,14 +92,9 @@ public class UIQERState : UIState
 	// Keeps track of the recipe pages that have been viewed, not including the current one.
 	private List<HistoryEntry> _history = new();
 
-	private List<UIRecipePage> _sourceTabs = new();
-	private List<UIRecipePage> _usageTabs = new();
+	private List<UIRecipePage> _allTabs = new();
 
-	/*
-	 * This refers either to `_sourceTabs` or `_usageTabs`, and is used to keep track of tab
-	 * history.
-	 */
-	private List<UIRecipePage>? _currentTabSet = null;
+	private QueryType _currentQueryType = QueryType.Sources;
 	private IIngredient? _clickedIngredient = null;
 
 	// Recipe page currently being viewed.
@@ -126,18 +120,13 @@ public class UIQERState : UIState
 	{
 		_itemSearchPage = new(_optionPanelContainer);
 
-		AddSourceHandler(new RecipeHandlers.BasicSourceHandler());
-		AddSourceHandler(new RecipeHandlers.ShimmerSourceHandler());
-		AddSourceHandler(new RecipeHandlers.NPCShopSourceHandler());
-		AddSourceHandler(new RecipeHandlers.ItemDropSourceHandler());
-		AddSourceHandler(new RecipeHandlers.NPCDropSourceHandler());
-		AddSourceHandler(new RecipeHandlers.GlobalLootSourceHandler());
-
-		AddUsageHandler(new RecipeHandlers.BasicUsageHandler());
-		AddUsageHandler(new RecipeHandlers.TileUsageHandler());
-		AddUsageHandler(new RecipeHandlers.ShimmerUsageHandler());
-		AddUsageHandler(new RecipeHandlers.ItemDropUsageHandler());
-		AddUsageHandler(new RecipeHandlers.NPCDropUsageHandler());
+		AddHandler(new RecipeHandlers.Basic());
+		AddHandler(new RecipeHandlers.CraftingStations());
+		AddHandler(new RecipeHandlers.ShimmerTransmutations());
+		AddHandler(new RecipeHandlers.NPCShops());
+		AddHandler(new RecipeHandlers.ItemDrops());
+		AddHandler(new RecipeHandlers.NPCDrops());
+		AddHandler(new RecipeHandlers.GlobalDrops());
 
 		AddInternalFilter(ItemID.StoneBlock, "Tiles", ItemPredicates.IsTile);
 		AddInternalFilter(ItemID.Furnace, "CraftingStations", ItemPredicates.IsCraftingStation);
@@ -247,11 +236,10 @@ public class UIQERState : UIState
 		}
 	}
 
-	public void AddSourceHandler(IRecipeHandler handler) => _sourceTabs.Add(new(handler));
-	public void AddUsageHandler(IRecipeHandler handler) => _usageTabs.Add(new(handler));
+	public void AddHandler(IRecipeHandler handler) => _allTabs.Add(new(handler));
 
-	public void ShowSources(IIngredient i) => TryPushPage(_sourceTabs, i);
-	public void ShowUses(IIngredient i) => TryPushPage(_usageTabs, i);
+	public void ShowSources(IIngredient i) => TryPushPage(i, QueryType.Sources);
+	public void ShowUses(IIngredient i) => TryPushPage(i, QueryType.Uses);
 
 	// This must be called before the filter panel is initialized.
 	public void AddFilter(Item icon, string hoverName, Predicate<Item> pred)
@@ -271,7 +259,7 @@ public class UIQERState : UIState
 		 * It would be weird if the page showed something the first time, but didn't have anything
 		 * to show this time, so we'll just assume it will always work.
 		 */
-		TryShowRelevantTabs(top.Tabs, top.ClickedIngredient);
+		TryShowRelevantTabs(top.ClickedIngredient, top.QueryType);
 		_tabBar.OpenTabFor(top.RecipePage);
 		top.RecipePage.ScrollViewPosition = top.ScrollViewPosition;
 	}
@@ -335,17 +323,17 @@ public class UIQERState : UIState
 	}
 
 	/*
-	 * Try to show the subset of tabs in `tabs` that apply to the ingredient `ingredient`. If no
-	 * tabs have any elements for the given ingredient, the view is not changed.
+	 * Try to show tabs with recipes for `ingredient`. If there are no recipes, the recipe panel
+	 * will not be changed, and this function will return false.
 	 */
-	private bool TryShowRelevantTabs(List<UIRecipePage> tabs, IIngredient ingredient)
+	private bool TryShowRelevantTabs(IIngredient ingredient, QueryType queryType)
 	{
-		var pagesForIngredient = tabs.Where(t => t.ShowRecipes(ingredient)).ToList();
+		var pagesForIngredient = _allTabs.Where(t => t.ShowRecipes(ingredient, queryType)).ToList();
 
 		// No tab has anything to display; don't do anything else.
 		if (pagesForIngredient.Count == 0) { return false; }
 
-		_currentTabSet = tabs;
+		_currentQueryType = queryType;
 		_clickedIngredient = ingredient;
 
 		_tabBar.ClearTabs();
@@ -362,31 +350,31 @@ public class UIQERState : UIState
 
 	/*
 	 * Try to switch the page. If there was something to show, push a history entry on the top of
-	 * the history stack. If successful, the page will show results for ingredient `ingredient` with
-	 * tabs taken from `tabs`. If the ingredient and tab set are the same as the currently active
-	 * one, then the page layout will be reset, but a new history entry will not be added.
+	 * the history stack. If successful, the page will show results for ingredient `ingredient`. If
+	 * `ingredient` and `queryType` are the same as what is currently being viewed, then no new
+	 * history entry will be added.
 	 */
-	private void TryPushPage(List<UIRecipePage> tabs, IIngredient ingredient)
+	private void TryPushPage(IIngredient ingredient, QueryType queryType)
 	{
 		/*
-		 * If there is no tab set active, then we are still on the blank page, so there's no history
-		 * ingredient we can actually push on the stack.
+		 * If there is no active recipe page, then we're not looking at anything, so there's nothing
+		 * worth storing in history.
 		 */
-		if (_currentTabSet == null ||
-			_currentTabSet == tabs && _clickedIngredient.IsEquivalent(ingredient))
+		if (_recipePage == null ||
+			_currentQueryType == queryType && _clickedIngredient.IsEquivalent(ingredient))
 		{
-			TryShowRelevantTabs(tabs, ingredient);
+			TryShowRelevantTabs(ingredient, queryType);
 			return;
 		}
 
 		var historyEntry = new HistoryEntry{
-			Tabs = _currentTabSet,
+			QueryType = _currentQueryType,
 			ClickedIngredient = _clickedIngredient,
 			RecipePage = _recipePage,
 			ScrollViewPosition = _recipePage.ScrollViewPosition
 		};
 
-		if (TryShowRelevantTabs(tabs, ingredient))
+		if (TryShowRelevantTabs(ingredient, queryType))
 		{
 			_history.Add(historyEntry);
 		}

@@ -6,9 +6,8 @@ using Terraria;
 namespace QuiteEnoughRecipes;
 
 /*
- * Represents a tab in the recipe panel. This can be used either for sources or usages of an
- * ingredient; the distinction is made by whether the handler is added via `AddSourceHandler` or
- * `AddUsageHandler`.
+ * Represents a tab in the recipe panel. This can be used for sources, uses, or both; the
+ * distinction is made by the `QueryType` passed to `GetRecipeDisplays`.
  */
 public interface IRecipeHandler
 {
@@ -18,6 +17,15 @@ public interface IRecipeHandler
 	// Item icon that will be displayed in the tab.
 	public Item TabItem { get; }
 
-	// Given an ingredient, get a sequence of UI elements showing the recipes involving it.
-	public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing);
+	/*
+	 * Given an ingredient, returns a sequence of UI elements showing recipes that either use or
+	 * result in that ingredient.
+	 */
+	public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType);
+}
+
+public enum QueryType
+{
+	Sources,
+	Uses
 }
