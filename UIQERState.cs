@@ -105,7 +105,7 @@ public class UIQERState : UIState
 	// Panel with the item list. This is needed so the filter panel can be added and removed.
 	private UIPanel _itemListPanel = new();
 
-	private UIIngredientSearchPage _itemSearchPage;
+	private UIIngredientSearchPage<ItemIngredient, UIItemPanel> _itemSearchPage;
 
 	/*
 	 * When an item panel is being hovered, this keeps track of it. This is needed so that we can
@@ -118,7 +118,21 @@ public class UIQERState : UIState
 
 	public UIQERState()
 	{
-		_itemSearchPage = new(_optionPanelContainer);
+		/*
+		 * Our "master list" of items is sorted by creative order first and item ID second, so this
+		 * is the order that will be used if no sort order is chosen.
+		 */
+		var allItems = Enumerable.Range(0, ItemLoader.ItemCount)
+			.Select(i => new Item(i))
+			.Where(i => i.type != 0)
+			.OrderBy(i => {
+				var itemGroup = ContentSamples.CreativeHelper.GetItemGroup(i, out int orderInGroup);
+				return (itemGroup, orderInGroup, i.type);
+			})
+			.Select(i => new ItemIngredient(i))
+			.ToList();
+
+		_itemSearchPage = new(_optionPanelContainer, allItems);
 
 		AddHandler(new RecipeHandlers.Basic());
 		AddHandler(new RecipeHandlers.CraftingStations());
@@ -203,16 +217,16 @@ public class UIQERState : UIState
 		_optionPanelContainer.Top.Percent = 0.1f;
 		_optionPanelContainer.Left.Percent = 0.26f;
 
-		_itemSearchPage.AddSort(new Item(ItemID.AlphabetStatue1),
+		AddSort(new Item(ItemID.AlphabetStatue1),
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.ID"),
 			(x, y) => x.type.CompareTo(y.type));
-		_itemSearchPage.AddSort(new Item(ItemID.AlphabetStatueA),
+		AddSort(new Item(ItemID.AlphabetStatueA),
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Alphabetical"),
 			(x, y) => x.Name.CompareTo(y.Name));
-		_itemSearchPage.AddSort(new Item(ItemID.StarStatue),
+		AddSort(new Item(ItemID.StarStatue),
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Rarity"),
 			(x, y) => x.rare.CompareTo(y.rare));
-		_itemSearchPage.AddSort(new Item(ItemID.ChestStatue),
+		AddSort(new Item(ItemID.ChestStatue),
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Value"),
 			(x, y) => x.value.CompareTo(y.value));
 
@@ -244,7 +258,13 @@ public class UIQERState : UIState
 	// This must be called before the filter panel is initialized.
 	public void AddFilter(Item icon, string hoverName, Predicate<Item> pred)
 	{
-		_itemSearchPage.AddFilter(icon, hoverName, pred);
+		// TODO: Work with `ItemIngredient` predicates directly instead of converting them.
+		_itemSearchPage.AddFilter(icon, hoverName, i => pred(i.Item));
+	}
+
+	public void AddSort(Item icon, string hoverName, Comparison<Item> compare)
+	{
+		_itemSearchPage.AddSort(icon, hoverName, (a, b) => compare(a.Item, b.Item));
 	}
 
 	// If it exists, load the top of the history stack and pop it.

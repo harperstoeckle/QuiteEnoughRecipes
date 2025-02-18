@@ -71,8 +71,13 @@ public class OptionPanelToggleButton : UIElement
 	}
 }
 
-// A page including a scrollable list of ingredients, a search bar, and filter options.
-public class UIIngredientSearchPage : UIElement
+/*
+ * A page including a scrollable list of ingredients, a search bar, and filter options. This
+ * contains a list of type `T`, which are displayed in elements of type `E` in a grid.
+ */
+public class UIIngredientSearchPage<T, E> : UIElement
+	where T : IIngredient
+	where E : UIElement, IScrollableGridElement<T>, new()
 {
 	private struct SearchQuery
 	{
@@ -80,47 +85,33 @@ public class UIIngredientSearchPage : UIElement
 		public string? Mod;
 		public string? Tooltip;
 
-		public bool Matches(Item i)
+		public bool Matches(T i)
 		{
-			if (Mod != null &&
-				(i.ModItem == null || !NormalizeForSearch(RemoveWhitespace(i.ModItem.Mod.DisplayNameClean)).Contains(Mod)))
+			if (!string.IsNullOrWhiteSpace(Name) &&
+				(i.Name == null || !NormalizeForSearch(i.Name).Contains(Name)))
 			{
 				return false;
 			}
 
-			if (Tooltip != null)
+			if (!string.IsNullOrWhiteSpace(Mod) &&
+				(i.Mod == null || !NormalizeForSearch(RemoveWhitespace(i.Mod.DisplayNameClean)).Contains(Mod)))
 			{
-				int yoyoLogo = -1;
-				int researchLine = -1;
-				int numLines = 1;
-				var tooltipNames = new string[30];
-				var tooltipLines = new string[30];
-				var prefixLines = new bool[30];
-				var badPrefixLines = new bool[30];
+				return false;
+			}
 
-				Main.MouseText_DrawItemTooltip_GetLinesInfo(i, ref yoyoLogo, ref researchLine, i.knockBack,
-					ref numLines, tooltipLines, prefixLines, badPrefixLines, tooltipNames, out var p);
+			if (!string.IsNullOrWhiteSpace(Tooltip))
+			{
+				var lines = i.GetTooltipLines();
 
-				var lines = ItemLoader.ModifyTooltips(i, ref numLines, tooltipNames, ref tooltipLines,
-					ref prefixLines, ref badPrefixLines, ref yoyoLogo, out Color?[] o, p);
-
-				/*
-				 * We have to remove the item name line (which is the item name, so it's not "part
-				 * of the description". We also have to remove any tooltip lines specific to this
-				 * mod. Since QER tooltips depend on what slot is being hovered, this can create
-				 * weird behavior where hovering over an item in the browser changes search results.
-				 */
-				var cleanLines = lines.Where(l => l.Name != "ItemName" && !(l.Mod is QuiteEnoughRecipes));
-
-				// Needed since we can't capture `Tooltip`.
+				// Needed to be usable in a lambda.
 				var tooltip = Tooltip;
-				if (!cleanLines.Any(l => NormalizeForSearch(l.Text).Contains(tooltip)))
+				if (lines == null || !lines.Any(l => NormalizeForSearch(l).Contains(tooltip)))
 				{
 					return false;
 				}
 			}
 
-			return i.Name.ToLower().Contains(Name);
+			return true;
 		}
 
 		// Used to remove whitespace
@@ -157,10 +148,10 @@ public class UIIngredientSearchPage : UIElement
 		}
 	}
 
-	private List<Item> _allItems;
-	private List<Item> _filteredItems;
+	private List<T> _allIngredients;
+	private List<T> _filteredIngredients;
 
-	private UIScrollableGrid<Item, UIItemPanel> _itemList = new();
+	private UIScrollableGrid<T, E> _ingredientList = new();
 
 	/*
 	 * This is a reference to a popup container in the parent that will be used to display the
@@ -170,35 +161,24 @@ public class UIIngredientSearchPage : UIElement
 
 	private OptionPanelToggleButton _filterToggleButton = new("Images/UI/Bestiary/Button_Filtering",
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
-	private UIOptionPanel<Predicate<Item>> _filterPanel = new();
-	private Predicate<Item>? _activeFilter = null;
+	private UIOptionPanel<Predicate<T>> _filterPanel = new();
+	private Predicate<T>? _activeFilter = null;
 
 	private OptionPanelToggleButton _sortToggleButton = new("Images/UI/Bestiary/Button_Sorting",
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SortHover"));
-	private UIOptionPanel<Comparison<Item>> _sortPanel = new();
-	private Comparison<Item>? _activeSortComparison = null;
+	private UIOptionPanel<Comparison<T>> _sortPanel = new();
+	private Comparison<T>? _activeSortComparison = null;
 
 	private UIQERSearchBar _searchBar = new();
 	private string? _searchText = null;
 
-	public UIIngredientSearchPage(UIPopupContainer optionPanelContainer)
+	public UIIngredientSearchPage(UIPopupContainer optionPanelContainer, List<T> allIngredients)
 	{
 		const float BarHeight = 50;
 		const float ScrollBarWidth = 30;
 
-		/*
-		 * Our "master list" of items is sorted by creative order first and item ID second, so this
-		 * is the order that will be used if no sort order is chosen.
-		 */
-		_allItems = Enumerable.Range(0, ItemLoader.ItemCount)
-			.Select(i => new Item(i))
-			.Where(i => i.type != 0)
-			.OrderBy(i => {
-				var itemGroup = ContentSamples.CreativeHelper.GetItemGroup(i, out int orderInGroup);
-				return (itemGroup, orderInGroup, i.type);
-			})
-			.ToList();
-		_filteredItems = new(_allItems);
+		_allIngredients = allIngredients;
+		_filteredIngredients = new(_allIngredients);
 
 		_optionPanelContainer = optionPanelContainer;
 
@@ -210,7 +190,7 @@ public class UIIngredientSearchPage : UIElement
 		_filterPanel.OnSelectionChanged += pred => {
 			_filterToggleButton.OptionSelected = pred != null;
 			_activeFilter = pred;
-			UpdateDisplayedItems();
+			UpdateDisplayedIngredients();
 		};
 
 		_sortPanel.Width.Percent = 1;
@@ -218,7 +198,7 @@ public class UIIngredientSearchPage : UIElement
 		_sortPanel.OnSelectionChanged += comp => {
 			_sortToggleButton.OptionSelected = comp != null;
 			_activeSortComparison = comp;
-			UpdateDisplayedItems();
+			UpdateDisplayedIngredients();
 		};
 
 		var scroll = new UIScrollbar();
@@ -226,11 +206,11 @@ public class UIIngredientSearchPage : UIElement
 		scroll.HAlign = 1;
 		scroll.VAlign = 1;
 
-		_itemList.Scrollbar = scroll;
-		_itemList.Values = _filteredItems;
-		_itemList.Width = new StyleDimension(-ScrollBarWidth, 1);
-		_itemList.Height = new StyleDimension(-BarHeight, 1);
-		_itemList.VAlign = 1;
+		_ingredientList.Scrollbar = scroll;
+		_ingredientList.Values = _filteredIngredients;
+		_ingredientList.Width = new StyleDimension(-ScrollBarWidth, 1);
+		_ingredientList.Height = new StyleDimension(-BarHeight, 1);
+		_ingredientList.VAlign = 1;
 
 		_filterToggleButton.OnLeftClick += (b, e) => _optionPanelContainer.Toggle(_filterPanel);
 		_filterToggleButton.OnRightClick += (b, e) => _filterPanel.DisableAllOptions();
@@ -251,10 +231,10 @@ public class UIIngredientSearchPage : UIElement
 		_searchBar.Left.Pixels = offset;
 		_searchBar.OnContentsChanged += s => {
 			_searchText = s;
-			UpdateDisplayedItems();
+			UpdateDisplayedIngredients();
 		};
 
-		Append(_itemList);
+		Append(_ingredientList);
 		Append(scroll);
 		Append(_filterToggleButton);
 		Append(_sortToggleButton);
@@ -263,12 +243,12 @@ public class UIIngredientSearchPage : UIElement
 
 	}
 
-	public void AddFilter(Item icon, string name, Predicate<Item> pred)
+	public void AddFilter(Item icon, string name, Predicate<T> pred)
 	{
 		_filterPanel.AddItemIconOption(icon, name, pred);
 	}
 
-	public void AddSort(Item icon, string name, Comparison<Item> compare)
+	public void AddSort(Item icon, string name, Comparison<T> compare)
 	{
 		_sortPanel.AddItemIconOption(icon, name, compare);
 	}
@@ -279,21 +259,21 @@ public class UIIngredientSearchPage : UIElement
 		_searchBar.SetTakingInput(false);
 	}
 
-	// Update what items are being displayed based on the search bar and filters.
-	private void UpdateDisplayedItems()
+	// Update what ingredients are being displayed based on the search bar and filters.
+	private void UpdateDisplayedIngredients()
 	{
 		var query = ParseSearchText(_searchText ?? "");
 
-		_filteredItems.Clear();
-		_filteredItems.AddRange(
-			_allItems.Where(i => query.Matches(i) && (_activeFilter?.Invoke(i) ?? true)));
+		_filteredIngredients.Clear();
+		_filteredIngredients.AddRange(
+			_allIngredients.Where(i => query.Matches(i) && (_activeFilter?.Invoke(i) ?? true)));
 
 		if (_activeSortComparison != null)
 		{
-			_filteredItems.Sort(_activeSortComparison);
+			_filteredIngredients.Sort(_activeSortComparison);
 		}
 
-		_itemList.Values = _filteredItems;
+		_ingredientList.Values = _filteredIngredients;
 	}
 
 	/*

@@ -16,7 +16,7 @@ namespace QuiteEnoughRecipes;
  * have any other special behavior when interacted with; this can be achieved by subscribing to the
  * events from `UIElement`.
  */
-public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement<Item>
+public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement<ItemIngredient>
 {
 	private float _scale;
 
@@ -39,7 +39,7 @@ public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement
 
 	public UIItemPanel() : this(null) {}
 
-	public void SetDisplayedValue(Item i) => DisplayedItem = i;
+	public void SetDisplayedValue(ItemIngredient i) => DisplayedItem = i.Item;
 
 	/*
 	 * This is a stripped-down version of the vanilla drawing code. It doesn't have to do any of
