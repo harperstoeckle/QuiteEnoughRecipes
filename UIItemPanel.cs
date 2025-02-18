@@ -16,7 +16,7 @@ namespace QuiteEnoughRecipes;
  * have any other special behavior when interacted with; this can be achieved by subscribing to the
  * events from `UIElement`.
  */
-public class UIItemPanel : UIElement, IIngredientElement
+public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement<Item>
 {
 	private float _scale;
 
@@ -26,7 +26,7 @@ public class UIItemPanel : UIElement, IIngredientElement
 	public IIngredient Ingredient => new ItemIngredient(DisplayedItem);
 
 	// The icon will be scaled to fit in a square with side length `width`.
-	public UIItemPanel(Item? displayedItem = null, float width = 50)
+	public UIItemPanel(Item? displayedItem, float width = 50)
 	{
 		DisplayedItem = displayedItem;
 		Width.Pixels = width;
@@ -36,6 +36,10 @@ public class UIItemPanel : UIElement, IIngredientElement
 		// Extremely lazy way to handle text bounds.
 		SetPadding(3 * _scale);
 	}
+
+	public UIItemPanel() : this(null) {}
+
+	public void SetDisplayedValue(Item i) => DisplayedItem = i;
 
 	/*
 	 * This is a stripped-down version of the vanilla drawing code. It doesn't have to do any of

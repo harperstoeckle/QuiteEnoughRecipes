@@ -160,7 +160,7 @@ public class UIIngredientSearchPage : UIElement
 	private List<Item> _allItems;
 	private List<Item> _filteredItems;
 
-	private UIItemList _itemList = new();
+	private UIScrollableGrid<Item, UIItemPanel> _itemList = new();
 
 	/*
 	 * This is a reference to a popup container in the parent that will be used to display the
@@ -227,7 +227,7 @@ public class UIIngredientSearchPage : UIElement
 		scroll.VAlign = 1;
 
 		_itemList.Scrollbar = scroll;
-		_itemList.Items = _filteredItems;
+		_itemList.Values = _filteredItems;
 		_itemList.Width = new StyleDimension(-ScrollBarWidth, 1);
 		_itemList.Height = new StyleDimension(-BarHeight, 1);
 		_itemList.VAlign = 1;
@@ -293,7 +293,7 @@ public class UIIngredientSearchPage : UIElement
 			_filteredItems.Sort(_activeSortComparison);
 		}
 
-		_itemList.Items = _filteredItems;
+		_itemList.Values = _filteredItems;
 	}
 
 	/*
