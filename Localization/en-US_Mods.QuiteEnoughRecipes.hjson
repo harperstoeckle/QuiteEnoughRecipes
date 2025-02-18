@@ -37,6 +37,8 @@ Configs: {
 }
 
 Tabs: {
+	ItemList: Items
+	NPCList: NPCs
 	Recipes: Recipes
 	Tiles: Recipes Requiring this Crafting Station
 	Shimmer: Shimmer Transmutations

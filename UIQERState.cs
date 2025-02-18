@@ -100,12 +100,14 @@ public class UIQERState : UIState
 	// Recipe page currently being viewed.
 	private UIRecipePage? _recipePage = null;
 
-	private UITabBar<UIRecipePage> _tabBar = new();
+	private UITabBar<UIRecipePage> _recipeTabBar = new();
+	private UITabBar<UIElement> _ingredientTabBar = new();
 
 	// Panel with the item list. This is needed so the filter panel can be added and removed.
 	private UIPanel _itemListPanel = new();
 
 	private UIIngredientSearchPage<ItemIngredient, UIItemPanel> _itemSearchPage;
+	private UIIngredientSearchPage<NPCIngredient, UINPCPanel> _npcSearchPage;
 
 	/*
 	 * When an item panel is being hovered, this keeps track of it. This is needed so that we can
@@ -133,6 +135,13 @@ public class UIQERState : UIState
 			.ToList();
 
 		_itemSearchPage = new(_optionPanelContainer, allItems);
+
+		var allNPCs = Enumerable.Range(0, NPCLoader.NPCCount)
+			.Where(n => Main.BestiaryDB.FindEntryByNPCID(n).Icon != null)
+			.Select(n => new NPCIngredient(n))
+			.ToList();
+
+		_npcSearchPage = new(_optionPanelContainer, allNPCs, 72, 10);
 
 		AddHandler(new RecipeHandlers.Basic());
 		AddHandler(new RecipeHandlers.CraftingStations());
@@ -280,7 +289,7 @@ public class UIQERState : UIState
 		 * to show this time, so we'll just assume it will always work.
 		 */
 		TryShowRelevantTabs(top.ClickedIngredient, top.QueryType);
-		_tabBar.OpenTabFor(top.RecipePage);
+		_recipeTabBar.OpenTabFor(top.RecipePage);
 		top.RecipePage.ScrollViewPosition = top.ScrollViewPosition;
 	}
 
@@ -356,14 +365,14 @@ public class UIQERState : UIState
 		_currentQueryType = queryType;
 		_clickedIngredient = ingredient;
 
-		_tabBar.ClearTabs();
+		_recipeTabBar.ClearTabs();
 		foreach (var page in pagesForIngredient)
 		{
-			_tabBar.AddTab(page.HoverName, page.TabItem, page);
+			_recipeTabBar.AddTab(page.HoverName, page.TabItem, page);
 		}
 
-		_tabBar.Activate();
-		_tabBar.OpenTabFor(pagesForIngredient[0]);
+		_recipeTabBar.Activate();
+		_recipeTabBar.OpenTabFor(pagesForIngredient[0]);
 
 		return true;
 	}
@@ -409,6 +418,7 @@ public class UIQERState : UIState
 	private void StopTakingInput()
 	{
 		_itemSearchPage.StopTakingInput();
+		_npcSearchPage.StopTakingInput();
 	}
 
 	// The left panel that displays recipes.
@@ -424,12 +434,13 @@ public class UIQERState : UIState
 		recipeContainer.Width.Percent = 1;
 		recipeContainer.Height.Percent = 1;
 
-		_tabBar.Width = new StyleDimension(-10, 0.45f);
-		_tabBar.Height.Pixels = TabHeight;
-		_tabBar.Left = new StyleDimension(5, 0.04f);
-		_tabBar.Top = new StyleDimension(-TabHeight, 0.1f);
+		_recipeTabBar.Width = new StyleDimension(-10, 0.45f);
+		_recipeTabBar.Height.Pixels = TabHeight;
+		_recipeTabBar.Left = new StyleDimension(5, 0.04f);
+		_recipeTabBar.Top = new StyleDimension(-TabHeight, 0.1f);
 
-		_tabBar.OnTabSelected += page => {
+		_recipeTabBar.OnTabSelected += page => {
+			StopTakingInput();
 			recipeContainer.Open(page);
 			_recipePage = page;
 		};
@@ -437,18 +448,36 @@ public class UIQERState : UIState
 		recipePanel.Append(recipeContainer);
 
 		Append(recipePanel);
-		Append(_tabBar);
+		Append(_recipeTabBar);
 	}
 
 	private void InitItemPanel()
 	{
+		var ingredientListContainer = new UIPopupContainer();
+		ingredientListContainer.Width.Percent = 1;
+		ingredientListContainer.Height.Percent = 1;
+
 		_itemListPanel.Left.Percent = 0.51f;
 		_itemListPanel.Width.Percent = 0.45f;
 		_itemListPanel.Height.Percent = 0.8f;
 		_itemListPanel.VAlign = 0.5f;
 
-		_itemListPanel.Append(_itemSearchPage);
+		_ingredientTabBar.Width = new StyleDimension(-10, 0.45f);
+		_ingredientTabBar.Height.Pixels = TabHeight;
+		_ingredientTabBar.Left = new StyleDimension(5, 0.51f);
+		_ingredientTabBar.Top = new StyleDimension(-TabHeight, 0.1f);
+		_ingredientTabBar.AddTab(Language.GetText("Mods.QuiteEnoughRecipes.Tabs.ItemList"),
+			new Item(ItemID.IronBar), _itemSearchPage);
+		_ingredientTabBar.AddTab(Language.GetText("Mods.QuiteEnoughRecipes.Tabs.NPCList"),
+			new Item(ItemID.Bunny), _npcSearchPage);
+
+		_ingredientTabBar.OnTabSelected += page => ingredientListContainer.Open(page);
+
+		_ingredientTabBar.OpenTabFor(_itemSearchPage);
+
+		_itemListPanel.Append(ingredientListContainer);
 		Append(_itemListPanel);
+		Append(_ingredientTabBar);
 	}
 
 	// Add a filter using a localization key.

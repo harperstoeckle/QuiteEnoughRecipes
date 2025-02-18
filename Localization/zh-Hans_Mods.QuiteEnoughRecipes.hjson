@@ -37,6 +37,8 @@ Configs: {
 }
 
 Tabs: {
+	// ItemList: Items
+	// NPCList: NPCs
 	Recipes: 合成获得
 	Tiles: 合成所需合成站
 	Shimmer: 微光转化

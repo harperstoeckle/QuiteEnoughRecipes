@@ -11,7 +11,7 @@ namespace QuiteEnoughRecipes;
  * Displays an NPC. Similar to a bestiary button, but is never locked. Shows the name of the NPC
  * when hovered.
  */
-public class UINPCPanel : UIElement, IIngredientElement
+public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<NPCIngredient>
 {
 	// This needs to be a child of the panel to handle overflow properly.
 	private class UINPCIcon : UIElement
@@ -70,6 +70,8 @@ public class UINPCPanel : UIElement, IIngredientElement
 	{
 		_icon = new(npcID);
 		_npcID = npcID;
+
+		Width.Pixels = Height.Pixels = 72;
 		OverflowHidden = true;
 
 		var slotBack = new UIImage(Main.Assets.Request<Texture2D>("Images/UI/Bestiary/Slot_Back")){
@@ -92,6 +94,14 @@ public class UINPCPanel : UIElement, IIngredientElement
 		Append(slotBack);
 		Append(_icon);
 		Append(slotFront);
+	}
+
+	public UINPCPanel() : this(0) {}
+
+	public void SetDisplayedValue(NPCIngredient i)
+	{
+		_npcID = i.ID;
+		_icon._entry = Main.BestiaryDB.FindEntryByNPCID(_npcID);
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
