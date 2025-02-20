@@ -101,10 +101,6 @@ public class UIQERState : UIState
 	private UIRecipePage? _recipePage = null;
 
 	private UITabBar<UIRecipePage> _recipeTabBar = new();
-	private UITabBar<UIElement> _ingredientTabBar = new();
-
-	// Panel with the item list. This is needed so the filter panel can be added and removed.
-	private UIPanel _itemListPanel = new();
 
 	private UIIngredientSearchPage<ItemIngredient, UIItemPanel> _itemSearchPage;
 	private UIIngredientSearchPage<NPCIngredient, UINPCPanel> _npcSearchPage;
@@ -151,70 +147,30 @@ public class UIQERState : UIState
 		AddHandler(new RecipeHandlers.NPCDrops());
 		AddHandler(new RecipeHandlers.GlobalDrops());
 
-		AddInternalFilter(ItemID.StoneBlock, "Tiles", ItemPredicates.IsTile);
-		AddInternalFilter(ItemID.Furnace, "CraftingStations", ItemPredicates.IsCraftingStation);
-		AddInternalFilter(ItemID.SuspiciousLookingEye, "BossSummons", ItemPredicates.IsBossSummon);
-		AddInternalFilter(ItemID.GoodieBag, "LootItems", ItemPredicates.IsLootItem);
-		AddInternalFilter(ItemID.InfernoPotion, "Potions", ItemPredicates.IsPotion);
-		AddInternalFilter(ItemID.Apple, "Food", ItemPredicates.IsFood);
-		AddInternalFilter(ItemID.WoodFishingPole, "Fishing", ItemPredicates.IsFishing);
-		AddInternalFilter(ItemID.RedDye, "Dye", ItemPredicates.IsDye);
-		AddInternalFilter(ItemID.AnkletoftheWind, "Accessories", ItemPredicates.IsAccessory);
-		AddInternalFilter(ItemID.ExoticEasternChewToy, "Pets", ItemPredicates.IsPet);
-		AddInternalFilter(ItemID.SlimySaddle, "Mounts", ItemPredicates.IsMount);
-		AddInternalFilter(ItemID.CreativeWings, "Wings", ItemPredicates.IsWings);
-		AddInternalFilter(ItemID.GrapplingHook, "Hooks", ItemPredicates.IsHook);
-		AddInternalFilter(ItemID.CopperPickaxe, "Tools", ItemPredicates.IsTool);
-		AddInternalFilter(ItemID.CopperChainmail, "Armor", ItemPredicates.IsArmor);
-		AddInternalFilter(ItemID.RedHat, "Vanity", ItemPredicates.IsVanity);
+		AddItemFilters(_itemSearchPage);
+		AddItemSorts(_itemSearchPage);
 
-		AddInternalFilter(ItemID.CopperShortsword, "MeleeWeapons", ItemPredicates.IsMeleeWeapon);
-		AddInternalFilter(ItemID.WoodenBow, "RangedWeapons", ItemPredicates.IsRangedWeapon);
-		AddInternalFilter(ItemID.WandofSparking, "MagicWeapons", ItemPredicates.IsMagicWeapon);
-		AddInternalFilter(ItemID.BabyBirdStaff, "SummonWeapons", ItemPredicates.IsSummonWeapon);
+		var recipePanel = new UIPanel();
+		recipePanel.Left.Percent = 0.04f;
+		recipePanel.Width.Percent = 0.45f;
+		recipePanel.Height.Percent = 0.8f;
+		recipePanel.VAlign = 0.5f;
 
-		AddInternalFilter(ItemID.FlareGun, "ClasslessWeapons", ItemPredicates.IsClasslessWeapon);
+		var recipeContainer = new UIPopupContainer();
+		recipeContainer.Width.Percent = 1;
+		recipeContainer.Height.Percent = 1;
 
-		// We only add the thrower class filter if there are mods that add throwing weapons.
-		if (FindIconItemForDamageClass(DamageClass.Throwing) is Item iconItem)
-		{
-			/*
-			 * Unlike the other modded damage classes, we only want to show throwing weapons that
-			 * are *exactly* in the throwing class, since modded classes that just *derive* from
-			 * throwing (like rogue) will also be shown below with the other modded classes.
-			 */
-			AddInternalFilter(iconItem.type, "ThrowingWeapons",
-				i => i.DamageType == DamageClass.Throwing && ItemPredicates.IsWeapon(i));
-		}
+		recipePanel.Append(recipeContainer);
 
-		/*
-		 * Modded damage classes, grouped by name. An item will be considered to fit into a group if
-		 * it counts as any of the damage classes in that group. Note that if two mods add damage
-		 * classes with the same name, they will be grouped together even if they're completely
-		 * unrelated.
-		 */
-		var moddedDamageClassSets =
-			Enumerable.Range(0, DamageClassLoader.DamageClassCount)
-			.Select(i => DamageClassLoader.GetDamageClass(i))
-			.GroupBy(c => BaseDamageClassName(c.DisplayName.Value))
-			.Select(g => g.ToList())
-			.Where(g => g.All(d => !(d is VanillaDamageClass)))
-			.OrderBy(g => g[0].Mod?.Name ?? "");
+		_recipeTabBar.Width = new StyleDimension(-10, 0.45f);
+		_recipeTabBar.Height.Pixels = TabHeight;
+		_recipeTabBar.Left = new StyleDimension(5, 0.04f);
+		_recipeTabBar.Top = new StyleDimension(-TabHeight, 0.1f);
 
-		foreach (var dcs in moddedDamageClassSets)
-		{
-			var icon = dcs.Select(d => FindIconItemForDamageClass(d))
-				.FirstOrDefault(n => n != null, null);
-
-			// This damage class has no items, so we can't really make a filter for it.
-			if (icon == null) { continue; }
-
-			// Adjust the name so instead of "rogue damage Weapons", we get "Rogue Weapons".
-			var name = Language.GetText("Mods.QuiteEnoughRecipes.Filters.OtherWeapons")
-				.Format(BaseDamageClassName(dcs[0].DisplayName.Value));
-			AddFilter(icon, $"{name}",
-				i => dcs.Any(dc => ItemPredicates.IsWeaponInDamageClass(i, dc)));
-		}
+		_recipeTabBar.OnTabSelected += page => {
+			recipeContainer.Open(page);
+			_recipePage = page;
+		};
 
 		/*
 		 * This should put the panel just to the left of the item list panel, which will keep it out
@@ -226,21 +182,40 @@ public class UIQERState : UIState
 		_optionPanelContainer.Top.Percent = 0.1f;
 		_optionPanelContainer.Left.Percent = 0.26f;
 
-		AddSort(new Item(ItemID.AlphabetStatue1),
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.ID"),
-			(x, y) => x.type.CompareTo(y.type));
-		AddSort(new Item(ItemID.AlphabetStatueA),
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Alphabetical"),
-			(x, y) => x.Name.CompareTo(y.Name));
-		AddSort(new Item(ItemID.StarStatue),
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Rarity"),
-			(x, y) => x.rare.CompareTo(y.rare));
-		AddSort(new Item(ItemID.ChestStatue),
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Value"),
-			(x, y) => x.value.CompareTo(y.value));
+		var ingredientListPanel = new UIPanel();
+		ingredientListPanel.Left.Percent = 0.51f;
+		ingredientListPanel.Width.Percent = 0.45f;
+		ingredientListPanel.Height.Percent = 0.8f;
+		ingredientListPanel.VAlign = 0.5f;
 
-		InitRecipePanel();
-		InitItemPanel();
+		var ingredientListContainer = new UIPopupContainer();
+		ingredientListContainer.Width.Percent = 1;
+		ingredientListContainer.Height.Percent = 1;
+
+		ingredientListPanel.Append(ingredientListContainer);
+
+		var ingredientTabBar = new UITabBar<UIElement>();
+		ingredientTabBar.Width = new StyleDimension(-10, 0.45f);
+		ingredientTabBar.Height.Pixels = TabHeight;
+		ingredientTabBar.Left = new StyleDimension(5, 0.51f);
+		ingredientTabBar.Top = new StyleDimension(-TabHeight, 0.1f);
+		ingredientTabBar.AddTab(Language.GetText("Mods.QuiteEnoughRecipes.Tabs.ItemList"),
+			new Item(ItemID.IronBar), _itemSearchPage);
+		ingredientTabBar.AddTab(Language.GetText("Mods.QuiteEnoughRecipes.Tabs.NPCList"),
+			new Item(ItemID.Bunny), _npcSearchPage);
+
+		ingredientTabBar.OnTabSelected += page => {
+			StopTakingInput();
+			_optionPanelContainer.Close();
+			ingredientListContainer.Open(page);
+		};
+
+		ingredientTabBar.OpenTabFor(_itemSearchPage);
+
+		Append(ingredientListPanel);
+		Append(ingredientTabBar);
+		Append(recipePanel);
+		Append(_recipeTabBar);
 		Append(_optionPanelContainer);
 	}
 
@@ -263,18 +238,6 @@ public class UIQERState : UIState
 
 	public void ShowSources(IIngredient i) => TryPushPage(i, QueryType.Sources);
 	public void ShowUses(IIngredient i) => TryPushPage(i, QueryType.Uses);
-
-	// This must be called before the filter panel is initialized.
-	public void AddFilter(Item icon, string hoverName, Predicate<Item> pred)
-	{
-		// TODO: Work with `ItemIngredient` predicates directly instead of converting them.
-		_itemSearchPage.AddFilter(icon, hoverName, i => pred(i.Item));
-	}
-
-	public void AddSort(Item icon, string hoverName, Comparison<Item> compare)
-	{
-		_itemSearchPage.AddSort(icon, hoverName, (a, b) => compare(a.Item, b.Item));
-	}
 
 	// If it exists, load the top of the history stack and pop it.
 	public void TryPopHistory()
@@ -421,75 +384,6 @@ public class UIQERState : UIState
 		_npcSearchPage.StopTakingInput();
 	}
 
-	// The left panel that displays recipes.
-	private void InitRecipePanel()
-	{
-		var recipePanel = new UIPanel();
-		recipePanel.Left.Percent = 0.04f;
-		recipePanel.Width.Percent = 0.45f;
-		recipePanel.Height.Percent = 0.8f;
-		recipePanel.VAlign = 0.5f;
-
-		var recipeContainer = new UIPopupContainer();
-		recipeContainer.Width.Percent = 1;
-		recipeContainer.Height.Percent = 1;
-
-		_recipeTabBar.Width = new StyleDimension(-10, 0.45f);
-		_recipeTabBar.Height.Pixels = TabHeight;
-		_recipeTabBar.Left = new StyleDimension(5, 0.04f);
-		_recipeTabBar.Top = new StyleDimension(-TabHeight, 0.1f);
-
-		_recipeTabBar.OnTabSelected += page => {
-			recipeContainer.Open(page);
-			_recipePage = page;
-		};
-
-		recipePanel.Append(recipeContainer);
-
-		Append(recipePanel);
-		Append(_recipeTabBar);
-	}
-
-	private void InitItemPanel()
-	{
-		var ingredientListContainer = new UIPopupContainer();
-		ingredientListContainer.Width.Percent = 1;
-		ingredientListContainer.Height.Percent = 1;
-
-		_itemListPanel.Left.Percent = 0.51f;
-		_itemListPanel.Width.Percent = 0.45f;
-		_itemListPanel.Height.Percent = 0.8f;
-		_itemListPanel.VAlign = 0.5f;
-
-		_ingredientTabBar.Width = new StyleDimension(-10, 0.45f);
-		_ingredientTabBar.Height.Pixels = TabHeight;
-		_ingredientTabBar.Left = new StyleDimension(5, 0.51f);
-		_ingredientTabBar.Top = new StyleDimension(-TabHeight, 0.1f);
-		_ingredientTabBar.AddTab(Language.GetText("Mods.QuiteEnoughRecipes.Tabs.ItemList"),
-			new Item(ItemID.IronBar), _itemSearchPage);
-		_ingredientTabBar.AddTab(Language.GetText("Mods.QuiteEnoughRecipes.Tabs.NPCList"),
-			new Item(ItemID.Bunny), _npcSearchPage);
-
-		_ingredientTabBar.OnTabSelected += page => {
-			StopTakingInput();
-			_optionPanelContainer.Close();
-			ingredientListContainer.Open(page);
-		};
-
-		_ingredientTabBar.OpenTabFor(_itemSearchPage);
-
-		_itemListPanel.Append(ingredientListContainer);
-		Append(_itemListPanel);
-		Append(_ingredientTabBar);
-	}
-
-	// Add a filter using a localization key.
-	private void AddInternalFilter(int itemID, string key, Predicate<Item> pred)
-	{
-		AddFilter(new Item(itemID), Language.GetTextValue($"Mods.QuiteEnoughRecipes.Filters.{key}"),
-			pred);
-	}
-
 	/*
 	 * Tries to find a low-rarity item to use as an icon for a damage class filter. When applying
 	 * the filter, any weapon that counts for this damage class will be shown, but for the purposes
@@ -519,5 +413,99 @@ public class UIQERState : UIState
 		var ti = new CultureInfo("en-US", false).TextInfo;
 		return ti.ToTitleCase(
 			Regex.Replace(name, @"^\s*(.*?)\s*damage\s*$", @"$1", RegexOptions.IgnoreCase));
+	}
+
+	private static void AddItemFilters(UIIngredientSearchPage<ItemIngredient, UIItemPanel> page)
+	{
+		IEnumerable<(int, string, Predicate<Item>)> filters = [
+			(ItemID.StoneBlock, "Tiles", ItemPredicates.IsTile),
+			(ItemID.Furnace, "CraftingStations", ItemPredicates.IsCraftingStation),
+			(ItemID.SuspiciousLookingEye, "BossSummons", ItemPredicates.IsBossSummon),
+			(ItemID.GoodieBag, "LootItems", ItemPredicates.IsLootItem),
+			(ItemID.InfernoPotion, "Potions", ItemPredicates.IsPotion),
+			(ItemID.Apple, "Food", ItemPredicates.IsFood),
+			(ItemID.WoodFishingPole, "Fishing", ItemPredicates.IsFishing),
+			(ItemID.RedDye, "Dye", ItemPredicates.IsDye),
+			(ItemID.AnkletoftheWind, "Accessories", ItemPredicates.IsAccessory),
+			(ItemID.ExoticEasternChewToy, "Pets", ItemPredicates.IsPet),
+			(ItemID.SlimySaddle, "Mounts", ItemPredicates.IsMount),
+			(ItemID.CreativeWings, "Wings", ItemPredicates.IsWings),
+			(ItemID.GrapplingHook, "Hooks", ItemPredicates.IsHook),
+			(ItemID.CopperPickaxe, "Tools", ItemPredicates.IsTool),
+			(ItemID.CopperChainmail, "Armor", ItemPredicates.IsArmor),
+			(ItemID.RedHat, "Vanity", ItemPredicates.IsVanity),
+
+			(ItemID.CopperShortsword, "MeleeWeapons", ItemPredicates.IsMeleeWeapon),
+			(ItemID.WoodenBow, "RangedWeapons", ItemPredicates.IsRangedWeapon),
+			(ItemID.WandofSparking, "MagicWeapons", ItemPredicates.IsMagicWeapon),
+			(ItemID.BabyBirdStaff, "SummonWeapons", ItemPredicates.IsSummonWeapon),
+
+			(ItemID.FlareGun, "ClasslessWeapons", ItemPredicates.IsClasslessWeapon)
+		];
+
+		foreach (var (id, key, pred) in filters)
+		{
+			page.AddFilter(new(id),
+				Language.GetTextValue($"Mods.QuiteEnoughRecipes.Filters.{key}"),
+				i => pred(i.Item));
+		}
+
+		// We only add the thrower class filter if there are mods that add throwing weapons.
+		if (FindIconItemForDamageClass(DamageClass.Throwing) is Item iconItem)
+		{
+			/*
+			 * Unlike the other modded damage classes, we only want to show throwing weapons that
+			 * are *exactly* in the throwing class, since modded classes that just *derive* from
+			 * throwing (like rogue) will also be shown below with the other modded classes.
+			 */
+			page.AddFilter(iconItem,
+				Language.GetTextValue("Mods.QuiteEnoughRecipes.Filters.ThrowingWeapons"),
+				i => i.Item.DamageType == DamageClass.Throwing && ItemPredicates.IsWeapon(i.Item));
+		}
+
+		/*
+		 * Modded damage classes, grouped by name. An item will be considered to fit into a group if
+		 * it counts as any of the damage classes in that group. Note that if two mods add damage
+		 * classes with the same name, they will be grouped together even if they're completely
+		 * unrelated.
+		 */
+		var moddedDamageClassSets =
+			Enumerable.Range(0, DamageClassLoader.DamageClassCount)
+			.Select(i => DamageClassLoader.GetDamageClass(i))
+			.GroupBy(c => BaseDamageClassName(c.DisplayName.Value))
+			.Select(g => g.ToList())
+			.Where(g => g.All(d => !(d is VanillaDamageClass)))
+			.OrderBy(g => g[0].Mod?.Name ?? "");
+
+		foreach (var dcs in moddedDamageClassSets)
+		{
+			var icon = dcs.Select(d => FindIconItemForDamageClass(d))
+				.FirstOrDefault(n => n != null, null);
+
+			// This damage class has no items, so we can't really make a filter for it.
+			if (icon == null) { continue; }
+
+			// Adjust the name so instead of "rogue damage Weapons", we get "Rogue Weapons".
+			var name = Language.GetText("Mods.QuiteEnoughRecipes.Filters.OtherWeapons")
+				.Format(BaseDamageClassName(dcs[0].DisplayName.Value));
+			page.AddFilter(icon, $"{name}",
+				i => dcs.Any(dc => ItemPredicates.IsWeaponInDamageClass(i.Item, dc)));
+		}
+	}
+
+	private static void AddItemSorts(UIIngredientSearchPage<ItemIngredient, UIItemPanel> page)
+	{
+		page.AddSort(new Item(ItemID.AlphabetStatue1),
+			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.ID"),
+			(x, y) => x.Item.type.CompareTo(y.Item.type));
+		page.AddSort(new Item(ItemID.AlphabetStatueA),
+			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Alphabetical"),
+			(x, y) => x.Item.Name.CompareTo(y.Item.Name));
+		page.AddSort(new Item(ItemID.StarStatue),
+			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Rarity"),
+			(x, y) => x.Item.rare.CompareTo(y.Item.rare));
+		page.AddSort(new Item(ItemID.ChestStatue),
+			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Value"),
+			(x, y) => x.Item.value.CompareTo(y.Item.value));
 	}
 }
