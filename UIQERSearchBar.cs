@@ -15,6 +15,9 @@ namespace QuiteEnoughRecipes;
 public class UIQERSearchBar : UIPanel
 {
 	private static readonly Color _backgroundColor = new(35, 40, 83);
+
+	private static UIQERSearchBar? _activeInstance = null;
+
 	private UISearchBar _search;
 
 	/*
@@ -61,8 +64,15 @@ public class UIQERSearchBar : UIPanel
 		 * this is an 100% accurate characterization of the bug, admittedly).
 		 * Setting `blockInput` like this prevents that from happening.
 		 */
-		_search.OnStartTakingInput += () => Main.blockInput = true;
-		_search.OnEndTakingInput += () => Main.blockInput = false;
+		_search.OnStartTakingInput += () => {
+			_activeInstance?.SetTakingInput(false);
+			Main.blockInput = true;
+			_activeInstance = this;
+		};
+		_search.OnEndTakingInput += () => {
+			_activeInstance = null;
+			Main.blockInput = false;
+		};
 
 		Width.Percent = 1;
 		Height.Pixels = 24;
@@ -104,5 +114,10 @@ public class UIQERSearchBar : UIPanel
 		{
 			_search.ToggleTakingText();
 		}
+	}
+
+	public static void UnfocusAll()
+	{
+		_activeInstance?.SetTakingInput(false);
 	}
 }

@@ -102,9 +102,6 @@ public class UIQERState : UIState
 
 	private UITabBar<UIRecipePage> _recipeTabBar = new();
 
-	private UIIngredientSearchPage<ItemIngredient, UIItemPanel> _itemSearchPage;
-	private UIIngredientSearchPage<NPCIngredient, UINPCPanel> _npcSearchPage;
-
 	/*
 	 * When an item panel is being hovered, this keeps track of it. This is needed so that we can
 	 * have the panel do tooltip modifications.
@@ -130,14 +127,16 @@ public class UIQERState : UIState
 			.Select(i => new ItemIngredient(i))
 			.ToList();
 
-		_itemSearchPage = new(_optionPanelContainer, allItems);
+		var itemSearchPage = new UIIngredientSearchPage<ItemIngredient, UIItemPanel>(
+			_optionPanelContainer, allItems);
 
 		var allNPCs = Enumerable.Range(0, NPCLoader.NPCCount)
 			.Where(n => Main.BestiaryDB.FindEntryByNPCID(n).Icon != null)
 			.Select(n => new NPCIngredient(n))
 			.ToList();
 
-		_npcSearchPage = new(_optionPanelContainer, allNPCs, 72, 10);
+		var npcSearchPage = new UIIngredientSearchPage<NPCIngredient, UINPCPanel>(
+			_optionPanelContainer, allNPCs, 72, 10);
 
 		AddHandler(new RecipeHandlers.Basic());
 		AddHandler(new RecipeHandlers.CraftingStations());
@@ -147,8 +146,8 @@ public class UIQERState : UIState
 		AddHandler(new RecipeHandlers.NPCDrops());
 		AddHandler(new RecipeHandlers.GlobalDrops());
 
-		AddItemFilters(_itemSearchPage);
-		AddItemSorts(_itemSearchPage);
+		AddItemFilters(itemSearchPage);
+		AddItemSorts(itemSearchPage);
 
 		var recipePanel = new UIPanel();
 		recipePanel.Left.Percent = 0.04f;
@@ -200,17 +199,17 @@ public class UIQERState : UIState
 		ingredientTabBar.Left = new StyleDimension(5, 0.51f);
 		ingredientTabBar.Top = new StyleDimension(-TabHeight, 0.1f);
 		ingredientTabBar.AddTab(Language.GetText("Mods.QuiteEnoughRecipes.Tabs.ItemList"),
-			new Item(ItemID.IronBar), _itemSearchPage);
+			new Item(ItemID.IronBar), itemSearchPage);
 		ingredientTabBar.AddTab(Language.GetText("Mods.QuiteEnoughRecipes.Tabs.NPCList"),
-			new Item(ItemID.Bunny), _npcSearchPage);
+			new Item(ItemID.Bunny), npcSearchPage);
 
 		ingredientTabBar.OnTabSelected += page => {
-			StopTakingInput();
+			UIQERSearchBar.UnfocusAll();
 			_optionPanelContainer.Close();
 			ingredientListContainer.Open(page);
 		};
 
-		ingredientTabBar.OpenTabFor(_itemSearchPage);
+		ingredientTabBar.OpenTabFor(itemSearchPage);
 
 		Append(ingredientListPanel);
 		Append(ingredientTabBar);
@@ -260,7 +259,7 @@ public class UIQERState : UIState
 	{
 		if (!(e.Target is UIQERSearchBar))
 		{
-			StopTakingInput();
+			UIQERSearchBar.UnfocusAll();
 		}
 
 		/*
@@ -282,7 +281,7 @@ public class UIQERState : UIState
 	{
 		if (!(e.Target is UIQERSearchBar))
 		{
-			StopTakingInput();
+			UIQERSearchBar.UnfocusAll();
 		}
 
 		if (!(e.Target is OptionPanelToggleButton) && !_optionPanelContainer.IsMouseHovering)
@@ -375,13 +374,6 @@ public class UIQERState : UIState
 		{
 			_history.RemoveRange(0, _history.Count - MaxHistorySize);
 		}
-	}
-
-	// If a search bar is focused, stop taking input from it.
-	private void StopTakingInput()
-	{
-		_itemSearchPage.StopTakingInput();
-		_npcSearchPage.StopTakingInput();
 	}
 
 	/*
