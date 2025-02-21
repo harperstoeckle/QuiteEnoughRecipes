@@ -182,14 +182,10 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 	 * `squareSideLength` is the side length of the grid squares, and `padding` is the amount of
 	 * padding between grid squares.
 	 */
-	public UIIngredientSearchPage(UIPopupContainer optionPanelContainer, List<T> allIngredients,
-		int squareSideLength = 50, int padding = 5)
+	public UIIngredientSearchPage(UIPopupContainer optionPanelContainer, List<T> allIngredients)
 	{
 		const float BarHeight = 50;
 		const float ScrollBarWidth = 30;
-
-		_ingredientList.SquareSideLength = squareSideLength;
-		_ingredientList.Padding = padding;
 
 		_allIngredients = allIngredients;
 		_filteredIngredients = new(_allIngredients);

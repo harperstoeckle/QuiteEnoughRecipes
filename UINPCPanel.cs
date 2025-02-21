@@ -61,6 +61,9 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 		}
 	}
 
+	public static int GridSideLength => 72;
+	public static int GridPadding => 10;
+
 	private UINPCIcon _icon;
 	private int _npcID;
 

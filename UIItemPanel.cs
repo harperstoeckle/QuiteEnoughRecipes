@@ -18,6 +18,11 @@ namespace QuiteEnoughRecipes;
  */
 public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement<ItemIngredient>
 {
+	public const int DefaultSideLength = 50;
+
+	public static int GridSideLength => DefaultSideLength;
+	public static int GridPadding => 5;
+
 	private float _scale;
 
 	// The item to show. When this is set to `null`, nothing at all will be drawn.
@@ -26,12 +31,12 @@ public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement
 	public IIngredient Ingredient => new ItemIngredient(DisplayedItem);
 
 	// The icon will be scaled to fit in a square with side length `width`.
-	public UIItemPanel(Item? displayedItem, float width = 50)
+	public UIItemPanel(Item? displayedItem, float width = DefaultSideLength)
 	{
 		DisplayedItem = displayedItem;
 		Width.Pixels = width;
 		Height.Pixels = width;
-		_scale = width / 50;
+		_scale = width / DefaultSideLength;
 
 		// Extremely lazy way to handle text bounds.
 		SetPadding(3 * _scale);
@@ -160,7 +165,8 @@ public class UIRecipeGroupPanel : UIItemPanel
 	private List<int> _itemsInGroup;
 	private int _curItemIndex = 0;
 
-	public UIRecipeGroupPanel(RecipeGroup displayedGroup, int stack = 1, float width = 50) :
+	public UIRecipeGroupPanel(RecipeGroup displayedGroup, int stack = 1,
+		float width = DefaultSideLength) :
 		base(null, width)
 	{
 		_displayedGroup = displayedGroup;

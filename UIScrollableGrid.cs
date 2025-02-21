@@ -15,6 +15,14 @@ namespace QuiteEnoughRecipes;
  */
 public interface IScrollableGridElement<T>
 {
+	/*
+	 * These will be used to determine the dimensions of the grid. `GridSideLength` should be the
+	 * same as the default width of one of these elements when constructed. Note that the grid of
+	 * a `UIScrollableGrid` is always square, and elements are placed in the top-left corner.
+	 */
+	public virtual static int GridSideLength { get; }
+	public virtual static int GridPadding { get; }
+
 	public void SetDisplayedValue(T value);
 }
 
@@ -26,8 +34,8 @@ public class UIScrollableGrid<T, E> : UIElement
 	private float _lastViewPosition = 0;
 
 	// Width and height of grid squares, and padding between squares.
-	public float SquareSideLength = 50;
-	public float Padding = 5;
+	public float SquareSideLength = E.GridSideLength;
+	public float Padding = E.GridPadding;
 
 	// *all* values to be displayed. These can be scrolled through.
 	public List<T> Values

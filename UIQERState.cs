@@ -144,7 +144,7 @@ public class UIQERState : UIState
 			.ToList();
 
 		var npcSearchPage = new UIIngredientSearchPage<NPCIngredient, UINPCPanel>(
-			_optionPanelContainer, allNPCs, 72, 10);
+			_optionPanelContainer, allNPCs);
 
 		AddNPCFilters(npcSearchPage);
 		AddNPCSorts(npcSearchPage);
