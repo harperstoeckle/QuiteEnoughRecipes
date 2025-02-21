@@ -10,7 +10,7 @@ UI: {
 	FilterHover: 筛选
 	SortHover: 排序
 	RightClickToClear: 右键清除
-	SearchHelp:
+	ItemSearchHelp:
 		'''
 		[c/32FF82:搜索语法]
 		以[c/3B95DA:#]为开头将搜索物品描述
@@ -18,6 +18,15 @@ UI: {
 		查找特定Mod需要在你的搜索文本中使用[c/3B95DA:@ModName]
 		[c/3B95DA:ModName]为Mod显示名称，但是需要手动删掉其中的空格
 		'''
+	/* NPCSearchHelp:
+		'''
+		[c/32FF82:Search Syntax]
+		Any text following a [c/3B95DA:#] will be searched for in the NPC's
+		bestiary flavor text.
+
+		To search by mod, include [c/3B95DA:@ModName] in your search, where
+		[c/3B95DA:ModName] is in the name of the mod with any spaces removed.
+		''' */
 }
 
 Configs: {

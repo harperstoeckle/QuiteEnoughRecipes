@@ -131,8 +131,11 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 	// Icon that provides help when hovered.
 	private class HelpIcon : UIElement
 	{
-		public HelpIcon()
+		private LocalizedText _text;
+		public HelpIcon(LocalizedText text)
 		{
+			_text = text;
+
 			Width.Pixels = Height.Pixels = 22;
 			Append(new UIText("?", 0.8f){
 				HAlign = 0.5f,
@@ -148,8 +151,7 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 
 			if (IsMouseHovering)
 			{
-				UICommon.TooltipMouseText(
-					Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SearchHelp"));
+				UICommon.TooltipMouseText(_text.Value);
 			}
 		}
 	}
@@ -182,7 +184,8 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 	 * `squareSideLength` is the side length of the grid squares, and `padding` is the amount of
 	 * padding between grid squares.
 	 */
-	public UIIngredientSearchPage(UIPopupContainer optionPanelContainer, List<T> allIngredients)
+	public UIIngredientSearchPage(UIPopupContainer optionPanelContainer, List<T> allIngredients,
+		LocalizedText helpText)
 	{
 		const float BarHeight = 50;
 		const float ScrollBarWidth = 30;
@@ -233,7 +236,7 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 
 		offset += _sortToggleButton.Width.Pixels + 10;
 
-		var helpIcon = new HelpIcon();
+		var helpIcon = new HelpIcon(helpText);
 		helpIcon.HAlign = 1;
 
 		// Make room for the filters on the left and the help icon on the right.

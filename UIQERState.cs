@@ -132,7 +132,8 @@ public class UIQERState : UIState
 			.ToList();
 
 		var itemSearchPage = new UIIngredientSearchPage<ItemIngredient, UIItemPanel>(
-			_optionPanelContainer, allItems);
+			_optionPanelContainer, allItems,
+			Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
 
 		AddItemFilters(itemSearchPage);
 		AddItemSorts(itemSearchPage);
@@ -144,7 +145,8 @@ public class UIQERState : UIState
 			.ToList();
 
 		var npcSearchPage = new UIIngredientSearchPage<NPCIngredient, UINPCPanel>(
-			_optionPanelContainer, allNPCs);
+			_optionPanelContainer, allNPCs,
+			Language.GetText("Mods.QuiteEnoughRecipes.UI.NPCSearchHelp"));
 
 		AddNPCFilters(npcSearchPage);
 		AddNPCSorts(npcSearchPage);
