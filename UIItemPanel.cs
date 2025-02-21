@@ -18,7 +18,7 @@ namespace QuiteEnoughRecipes;
  */
 public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement<ItemIngredient>
 {
-	public const int DefaultSideLength = 50;
+	public const int DefaultSideLength = 52;
 
 	public static int GridSideLength => DefaultSideLength;
 	public static int GridPadding => 5;
