@@ -51,26 +51,26 @@ public class UISystem : ModSystem
 	{
 		if (OpenUIKey.JustPressed)
 		{
-			if (Main.InGameUI.CurrentState == _ui)
+			if (_ui.IsOpen())
 			{
-				IngameFancyUI.Close();
+				_ui.Close();
 			}
 			else
 			{
-				IngameFancyUI.OpenUIState(_ui);
+				_ui.Open();
 			}
 		}
 
 		if (HoverSourcesKey.JustPressed && Main.HoverItem != null && !Main.HoverItem.IsAir)
 		{
 			_ui.ShowSources(new ItemIngredient(Main.HoverItem));
-			IngameFancyUI.OpenUIState(_ui);
+			_ui.Open();
 		}
 
 		if (HoverUsesKey.JustPressed && Main.HoverItem != null && !Main.HoverItem.IsAir)
 		{
 			_ui.ShowUses(new ItemIngredient(Main.HoverItem));
-			IngameFancyUI.OpenUIState(_ui);
+			_ui.Open();
 		}
 	}
 }

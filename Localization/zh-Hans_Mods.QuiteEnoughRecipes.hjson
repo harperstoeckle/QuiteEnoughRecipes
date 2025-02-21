@@ -32,6 +32,15 @@ Configs: {
 				'''
 		}
 
+		AutoFocusSearchBars: {
+			// Label: Automatically Focus Search Bars
+			/* Tooltip:
+				'''
+				If this is enabled, the search bar will automatically be focused when opening the
+				browser or when switching tabs.
+				''' */
+		}
+
 		DisplayName: 极适合成表配置
 	}
 }

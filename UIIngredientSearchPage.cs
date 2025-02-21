@@ -16,6 +16,12 @@ using Terraria;
 
 namespace QuiteEnoughRecipes;
 
+// A page containing a search bar that can automatically be focused.
+public interface IFocusableSearchPage
+{
+	public void FocusSearchBar();
+}
+
 /*
  * TODO: This is only public so that `UIQERState` can avoid closing the option popup when one of
  * these buttons is pressed by checking the type. There should be a better way of checking whether
@@ -75,7 +81,7 @@ public class OptionPanelToggleButton : UIElement
  * A page including a scrollable list of ingredients, a search bar, and filter options. This
  * contains a list of type `T`, which are displayed in elements of type `E` in a grid.
  */
-public class UIIngredientSearchPage<T, E> : UIElement
+public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 	where T : IIngredient
 	where E : UIElement, IScrollableGridElement<T>, new()
 {
@@ -251,6 +257,11 @@ public class UIIngredientSearchPage<T, E> : UIElement
 
 	}
 
+	public void FocusSearchBar()
+	{
+		_searchBar.SetTakingInput(true);
+	}
+
 	public void AddFilter(Item icon, string name, Predicate<T> pred)
 	{
 		_filterPanel.AddItemIconOption(icon, name, pred);
@@ -259,12 +270,6 @@ public class UIIngredientSearchPage<T, E> : UIElement
 	public void AddSort(Item icon, string name, Comparison<T> compare)
 	{
 		_sortPanel.AddItemIconOption(icon, name, compare);
-	}
-
-	// Unfocus the search bar.
-	public void StopTakingInput()
-	{
-		_searchBar.SetTakingInput(false);
 	}
 
 	// Update what ingredients are being displayed based on the search bar and filters.

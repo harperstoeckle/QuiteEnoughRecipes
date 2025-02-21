@@ -12,4 +12,7 @@ public class QERConfig : ModConfig
 
 	[DefaultValue(false)]
 	public bool ShouldPreloadItems;
+
+	[DefaultValue(false)]
+	public bool AutoFocusSearchBars;
 }

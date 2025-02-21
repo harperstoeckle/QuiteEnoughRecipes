@@ -111,6 +111,9 @@ public class UIQERState : UIState
 	// This will contain at most one of the options panels (sort, filter).
 	private UIPopupContainer _optionPanelContainer = new();
 
+	// This will be re-focused when the browser is opened.
+	private IFocusableSearchPage? _pageToFocusOnOpen = null;
+
 	public UIQERState()
 	{
 		/*
@@ -205,6 +208,13 @@ public class UIQERState : UIState
 
 		ingredientTabBar.OnTabSelected += page => {
 			UIQERSearchBar.UnfocusAll();
+
+			if (QERConfig.Instance.AutoFocusSearchBars && page is IFocusableSearchPage s)
+			{
+				if (IsOpen()) { s.FocusSearchBar(); }
+				_pageToFocusOnOpen = s;
+			}
+
 			_optionPanelContainer.Close();
 			ingredientListContainer.Open(page);
 		};
@@ -231,6 +241,27 @@ public class UIQERState : UIState
 		{
 			TryPopHistory();
 		}
+	}
+
+	public bool IsOpen() => Main.InGameUI.CurrentState == this;
+
+	/*
+	 * `Open` and `Close` are the preferred ways to open and close the browser, since they handle
+	 * things like auto-focusing the search bar.
+	 */
+	public void Open()
+	{
+		IngameFancyUI.OpenUIState(this);
+
+		if (QERConfig.Instance.AutoFocusSearchBars)
+		{
+			_pageToFocusOnOpen?.FocusSearchBar();
+		}
+	}
+	public void Close()
+	{
+		UIQERSearchBar.UnfocusAll();
+		IngameFancyUI.Close();
 	}
 
 	public void AddHandler(IRecipeHandler handler) => _allTabs.Add(new(handler));
