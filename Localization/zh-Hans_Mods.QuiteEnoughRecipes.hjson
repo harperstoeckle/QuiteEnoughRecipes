@@ -82,6 +82,10 @@ Filters: {
 	BossSummons: Boss召唤物
 	# Used to format other damage types.
 	OtherWeapons: "{0}武器"
+	# NPCs
+	// Bosses: Bosses
+	// TownNPCs: Town NPCs
+	// RareNPCs: Rare
 }
 
 Sorts: {

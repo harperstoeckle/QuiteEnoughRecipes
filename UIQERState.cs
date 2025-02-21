@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System;
+using Terraria.GameContent.Bestiary;
 using Terraria.GameContent.UI.Elements;
 using Terraria.GameContent;
 using Terraria.ID;
@@ -133,13 +134,20 @@ public class UIQERState : UIState
 		var itemSearchPage = new UIIngredientSearchPage<ItemIngredient, UIItemPanel>(
 			_optionPanelContainer, allItems);
 
+		AddItemFilters(itemSearchPage);
+		AddItemSorts(itemSearchPage);
+
 		var allNPCs = Enumerable.Range(0, NPCLoader.NPCCount)
 			.Where(n => Main.BestiaryDB.FindEntryByNPCID(n).Icon != null)
 			.Select(n => new NPCIngredient(n))
+			.OrderBy(n => ContentSamples.NpcBestiarySortingId[n.ID])
 			.ToList();
 
 		var npcSearchPage = new UIIngredientSearchPage<NPCIngredient, UINPCPanel>(
 			_optionPanelContainer, allNPCs, 72, 10);
+
+		AddNPCFilters(npcSearchPage);
+		AddNPCSorts(npcSearchPage);
 
 		AddHandler(new RecipeHandlers.Basic());
 		AddHandler(new RecipeHandlers.CraftingStations());
@@ -148,9 +156,6 @@ public class UIQERState : UIState
 		AddHandler(new RecipeHandlers.ItemDrops());
 		AddHandler(new RecipeHandlers.NPCDrops());
 		AddHandler(new RecipeHandlers.GlobalDrops());
-
-		AddItemFilters(itemSearchPage);
-		AddItemSorts(itemSearchPage);
 
 		var recipePanel = new UIPanel();
 		recipePanel.Left.Percent = 0.04f;
@@ -530,5 +535,53 @@ public class UIQERState : UIState
 		page.AddSort(new Item(ItemID.ChestStatue),
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Value"),
 			(x, y) => x.Item.value.CompareTo(y.Item.value));
+	}
+
+	private static void AddNPCFilters(UIIngredientSearchPage<NPCIngredient, UINPCPanel> page)
+	{
+		IEnumerable<(int, string, Predicate<int>)> filters = [
+			(ItemID.SlimeCrown, "Bosses",
+				n => TryGetBestiaryInfoElement<BossBestiaryInfoElement>(n) != null),
+			(ItemID.GoldCoin, "TownNPCs", n => TryGetNPC(n)?.isLikeATownNPC ?? false)
+		];
+
+		foreach (var (id, key, pred) in filters)
+		{
+			page.AddFilter(new(id),
+				Language.GetTextValue($"Mods.QuiteEnoughRecipes.Filters.{key}"),
+				n => pred(n.ID));
+		}
+	}
+
+	private static void AddNPCSorts(UIIngredientSearchPage<NPCIngredient, UINPCPanel> page)
+	{
+		IEnumerable<(int, string, Comparison<int>)> sorts = [
+			(ItemID.AlphabetStatue1, "ID", (x, y) => x.CompareTo(y)),
+			(ItemID.AlphabetStatueA, "Alphabetical",
+				(x, y) => Lang.GetNPCNameValue(x).CompareTo(Lang.GetNPCNameValue(y))),
+			(ItemID.StarStatue, "Rarity", (x, y) => {
+				int xRare = TryGetNPC(x)?.rarity ?? 0;
+				int yRare = TryGetNPC(y)?.rarity ?? 0;
+				return xRare.CompareTo(yRare);
+			})
+		];
+
+		foreach (var (id, key, comp) in sorts)
+		{
+			page.AddSort(new(id),
+				Language.GetTextValue($"Mods.QuiteEnoughRecipes.Sorts.{key}"),
+				(x, y) => comp(x.ID, y.ID));
+		}
+
+	}
+
+	private static T? TryGetBestiaryInfoElement<T>(int npcID)
+	{
+		return Main.BestiaryDB.FindEntryByNPCID(npcID).Info.OfType<T>().FirstOrDefault();
+	}
+
+	private static NPC? TryGetNPC(int npcID)
+	{
+		return ContentSamples.NpcsByNetId.TryGetValue(npcID, out var npc) ? npc : null;
 	}
 }
