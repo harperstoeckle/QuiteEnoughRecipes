@@ -23,7 +23,7 @@ UI: {
 Configs: {
 	QERConfig: {
 		ShouldPreloadItems: {
-			Label: Preload Item Textures
+			Label: 预加载物品贴图
 			Tooltip:
 				'''
 				如果启用该选项，则将在加载世界的时候加载物品列表
@@ -80,4 +80,4 @@ Sorts: {
 	Value: 按价值排序
 }
 
-// Conditions.BannerDrop: Drops once for every {0} kills
+Conditions.BannerDrop: 每击杀{0}次掉落一个
