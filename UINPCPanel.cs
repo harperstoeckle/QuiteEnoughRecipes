@@ -1,7 +1,10 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using System.Linq;
 using Terraria.GameContent.Bestiary;
 using Terraria.GameContent.UI.Elements;
+using Terraria.GameContent;
+using Terraria.ModLoader.UI;
 using Terraria.UI;
 using Terraria;
 
@@ -18,11 +21,11 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 	{
 		private bool _isHovering => Parent?.IsMouseHovering ?? false;
 
-		public BestiaryEntry _entry;
+		public BestiaryEntry Entry;
 
 		public UINPCIcon(int npcID)
 		{
-			_entry = Main.BestiaryDB.FindEntryByNPCID(npcID);
+			Entry = Main.BestiaryDB.FindEntryByNPCID(npcID);
 
 			OverflowHidden = true;
 			IgnoresMouseInteraction = true;
@@ -34,10 +37,10 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 		{
 			var rect = GetDimensions().ToRectangle();
 			var collectionInfo = new BestiaryUICollectionInfo(){
-				OwnerEntry = _entry,
+				OwnerEntry = Entry,
 				UnlockState = BestiaryEntryUnlockState.CanShowPortraitOnly_1
 			};
-			_entry.Icon?.Update(collectionInfo, rect,
+			Entry.Icon?.Update(collectionInfo, rect,
 				new EntryIconDrawSettings(){
 					iconbox = rect,
 					IsHovered = _isHovering,
@@ -48,11 +51,11 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 		protected override void DrawSelf(SpriteBatch sb)
 		{
 			var collectionInfo = new BestiaryUICollectionInfo(){
-				OwnerEntry = _entry,
+				OwnerEntry = Entry,
 				UnlockState = BestiaryEntryUnlockState.CanShowPortraitOnly_1
 			};
 
-			_entry.Icon?.Draw(collectionInfo, sb,
+			Entry.Icon?.Draw(collectionInfo, sb,
 				new EntryIconDrawSettings(){
 					iconbox = GetDimensions().ToRectangle(),
 					IsHovered = _isHovering,
@@ -65,6 +68,7 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 	public static int GridPadding => 5;
 
 	private UINPCIcon _icon;
+	private string _hoverText;
 	private int _npcID;
 
 	public IIngredient Ingredient => new NPCIngredient(_npcID);
@@ -73,6 +77,7 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 	{
 		_icon = new(npcID);
 		_npcID = npcID;
+		UpdateHoverText();
 
 		Width.Pixels = Height.Pixels = 72;
 		OverflowHidden = true;
@@ -104,7 +109,8 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 	public void SetDisplayedValue(NPCIngredient i)
 	{
 		_npcID = i.ID;
-		_icon._entry = Main.BestiaryDB.FindEntryByNPCID(_npcID);
+		_icon.Entry = Main.BestiaryDB.FindEntryByNPCID(_npcID);
+		UpdateHoverText();
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
@@ -112,14 +118,25 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 		base.DrawSelf(sb);
 
 		var collectionInfo = new BestiaryUICollectionInfo(){
-			OwnerEntry = _icon._entry,
+			OwnerEntry = _icon.Entry,
 			UnlockState = BestiaryEntryUnlockState.CanShowPortraitOnly_1
 		};
 
 		if (IsMouseHovering)
 		{
-			Main.instance.MouseText(
-				_icon._entry.Icon?.GetHoverText(collectionInfo) ?? Lang.GetNPCNameValue(_npcID));
+			UICommon.TooltipMouseText(_hoverText);
+		}
+	}
+
+	private void UpdateHoverText()
+	{
+		_hoverText = Lang.GetNPCNameValue(_npcID);
+		var flavorText = Ingredient.GetTooltipLines()?.FirstOrDefault();
+
+		if (flavorText != null)
+		{
+			var wrappedFlavorText = FontAssets.MouseText.Value.CreateWrappedText(flavorText, 300);
+			_hoverText += $"\n{wrappedFlavorText}";
 		}
 	}
 }

@@ -1,6 +1,9 @@
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using Terraria.GameContent.Bestiary;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria;
 
@@ -72,7 +75,21 @@ public record struct NPCIngredient(int ID) : IIngredient
 {
 	public string? Name => Lang.GetNPCNameValue(ID);
 	public Mod? Mod => NPCLoader.GetNPC(ID)?.Mod;
-	public IEnumerable<string> GetTooltipLines() => null;
+
+	[UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_key")]
+	private extern static ref string FlavorTextBestiaryInfoElement_key(
+		FlavorTextBestiaryInfoElement self);
+
+	public IEnumerable<string>? GetTooltipLines()
+	{
+		var elem = Main.BestiaryDB.FindEntryByNPCID(ID).Info
+			.OfType<FlavorTextBestiaryInfoElement>()
+			.FirstOrDefault();
+
+		if (elem == null) { return []; }
+
+		return [Language.GetTextValue(FlavorTextBestiaryInfoElement_key(elem))];
+	}
 
 	public bool IsEquivalent(IIngredient other)
 	{
