@@ -91,7 +91,6 @@ public static class RecipeHandlers
 		}
 	}
 
-	// Shows NPC shops that sell the given item. TODO: Add NPC uses.
 	public class NPCShops : IRecipeHandler
 	{
 		public LocalizedText HoverName { get; }
@@ -101,17 +100,29 @@ public static class RecipeHandlers
 
 		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
 		{
-			if (!(queryType == QueryType.Sources && ing is ItemIngredient i))
+			switch (ing, queryType)
 			{
-				yield break;
-			}
-
-			foreach (var shop in NPCShopDatabase.AllShops)
-			{
-				if (shop.ActiveEntries.Any(e => e.Item.type == i.Item.type))
+			case (ItemIngredient i, QueryType.Sources):
+				foreach (var shop in NPCShopDatabase.AllShops)
 				{
-					yield return new UINPCShopPanel(shop);
+					if (shop.ActiveEntries.Any(e => e.Item.type == i.Item.type))
+					{
+						yield return new UINPCShopPanel(shop);
+					}
 				}
+
+				break;
+
+			case (NPCIngredient n, QueryType.Uses):
+				foreach (var shop in NPCShopDatabase.AllShops)
+				{
+					if (shop.NpcType == n.ID)
+					{
+						yield return new UINPCShopPanel(shop);
+					}
+				}
+
+				break;
 			}
 		}
 	}
@@ -166,38 +177,42 @@ public static class RecipeHandlers
 		{
 			switch (ing, queryType)
 			{
-				case (ItemIngredient i, QueryType.Sources):
-					foreach (int id in Enumerable.Range(0, NPCLoader.NPCCount))
+			case (ItemIngredient i, QueryType.Sources):
+				foreach (int id in Enumerable.Range(0, NPCLoader.NPCCount))
+				{
+					/*
+					 * TODO: Is there a better way to check whether a bestiary entry exists?
+					 *
+					 * For some reason, `FindEntryByNPCID` doesn't return null, but *does*
+					 * return an entry with a null icon.
+					 */
+					if (Main.BestiaryDB.FindEntryByNPCID(id).Icon == null) { continue; }
+
+					var droppedItems = GetNPCDrops(id);
+					if (droppedItems.Any(info => info.itemId == i.Item.type))
 					{
-						/*
-						 * TODO: Is there a better way to check whether a bestiary entry exists?
-						 *
-						 * For some reason, `FindEntryByNPCID` doesn't return null, but *does*
-						 * return an entry with a null icon.
-						 */
-						if (Main.BestiaryDB.FindEntryByNPCID(id).Icon == null) { continue; }
-
-						var droppedItems = GetNPCDrops(id);
-						if (droppedItems.Any(info => info.itemId == i.Item.type))
-						{
-							yield return new UIDropsPanel(new UINPCPanel(id){
-								Width = new StyleDimension(72, 0),
-								Height = new StyleDimension(72, 0)
-							}, droppedItems);
-						}
+						yield return new UIDropsPanel(new UINPCPanel(id){
+							Width = new StyleDimension(72, 0),
+							Height = new StyleDimension(72, 0)
+						}, droppedItems);
 					}
+				}
 
-					break;
+				break;
 
-				case (NPCIngredient n, QueryType.Uses):
-					if (Main.BestiaryDB.FindEntryByNPCID(n.ID).Icon == null) { yield break; }
+			case (NPCIngredient n, QueryType.Uses):
+				if (Main.BestiaryDB.FindEntryByNPCID(n.ID).Icon == null) { yield break; }
 
+				var drops = GetNPCDrops(n.ID);
+				if (drops.Count > 0)
+				{
 					yield return new UIDropsPanel(new UINPCPanel(n.ID){
 						Width = new StyleDimension(72, 0),
-							  Height = new StyleDimension(72, 0)
-					}, GetNPCDrops(n.ID));
+						Height = new StyleDimension(72, 0)
+					}, drops);
+				}
 
-					break;
+				break;
 			}
 		}
 	}
