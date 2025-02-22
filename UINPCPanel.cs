@@ -1,12 +1,14 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System.Linq;
+using System;
 using Terraria.GameContent.Bestiary;
 using Terraria.GameContent.UI.Elements;
 using Terraria.GameContent.UI;
 using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader.UI;
+using Terraria.UI.Chat;
 using Terraria.UI;
 using Terraria;
 
@@ -144,7 +146,12 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 
 		if (flavorText != null)
 		{
-			var wrappedFlavorText = FontAssets.MouseText.Value.CreateWrappedText(flavorText, 300);
+			// Match width to the width of the name for long names.
+			float width = ChatManager.GetStringSize(FontAssets.MouseText.Value, _hoverText,
+				Vector2.One).X;
+			width = MathF.Max(300, width);
+
+			var wrappedFlavorText = FontAssets.MouseText.Value.CreateWrappedText(flavorText, width);
 			_hoverText += $"\n{wrappedFlavorText}";
 		}
 	}
