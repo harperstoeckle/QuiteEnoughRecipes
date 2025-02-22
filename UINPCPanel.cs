@@ -3,7 +3,9 @@ using Microsoft.Xna.Framework;
 using System.Linq;
 using Terraria.GameContent.Bestiary;
 using Terraria.GameContent.UI.Elements;
+using Terraria.GameContent.UI;
 using Terraria.GameContent;
+using Terraria.ID;
 using Terraria.ModLoader.UI;
 using Terraria.UI;
 using Terraria;
@@ -130,7 +132,11 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 
 	private void UpdateHoverText()
 	{
-		_hoverText = Lang.GetNPCNameValue(_npcID);
+		// We color NPC names by rarity, similarly to items.
+		ContentSamples.NpcsByNetId.TryGetValue(_npcID, out var npc);
+		var rarityColor = ItemRarity.GetColor(npc?.rarity ?? 0);
+
+		_hoverText = $"[c/{rarityColor.Hex3()}:{Lang.GetNPCNameValue(_npcID)}]";
 		var flavorText = Ingredient.GetTooltipLines()?.FirstOrDefault();
 
 		if (flavorText != null)
