@@ -29,4 +29,10 @@ public class QuiteEnoughRecipes : Mod
 			Main.Assets.Request<Texture2D>(TextureAssets.Item[i].Name, AssetRequestMode.AsyncLoad);
 		}
 	}
+
+	/*
+	 * When displaying the name of an ingredient that comes from a mod, this should be appended
+	 * immediately after the name so that it's clear what mod the ingredient came from.
+	 */
+	public static string GetModTagText(Mod mod) => $"   [c/56665e:〈{mod.DisplayNameClean}〉]";
 }

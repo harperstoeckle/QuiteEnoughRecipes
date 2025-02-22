@@ -132,11 +132,14 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 
 	private void UpdateHoverText()
 	{
-		// We color NPC names by rarity, similarly to items.
 		ContentSamples.NpcsByNetId.TryGetValue(_npcID, out var npc);
-		var rarityColor = ItemRarity.GetColor(npc?.rarity ?? 0);
 
-		_hoverText = $"[c/{rarityColor.Hex3()}:{Lang.GetNPCNameValue(_npcID)}]";
+		// We color NPC names by rarity, similarly to items.
+		var rarityColor = ItemRarity.GetColor(npc?.rarity ?? 0);
+		var mod = npc?.ModNPC?.Mod;
+		var modTag = mod == null ? "" : QuiteEnoughRecipes.GetModTagText(mod);
+
+		_hoverText = $"[c/{rarityColor.Hex3()}:{Lang.GetNPCNameValue(_npcID)}]{modTag}";
 		var flavorText = Ingredient.GetTooltipLines()?.FirstOrDefault();
 
 		if (flavorText != null)

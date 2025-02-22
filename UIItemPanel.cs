@@ -99,7 +99,7 @@ public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement
 
 		if (DisplayedItem.ModItem != null)
 		{
-			tooltips[0].Text += $" [{DisplayedItem.ModItem.Mod.DisplayNameClean}]";
+			tooltips[0].Text += QuiteEnoughRecipes.GetModTagText(DisplayedItem.ModItem.Mod);
 		}
 	}
 
