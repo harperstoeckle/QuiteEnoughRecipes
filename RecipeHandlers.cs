@@ -142,7 +142,7 @@ public static class RecipeHandlers
 			if (queryType == QueryType.Sources)
 			{
 				var item = new Item();
-				foreach (int itemID in Enumerable.Range(0, ItemLoader.ItemCount))
+				for (int itemID = 0; itemID < ItemLoader.ItemCount; ++itemID)
 				{
 					item.SetDefaults(itemID);
 
@@ -178,7 +178,7 @@ public static class RecipeHandlers
 			switch (ing, queryType)
 			{
 			case (ItemIngredient i, QueryType.Sources):
-				foreach (int id in Enumerable.Range(0, NPCLoader.NPCCount))
+				for (int id = 0; id < NPCLoader.NPCCount; ++id)
 				{
 					/*
 					 * TODO: Is there a better way to check whether a bestiary entry exists?

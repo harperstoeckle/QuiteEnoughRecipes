@@ -60,7 +60,7 @@ public class UIRecipePanel : UIAutoExtend
 				.Select(g => {
 					RecipeGroup.recipeGroups.TryGetValue(g, out var rg);
 					return rg;
-				}).FirstOrDefault(rg => rg.ContainsItem(item.type), null);
+				}).FirstOrDefault(rg => rg.ContainsItem(item.type));
 
 			var elem = maybeGroup == null
 					? new UIItemPanel(item, 30)

@@ -510,7 +510,7 @@ public class UIQERState : UIState
 		foreach (var dcs in moddedDamageClassSets)
 		{
 			var icon = dcs.Select(d => FindIconItemForDamageClass(d))
-				.FirstOrDefault(n => n != null, null);
+				.FirstOrDefault(n => n != null);
 
 			// This damage class has no items, so we can't really make a filter for it.
 			if (icon == null) { continue; }
