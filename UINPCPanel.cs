@@ -72,7 +72,7 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 	public static int GridPadding => 5;
 
 	private UINPCIcon _icon;
-	private string _hoverText;
+	private string _hoverText = "";
 	private int _npcID;
 
 	public IIngredient Ingredient => new NPCIngredient(_npcID);

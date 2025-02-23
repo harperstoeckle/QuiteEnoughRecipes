@@ -53,7 +53,7 @@ public class UITabBar<T> : UIElement
 	 * Called as `OnTabSelected(v)` when a tab is selected, where `v` is the value associated with
 	 * the tab.
 	 */
-	public event Action<T> OnTabSelected;
+	public event Action<T>? OnTabSelected;
 
 	public UITabBar()
 	{

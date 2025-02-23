@@ -85,7 +85,7 @@ public class UIScrollableGrid<T, E> : UIElement
 		 * This check here is just to avoid re-appending the grid elements every frame even if no
 		 * scrolling has happened.
 		 */
-		if (Scrollbar.ViewPosition != _lastViewPosition)
+		if (Scrollbar != null && Scrollbar.ViewPosition != _lastViewPosition)
 		{
 			SetDisplayedValues();
 			_lastViewPosition = Scrollbar.ViewPosition;
@@ -118,8 +118,7 @@ public class UIScrollableGrid<T, E> : UIElement
 		}
 		else if (oldGridCount < newGridCount)
 		{
-			_grid.AddRange(Enumerable.Repeat(default(E), newGridCount - oldGridCount));
-			for (int i = oldGridCount; i < newGridCount; ++i) { _grid[i] = new(); }
+			_grid.AddRange(Enumerable.Range(0, newGridCount - oldGridCount).Select(_ => new E()));
 		}
 
 		// Extra space added on the top and left to keep the contents centered.

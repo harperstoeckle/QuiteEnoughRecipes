@@ -96,7 +96,7 @@ public class UIQERState : UIState
 	private List<UIRecipePage> _allTabs = new();
 
 	private QueryType _currentQueryType = QueryType.Sources;
-	private IIngredient? _clickedIngredient = null;
+	private IIngredient _clickedIngredient = new ItemIngredient(new(0));
 
 	// Recipe page currently being viewed.
 	private UIRecipePage? _recipePage = null;
@@ -244,7 +244,7 @@ public class UIQERState : UIState
 	protected override void DrawSelf(SpriteBatch sb)
 	{
 		// TODO: Is this actually the right place to handle input?
-		if (UISystem.BackKey.JustPressed)
+		if (UISystem.BackKey?.JustPressed ?? false)
 		{
 			TryPopHistory();
 		}
@@ -347,8 +347,7 @@ public class UIQERState : UIState
 	{
 		// Prevent weird situations where the wrong tooltip can be modified.
 		if ((_hoveredItemPanel?.DisplayedItem?.type ?? 0) != item.type) { return; }
-
-		_hoveredItemPanel.ModifyTooltips(mod, tooltips);
+		_hoveredItemPanel?.ModifyTooltips(mod, tooltips);
 	}
 
 	/*

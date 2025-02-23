@@ -91,7 +91,7 @@ public class UIOptionPanel<T> : UIPanel
 	 * be called with the value associated with that option. If all options were disabled, this will
 	 * be called with null.
 	 */
-	public event Action<T?> OnSelectionChanged;
+	public event Action<T?>? OnSelectionChanged;
 
 	public UIOptionPanel()
 	{

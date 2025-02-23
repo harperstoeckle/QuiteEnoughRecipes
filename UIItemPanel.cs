@@ -28,7 +28,7 @@ public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement
 	// The item to show. When this is set to `null`, nothing at all will be drawn.
 	public Item? DisplayedItem;
 
-	public IIngredient Ingredient => new ItemIngredient(DisplayedItem);
+	public IIngredient? Ingredient => DisplayedItem == null ? null : new ItemIngredient(DisplayedItem);
 
 	// The icon will be scaled to fit in a square with side length `width`.
 	public UIItemPanel(Item? displayedItem, float width = DefaultSideLength)
@@ -185,6 +185,8 @@ public class UIRecipeGroupPanel : UIItemPanel
 			_timeSinceLastCycle -= TimePerCycle;
 			_curItemIndex = (_curItemIndex + 1) % _itemsInGroup.Count;
 		}
+
+		if (DisplayedItem == null) { return; }
 
 		int stack = DisplayedItem.stack;
 		DisplayedItem.SetDefaults(_itemsInGroup[_curItemIndex]);

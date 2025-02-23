@@ -5,12 +5,12 @@
 
 	<!-- General -->
 	<PropertyGroup>
-		
+		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
 	<!-- References -->
 	<ItemGroup>
-		
+
 	</ItemGroup>
 
 </Project>

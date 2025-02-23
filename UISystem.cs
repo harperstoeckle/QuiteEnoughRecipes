@@ -9,12 +9,12 @@ namespace QuiteEnoughRecipes;
 
 public class UISystem : ModSystem
 {
-	private UIQERState _ui;
+	private UIQERState? _ui;
 
-	public static ModKeybind OpenUIKey { get; private set; }
-	public static ModKeybind HoverSourcesKey { get; private set; }
-	public static ModKeybind HoverUsesKey { get; private set; }
-	public static ModKeybind BackKey { get; private set; }
+	public static ModKeybind? OpenUIKey { get; private set; }
+	public static ModKeybind? HoverSourcesKey { get; private set; }
+	public static ModKeybind? HoverUsesKey { get; private set; }
+	public static ModKeybind? BackKey { get; private set; }
 
 	public override void Load()
 	{
@@ -49,7 +49,9 @@ public class UISystem : ModSystem
 
 	public override void UpdateUI(GameTime t)
 	{
-		if (OpenUIKey.JustPressed)
+		if (_ui == null) { return; }
+
+		if (OpenUIKey?.JustPressed ?? false)
 		{
 			if (_ui.IsOpen())
 			{
@@ -61,13 +63,13 @@ public class UISystem : ModSystem
 			}
 		}
 
-		if (HoverSourcesKey.JustPressed && Main.HoverItem != null && !Main.HoverItem.IsAir)
+		if ((HoverSourcesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)
 		{
 			_ui.ShowSources(new ItemIngredient(Main.HoverItem));
 			_ui.Open();
 		}
 
-		if (HoverUsesKey.JustPressed && Main.HoverItem != null && !Main.HoverItem.IsAir)
+		if ((HoverUsesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)
 		{
 			_ui.ShowUses(new ItemIngredient(Main.HoverItem));
 			_ui.Open();
