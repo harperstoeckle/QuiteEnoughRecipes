@@ -9,7 +9,7 @@ namespace QuiteEnoughRecipes;
 
 public class UISystem : ModSystem
 {
-	private UIQERState? _ui;
+	public static UIQERState? UI { get; private set; }
 
 	public static ModKeybind? OpenUIKey { get; private set; }
 	public static ModKeybind? HoverSourcesKey { get; private set; }
@@ -31,7 +31,7 @@ public class UISystem : ModSystem
 		 * across worlds. There's also potentially world-specific data that needs to be handled
 		 * differently in each world.
 		 */
-		_ui = new();
+		UI = new();
 
 		// Loading items beforehand ensures that they *aren't* being loaded while scrolling.
 		if (QERConfig.Instance.ShouldPreloadItems)
@@ -44,35 +44,6 @@ public class UISystem : ModSystem
 			{
 				QuiteEnoughRecipes.LoadItemAsync(i);
 			}
-		}
-	}
-
-	public override void UpdateUI(GameTime t)
-	{
-		if (_ui == null) { return; }
-
-		if (OpenUIKey?.JustPressed ?? false)
-		{
-			if (_ui.IsOpen())
-			{
-				_ui.Close();
-			}
-			else
-			{
-				_ui.Open();
-			}
-		}
-
-		if ((HoverSourcesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)
-		{
-			_ui.ShowSources(new ItemIngredient(Main.HoverItem));
-			_ui.Open();
-		}
-
-		if ((HoverUsesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)
-		{
-			_ui.ShowUses(new ItemIngredient(Main.HoverItem));
-			_ui.Open();
 		}
 	}
 }

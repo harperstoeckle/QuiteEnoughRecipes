@@ -243,8 +243,7 @@ public class UIQERState : UIState
 
 	protected override void DrawSelf(SpriteBatch sb)
 	{
-		// TODO: Is this actually the right place to handle input?
-		if (UISystem.BackKey?.JustPressed ?? false)
+		if (QERPlayer.BackRequested)
 		{
 			TryPopHistory();
 		}
