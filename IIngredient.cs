@@ -54,6 +54,8 @@ public record struct ItemIngredient(Item Item) : IIngredient
 		var lines = ItemLoader.ModifyTooltips(Item, ref numLines, tooltipNames, ref tooltipLines,
 			ref prefixLines, ref badPrefixLines, ref yoyoLogo, out Color?[] o, p);
 
+		var qerName = ModContent.GetInstance<QuiteEnoughRecipes>().Name;
+
 		/*
 		 * We have to remove the item name line (which is the item name, so it's not "part
 		 * of the description". We also have to remove any tooltip lines specific to this
@@ -61,7 +63,7 @@ public record struct ItemIngredient(Item Item) : IIngredient
 		 * weird behavior where hovering over an item in the browser changes search results.
 		 */
 		return lines
-			.Where(l => l.Name != "ItemName" && !(l.Mod is QuiteEnoughRecipes))
+			.Where(l => l.Name != "ItemName" && l.Mod != qerName)
 			.Select(l => l.Text);
 	}
 
