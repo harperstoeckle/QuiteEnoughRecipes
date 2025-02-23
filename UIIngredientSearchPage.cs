@@ -107,11 +107,9 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 
 			if (!string.IsNullOrWhiteSpace(Tooltip))
 			{
-				var lines = i.GetTooltipLines();
-
 				// Needed to be usable in a lambda.
 				var tooltip = Tooltip;
-				if (lines == null || !lines.Any(l => NormalizeForSearch(l).Contains(tooltip)))
+				if (!i.GetTooltipLines().Any(l => NormalizeForSearch(l).Contains(tooltip)))
 				{
 					return false;
 				}

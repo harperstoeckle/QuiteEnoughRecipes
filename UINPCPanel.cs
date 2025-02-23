@@ -142,7 +142,7 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 		var modTag = mod == null ? "" : QuiteEnoughRecipes.GetModTagText(mod);
 
 		_hoverText = $"[c/{rarityColor.Hex3()}:{Lang.GetNPCNameValue(_npcID)}]{modTag}";
-		var flavorText = Ingredient.GetTooltipLines()?.FirstOrDefault();
+		var flavorText = Ingredient.GetTooltipLines().FirstOrDefault();
 
 		if (flavorText != null)
 		{

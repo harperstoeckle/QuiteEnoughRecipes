@@ -18,7 +18,7 @@ public interface IIngredient
 	// These are used for searching.
 	public string? Name => null;
 	public Mod? Mod => null;
-	public IEnumerable<string>? GetTooltipLines() => null;
+	public IEnumerable<string> GetTooltipLines() => [];
 
 	public bool IsEquivalent(IIngredient other) => false;
 }
@@ -37,7 +37,7 @@ public record struct ItemIngredient(Item Item) : IIngredient
 	public string? Name => Item.Name;
 	public Mod? Mod => Item.ModItem?.Mod;
 
-	public IEnumerable<string>? GetTooltipLines()
+	public IEnumerable<string> GetTooltipLines()
 	{
 		int yoyoLogo = -1;
 		int researchLine = -1;
@@ -80,7 +80,7 @@ public record struct NPCIngredient(int ID) : IIngredient
 	private extern static ref string FlavorTextBestiaryInfoElement_key(
 		FlavorTextBestiaryInfoElement self);
 
-	public IEnumerable<string>? GetTooltipLines()
+	public IEnumerable<string> GetTooltipLines()
 	{
 		var elem = Main.BestiaryDB.FindEntryByNPCID(ID).Info
 			.OfType<FlavorTextBestiaryInfoElement>()
