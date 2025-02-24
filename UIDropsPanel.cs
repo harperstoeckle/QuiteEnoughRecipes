@@ -77,9 +77,19 @@ file class UILootItemPanel : UIItemPanel
 			DrawText(sb, text, new Vector2(10, 26));
 		}
 
-		if (_chance < 0.9999f)
+		var percentPos = new Vector2(25, 3);
+
+		if (_chance < 0.00001f)
 		{
-			DrawText(sb, $"{_chance:p2}", new Vector2(25, 3));
+			DrawText(sb, $"<{0.00001f:p3}", percentPos);
+		}
+		else if (_chance < 0.0001f)
+		{
+			DrawText(sb, $"{_chance:p3}", percentPos);
+		}
+		else if (_chance < 0.9999f)
+		{
+			DrawText(sb, $"{_chance:p2}", percentPos);
 		}
 	}
 }
