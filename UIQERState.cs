@@ -70,12 +70,14 @@ public class UIQERState : UIState
 	}
 
 	// Enough to reconstruct (enough of) the recipe panel state.
-	private struct HistoryEntry
+	private class HistoryEntry
 	{
-		public QueryType QueryType;
-		public IIngredient ClickedIngredient;
-		public UIRecipePage RecipePage;
-		public float ScrollViewPosition;
+		public QueryType QueryType = QueryType.Sources;
+		public IIngredient ClickedIngredient = new ItemIngredient(new(0));
+		public UIRecipePage? RecipePage = null;
+		public float ScrollViewPosition = 0;
+
+		public HistoryEntry() {}
 	}
 
 	private const float ScrollBarWidth = 30;
@@ -90,16 +92,11 @@ public class UIQERState : UIState
 	 */
 	private const int MaxHistorySize = 100;
 
-	// Keeps track of the recipe pages that have been viewed, not including the current one.
-	private List<HistoryEntry> _history = new();
+	// Keeps track of the recipe pages that have been viewed, including the current one.
+	private List<HistoryEntry> _history = [new()];
+	private int _historyIndex = 0;
 
 	private List<UIRecipePage> _allTabs = new();
-
-	private QueryType _currentQueryType = QueryType.Sources;
-	private IIngredient _clickedIngredient = new ItemIngredient(new(0));
-
-	// Recipe page currently being viewed.
-	private UIRecipePage? _recipePage = null;
 
 	private UITabBar<UIRecipePage> _recipeTabBar = new();
 
@@ -178,7 +175,7 @@ public class UIQERState : UIState
 
 		_recipeTabBar.OnTabSelected += page => {
 			recipeContainer.Open(page);
-			_recipePage = page;
+			_history[_historyIndex].RecipePage = page;
 		};
 
 		/*
@@ -243,9 +240,13 @@ public class UIQERState : UIState
 
 	protected override void DrawSelf(SpriteBatch sb)
 	{
-		if (QERPlayer.BackRequested)
+		if (QERPlayer.ShouldGoForwardInHistory)
 		{
-			TryPopHistory();
+			TryMoveInHistory(1);
+		}
+		else if (QERPlayer.ShouldGoBackInHistory)
+		{
+			TryMoveInHistory(-1);
 		}
 	}
 
@@ -275,21 +276,29 @@ public class UIQERState : UIState
 	public void ShowSources(IIngredient i) => TryPushPage(i, QueryType.Sources);
 	public void ShowUses(IIngredient i) => TryPushPage(i, QueryType.Uses);
 
-	// If it exists, load the top of the history stack and pop it.
-	public void TryPopHistory()
+	/*
+	 * Tries to load the history entry at `offset` from the current location. For example, if
+	 * `offset` is -1, then it will go back to the previous entry, and if it is 1, then it will
+	 * try to go forward.
+	 */
+	public void TryMoveInHistory(int offset)
 	{
-		if (_history.Count == 0) { return; }
+		int newIndex = _historyIndex + offset;
+		if (newIndex < 0 || newIndex >= _history.Count) { return; }
 
-		var top = _history[_history.Count - 1];
-		_history.RemoveAt(_history.Count - 1);
+		var entry = _history[newIndex];
+		_historyIndex = newIndex;
+
+		float savedScrollPos = entry.ScrollViewPosition;
+		var savedPage = entry.RecipePage;
 
 		/*
 		 * It would be weird if the page showed something the first time, but didn't have anything
 		 * to show this time, so we'll just assume it will always work.
 		 */
-		TryShowRelevantTabs(top.ClickedIngredient, top.QueryType);
-		_recipeTabBar.OpenTabFor(top.RecipePage);
-		top.RecipePage.ScrollViewPosition = top.ScrollViewPosition;
+		TryShowRelevantTabs(entry.ClickedIngredient, entry.QueryType);
+		if (savedPage != null) { _recipeTabBar.OpenTabFor(savedPage); }
+		if (entry.RecipePage != null) { entry.RecipePage.ScrollViewPosition = savedScrollPos; }
 	}
 
 	public override void LeftClick(UIMouseEvent e)
@@ -351,7 +360,8 @@ public class UIQERState : UIState
 
 	/*
 	 * Try to show tabs with recipes for `ingredient`. If there are no recipes, the recipe panel
-	 * will not be changed, and this function will return false.
+	 * will not be changed, and this function will return false. If this function ends up actually
+	 * displaying recipes, then those changes will be reflected in `_history[_historyIndex]`.
 	 */
 	private bool TryShowRelevantTabs(IIngredient ingredient, QueryType queryType)
 	{
@@ -360,8 +370,8 @@ public class UIQERState : UIState
 		// No tab has anything to display; don't do anything else.
 		if (pagesForIngredient.Count == 0) { return false; }
 
-		_currentQueryType = queryType;
-		_clickedIngredient = ingredient;
+		_history[_historyIndex].QueryType = queryType;
+		_history[_historyIndex].ClickedIngredient = ingredient;
 
 		_recipeTabBar.ClearTabs();
 		foreach (var page in pagesForIngredient)
@@ -383,27 +393,44 @@ public class UIQERState : UIState
 	 */
 	private void TryPushPage(IIngredient ingredient, QueryType queryType)
 	{
+		var curHistory = _history[_historyIndex];
+
+		if (curHistory.QueryType == queryType
+			&& curHistory.ClickedIngredient.IsEquivalent(ingredient))
+		{
+			return;
+		}
+
 		/*
-		 * If there is no active recipe page, then we're not looking at anything, so there's nothing
-		 * worth storing in history.
+		 * If there's no page being displayed, then we're currently looking at a blank page, which
+		 * we don't want to store as its own history entry. Instead, we keep working in the
+		 * current history entry.
 		 */
-		if (_recipePage == null ||
-			_currentQueryType == queryType && _clickedIngredient.IsEquivalent(ingredient))
+		if (curHistory.RecipePage == null)
 		{
 			TryShowRelevantTabs(ingredient, queryType);
 			return;
 		}
 
-		var historyEntry = new HistoryEntry{
-			QueryType = _currentQueryType,
-			ClickedIngredient = _clickedIngredient,
-			RecipePage = _recipePage,
-			ScrollViewPosition = _recipePage.ScrollViewPosition
-		};
+		++_historyIndex;
+		bool pushExtraHistoryEntry = _historyIndex >= _history.Count;
+		if (pushExtraHistoryEntry)
+		{
+			_history.Add(new());
+		}
 
 		if (TryShowRelevantTabs(ingredient, queryType))
 		{
-			_history.Add(historyEntry);
+			_history.RemoveRange(_historyIndex + 1, _history.Count - _historyIndex - 1);
+
+			// Maintain the same tab if it exists for the new item.
+			_recipeTabBar.OpenTabFor(curHistory.RecipePage);
+		}
+		else if (pushExtraHistoryEntry)
+		{
+			// Nothing to show for this ingredient; undo.
+			_history.RemoveAt(_history.Count - 1);
+			--_historyIndex;
 		}
 
 		if (_history.Count > MaxHistorySize)

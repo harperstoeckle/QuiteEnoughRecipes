@@ -6,11 +6,18 @@ namespace QuiteEnoughRecipes;
 
 public class QERPlayer : ModPlayer
 {
-	public static bool BackRequested { get; private set; } = false;
+	public static bool ShouldGoBackInHistory { get; private set; } = false;
+	public static bool ShouldGoForwardInHistory { get; private set; } = false;
 
 	public override void ProcessTriggers(TriggersSet ts)
 	{
-		BackRequested = UISystem.BackKey?.JustPressed ?? false;
+		ShouldGoBackInHistory = false;
+		ShouldGoForwardInHistory = false;
+		if (UISystem.BackKey?.JustPressed ?? false)
+		{
+			ShouldGoForwardInHistory = Main.keyState.PressingShift();
+			ShouldGoBackInHistory = !ShouldGoForwardInHistory;
+		}
 
 		if (UISystem.UI == null) { return; }
 
