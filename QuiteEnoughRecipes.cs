@@ -30,6 +30,14 @@ public class QuiteEnoughRecipes : Mod
 		}
 	}
 
+	public static void LoadNPCAsync(int i)
+	{
+		if (TextureAssets.Npc[i].State == AssetState.NotLoaded)
+		{
+			Main.Assets.Request<Texture2D>(TextureAssets.Npc[i].Name, AssetRequestMode.AsyncLoad);
+		}
+	}
+
 	/*
 	 * When displaying the name of an ingredient that comes from a mod, this should be appended
 	 * immediately after the name so that it's clear what mod the ingredient came from.

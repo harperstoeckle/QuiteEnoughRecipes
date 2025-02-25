@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System;
 using Terraria.GameContent.Bestiary;
@@ -23,14 +24,24 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 	// This needs to be a child of the panel to handle overflow properly.
 	private class UINPCIcon : UIElement
 	{
+		private int _npcID = 0;
+		private BestiaryEntry _entry;
 		private bool _isHovering => Parent?.IsMouseHovering ?? false;
 
-		public BestiaryEntry Entry;
-
-		public UINPCIcon(int npcID)
+		public required int NPCID
 		{
-			Entry = Main.BestiaryDB.FindEntryByNPCID(npcID);
+			get => _npcID;
 
+			[MemberNotNull(nameof(_entry))]
+			set
+			{
+				_npcID = value;
+				_entry = Main.BestiaryDB.FindEntryByNPCID(_npcID);
+			}
+		}
+
+		public UINPCIcon()
+		{
 			OverflowHidden = true;
 			IgnoresMouseInteraction = true;
 			Width.Percent = 1;
@@ -39,12 +50,14 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 
 		public override void Update(GameTime t)
 		{
+			if (_entry.Icon == null) { return; }
+
 			var rect = GetDimensions().ToRectangle();
 			var collectionInfo = new BestiaryUICollectionInfo(){
-				OwnerEntry = Entry,
+				OwnerEntry = _entry,
 				UnlockState = BestiaryEntryUnlockState.CanShowPortraitOnly_1
 			};
-			Entry.Icon?.Update(collectionInfo, rect,
+			_entry.Icon.Update(collectionInfo, rect,
 				new EntryIconDrawSettings(){
 					iconbox = rect,
 					IsHovered = _isHovering,
@@ -54,12 +67,15 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 
 		protected override void DrawSelf(SpriteBatch sb)
 		{
+			if (_entry.Icon == null) { return; }
+
 			var collectionInfo = new BestiaryUICollectionInfo(){
-				OwnerEntry = Entry,
+				OwnerEntry = _entry,
 				UnlockState = BestiaryEntryUnlockState.CanShowPortraitOnly_1
 			};
 
-			Entry.Icon?.Draw(collectionInfo, sb,
+			QuiteEnoughRecipes.LoadNPCAsync(NPCID);
+			_entry.Icon.Draw(collectionInfo, sb,
 				new EntryIconDrawSettings(){
 					iconbox = GetDimensions().ToRectangle(),
 					IsHovered = _isHovering,
@@ -73,14 +89,12 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 
 	private UINPCIcon _icon;
 	private string _hoverText = "";
-	private int _npcID;
 
-	public IIngredient Ingredient => new NPCIngredient(_npcID);
+	public IIngredient Ingredient => new NPCIngredient(_icon.NPCID);
 
 	public UINPCPanel(int npcID)
 	{
-		_icon = new(npcID);
-		_npcID = npcID;
+		_icon = new UINPCIcon{ NPCID = npcID};
 		UpdateHoverText();
 
 		Width.Pixels = Height.Pixels = 72;
@@ -112,19 +126,13 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 
 	public void SetDisplayedValue(NPCIngredient i)
 	{
-		_npcID = i.ID;
-		_icon.Entry = Main.BestiaryDB.FindEntryByNPCID(_npcID);
+		_icon.NPCID = i.ID;
 		UpdateHoverText();
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
 	{
 		base.DrawSelf(sb);
-
-		var collectionInfo = new BestiaryUICollectionInfo(){
-			OwnerEntry = _icon.Entry,
-			UnlockState = BestiaryEntryUnlockState.CanShowPortraitOnly_1
-		};
 
 		if (IsMouseHovering)
 		{
@@ -134,14 +142,14 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 
 	private void UpdateHoverText()
 	{
-		ContentSamples.NpcsByNetId.TryGetValue(_npcID, out var npc);
+		ContentSamples.NpcsByNetId.TryGetValue(_icon.NPCID, out var npc);
 
 		// We color NPC names by rarity, similarly to items.
 		var rarityColor = ItemRarity.GetColor(npc?.rarity ?? 0);
 		var mod = npc?.ModNPC?.Mod;
 		var modTag = mod == null ? "" : QuiteEnoughRecipes.GetModTagText(mod);
 
-		_hoverText = $"[c/{rarityColor.Hex3()}:{Lang.GetNPCNameValue(_npcID)}]{modTag}";
+		_hoverText = $"[c/{rarityColor.Hex3()}:{Lang.GetNPCNameValue(_icon.NPCID)}]{modTag}";
 		var flavorText = Ingredient.GetTooltipLines().FirstOrDefault();
 
 		if (flavorText != null)
