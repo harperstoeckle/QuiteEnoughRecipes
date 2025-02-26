@@ -25,18 +25,18 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 	private class UINPCIcon : UIElement
 	{
 		private int _npcID = 0;
-		private BestiaryEntry _entry;
 		private bool _isHovering => Parent?.IsMouseHovering ?? false;
 
+		public BestiaryEntry Entry { get; private set; }
 		public required int NPCID
 		{
 			get => _npcID;
 
-			[MemberNotNull(nameof(_entry))]
+			[MemberNotNull(nameof(Entry))]
 			set
 			{
 				_npcID = value;
-				_entry = Main.BestiaryDB.FindEntryByNPCID(_npcID);
+				Entry = Main.BestiaryDB.FindEntryByNPCID(_npcID);
 			}
 		}
 
@@ -50,14 +50,14 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 
 		public override void Update(GameTime t)
 		{
-			if (_entry.Icon == null) { return; }
+			if (Entry.Icon == null) { return; }
 
 			var rect = GetDimensions().ToRectangle();
 			var collectionInfo = new BestiaryUICollectionInfo(){
-				OwnerEntry = _entry,
+				OwnerEntry = Entry,
 				UnlockState = BestiaryEntryUnlockState.CanShowPortraitOnly_1
 			};
-			_entry.Icon.Update(collectionInfo, rect,
+			Entry.Icon.Update(collectionInfo, rect,
 				new EntryIconDrawSettings(){
 					iconbox = rect,
 					IsHovered = _isHovering,
@@ -67,15 +67,15 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 
 		protected override void DrawSelf(SpriteBatch sb)
 		{
-			if (_entry.Icon == null) { return; }
+			if (Entry.Icon == null) { return; }
 
 			var collectionInfo = new BestiaryUICollectionInfo(){
-				OwnerEntry = _entry,
+				OwnerEntry = Entry,
 				UnlockState = BestiaryEntryUnlockState.CanShowPortraitOnly_1
 			};
 
 			QuiteEnoughRecipes.LoadNPCAsync(NPCID);
-			_entry.Icon.Draw(collectionInfo, sb,
+			Entry.Icon.Draw(collectionInfo, sb,
 				new EntryIconDrawSettings(){
 					iconbox = GetDimensions().ToRectangle(),
 					IsHovered = _isHovering,
@@ -144,8 +144,14 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 	{
 		ContentSamples.NpcsByNetId.TryGetValue(_icon.NPCID, out var npc);
 
-		// We color NPC names by rarity, similarly to items.
-		var rarityColor = ItemRarity.GetColor(npc?.rarity ?? 0);
+		/*
+		 * We color NPC names by rarity, similarly to items. Bosses use the color of
+		 */
+		int rarity = _icon.Entry.Info.Any(i => i is BossBestiaryInfoElement)
+			? ItemRarityID.Quest
+			: (npc?.rarity ?? 0);
+
+		var rarityColor = ItemRarity.GetColor(rarity);
 		var mod = npc?.ModNPC?.Mod;
 		var modTag = mod == null ? "" : QuiteEnoughRecipes.GetModTagText(mod);
 
