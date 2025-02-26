@@ -145,7 +145,8 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 		ContentSamples.NpcsByNetId.TryGetValue(_icon.NPCID, out var npc);
 
 		/*
-		 * We color NPC names by rarity, similarly to items. Bosses use the color of
+		 * We color NPC names by rarity, similarly to items. Bosses use the same color as quest
+		 * fish.
 		 */
 		int rarity = _icon.Entry.Info.Any(i => i is BossBestiaryInfoElement)
 			? ItemRarityID.Quest
