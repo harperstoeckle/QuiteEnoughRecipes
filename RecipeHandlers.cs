@@ -1,13 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using Terraria.GameContent.ItemDropRules;
 using Terraria.GameContent.UI.Elements;
+using Terraria.GameContent.UI;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria;
-using System;
 
 namespace QuiteEnoughRecipes;
 
@@ -113,6 +114,17 @@ public static class RecipeHandlers
 
 				break;
 
+			case (ItemIngredient i, QueryType.Uses):
+				foreach (var shop in NPCShopDatabase.AllShops)
+				{
+					if (shop.ActiveEntries.Any(e => MatchesCurrency(i.Item, e.Item)))
+					{
+						yield return new UINPCShopPanel(shop);
+					}
+				}
+
+				break;
+
 			case (NPCIngredient n, QueryType.Uses):
 				foreach (var shop in NPCShopDatabase.AllShops)
 				{
@@ -124,6 +136,15 @@ public static class RecipeHandlers
 
 				break;
 			}
+		}
+
+		static bool MatchesCurrency(Item currency, Item shopEntry)
+		{
+			if (CustomCurrencyManager.TryGetCurrencySystem(shopEntry.shopSpecialCurrency, out var customCurrency))
+			{
+				return customCurrency.Accepts(currency);
+			}
+			return currency.IsACoin;
 		}
 	}
 
