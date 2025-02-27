@@ -50,6 +50,15 @@ Configs: {
 				''' */
 		}
 
+		ShowDropChancesInTooltips: {
+			// Label: Show Drop Chances in Tooltips
+			/* Tooltip:
+				'''
+				An item's drop chance will be displayed in the tooltip instead of being drawn on top
+				of the item.
+				''' */
+		}
+
 		DisplayName: 极适合成表配置
 	}
 }
@@ -104,4 +113,5 @@ Sorts: {
 	Value: 按价值排序
 }
 
+// Tooltips.DropChance: "{0} drop chance"
 Conditions.BannerDrop: 每击杀{0}次掉落一个

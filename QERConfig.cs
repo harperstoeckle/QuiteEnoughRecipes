@@ -15,4 +15,7 @@ public class QERConfig : ModConfig
 
 	[DefaultValue(false)]
 	public bool AutoFocusSearchBars;
+
+	[DefaultValue(false)]
+	public bool ShowDropChancesInTooltips;
 }

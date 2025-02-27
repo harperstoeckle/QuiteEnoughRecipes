@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using Terraria.GameContent.ItemDropRules;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria;
@@ -61,6 +62,20 @@ file class UILootItemPanel : UIItemPanel
 	public override void ModifyTooltips(Mod mod, List<TooltipLine> tooltips)
 	{
 		base.ModifyTooltips(mod, tooltips);
+
+		if (QERConfig.Instance.ShowDropChancesInTooltips)
+		{
+			var percent = FormatDropChance(_chance);
+			if (percent != "")
+			{
+				var line = Language.GetText("Mods.QuiteEnoughRecipes.Tooltips.DropChance")
+					.Format(percent);
+				tooltips.Add(new(mod, "QER: drop chance", line){
+					OverrideColor = Main.OurFavoriteColor
+				});
+			}
+		}
+
 		if (!string.IsNullOrWhiteSpace(_conditions))
 		{
 			tooltips.Add(new(mod, "QER: drop conditions", _conditions){
@@ -77,19 +92,29 @@ file class UILootItemPanel : UIItemPanel
 			DrawText(sb, text, new Vector2(10, 26));
 		}
 
-		var percentPos = new Vector2(25, 3);
+		if (!QERConfig.Instance.ShowDropChancesInTooltips)
+		{
+			DrawText(sb, FormatDropChance(_chance), new Vector2(25, 3));
+		}
+	}
 
-		if (_chance < 0.00001f)
+	private static string FormatDropChance(float chance)
+	{
+		if (chance < 0.00001f)
 		{
-			DrawText(sb, $"<{0.00001f:p3}", percentPos);
+			return $"<{0.00001f:p3}";
 		}
-		else if (_chance < 0.0001f)
+		else if (chance < 0.0001f)
 		{
-			DrawText(sb, $"{_chance:p3}", percentPos);
+			return $"{chance:p3}";
 		}
-		else if (_chance < 0.9999f)
+		else if (chance < 0.9999f)
 		{
-			DrawText(sb, $"{_chance:p2}", percentPos);
+			return $"{chance:p2}";
+		}
+		else
+		{
+			return "";
 		}
 	}
 }
