@@ -79,6 +79,7 @@ OptionGroups: {
 	ItemFilters: {
 		Tiles: 物块
 		CraftingStations: 合成站
+		BossSummons: Boss召唤物
 		LootItems: 掉落物
 		Fishing: 鱼获
 		Dye: 染料
@@ -102,7 +103,6 @@ OptionGroups: {
 		SummonWeapons: 召唤伤害武器
 		ClasslessWeapons: 无职业伤害武器
 		ThrowingWeapons: 投掷伤害武器
-		BossSummons: Boss召唤物
 		# Used to format other damage types.
 		OtherWeapons: "{0}武器"
 	}

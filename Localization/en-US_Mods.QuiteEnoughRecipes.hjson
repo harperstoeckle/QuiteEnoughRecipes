@@ -79,6 +79,7 @@ OptionGroups: {
 	ItemFilters: {
 		Tiles: Tiles
 		CraftingStations: Crafting Stations
+		BossSummons: Boss Summons
 		LootItems: Loot Items
 		Fishing: Fishing
 		Dye: Dye
@@ -102,7 +103,6 @@ OptionGroups: {
 		SummonWeapons: Summoner Weapons
 		ClasslessWeapons: Classless Weapons
 		ThrowingWeapons: Throwing Weapons
-		BossSummons: Boss Summons
 		# Used to format other damage types.
 		OtherWeapons: "{0} Weapons"
 	}
