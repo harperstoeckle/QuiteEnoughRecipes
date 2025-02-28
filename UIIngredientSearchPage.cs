@@ -168,7 +168,7 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 	private OptionPanelToggleButton _filterToggleButton = new("Images/UI/Bestiary/Button_Filtering",
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
 	private UIOptionPanel<Predicate<T>> _filterPanel = new();
-	private Predicate<T>? _activeFilter = null;
+	private List<Predicate<T>> _activeFilters = [];
 
 	private OptionPanelToggleButton _sortToggleButton = new("Images/UI/Bestiary/Button_Sorting",
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SortHover"));
@@ -198,17 +198,18 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 
 		_filterPanel.Width.Percent = 1;
 		_filterPanel.Height.Percent = 1;
-		_filterPanel.OnSelectionChanged += pred => {
-			_filterToggleButton.OptionSelected = pred != null;
-			_activeFilter = pred;
+		_filterPanel.OnSelectionChanged += preds => {
+			_filterToggleButton.OptionSelected = preds.Count != 0;
+			_activeFilters.Clear();
+			_activeFilters.AddRange(preds);
 			UpdateDisplayedIngredients();
 		};
 
 		_sortPanel.Width.Percent = 1;
 		_sortPanel.Height.Percent = 1;
 		_sortPanel.OnSelectionChanged += comp => {
-			_sortToggleButton.OptionSelected = comp != null;
-			_activeSortComparison = comp;
+			_sortToggleButton.OptionSelected = comp.Count != 0;
+			_activeSortComparison = comp.FirstOrDefault();
 			UpdateDisplayedIngredients();
 		};
 
@@ -259,14 +260,14 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 		_searchBar.SetTakingInput(true);
 	}
 
-	public void AddFilter(Item icon, string name, Predicate<T> pred)
+	public void AddFilterGroup(in OptionGroup<Predicate<T>> g)
 	{
-		_filterPanel.AddItemIconOption(icon, name, pred);
+		_filterPanel.AddGroup(g);
 	}
 
-	public void AddSort(Item icon, string name, Comparison<T> compare)
+	public void AddSortGroup(in OptionGroup<Comparison<T>> g)
 	{
-		_sortPanel.AddItemIconOption(icon, name, compare);
+		_sortPanel.AddGroup(g);
 	}
 
 	// Update what ingredients are being displayed based on the search bar and filters.
@@ -276,7 +277,7 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 
 		_filteredIngredients.Clear();
 		_filteredIngredients.AddRange(
-			_allIngredients.Where(i => query.Matches(i) && (_activeFilter?.Invoke(i) ?? true)));
+			_allIngredients.Where(i => query.Matches(i) && (_activeFilters.All(f => f(i)))));
 
 		if (_activeSortComparison != null)
 		{

@@ -4,48 +4,54 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using Terraria.GameContent.UI.Elements;
+using Terraria.Localization;
 using Terraria.ModLoader.UI.Elements;
 using Terraria.UI;
 using Terraria;
 
 namespace QuiteEnoughRecipes;
 
+public struct OptionGroup<T>
+{
+	public record struct Option(UIElement Icon, LocalizedText Name, T Value) {}
+
+	/*
+	 * If this is null, then the group won't have a header. This might be desirable if the option
+	 * panel only has one option group (like sorts).
+	 */
+	public LocalizedText? Name = null;
+	public List<Option> Options = [];
+
+	public OptionGroup() {}
+}
+
 /*
- * A panel with a grid of options where at most one can be selected. Each option is associated with
- * a value of type `T`.
+ * A panel that displays several groups of options. At most one option from each group can be
+ * selected at once.
  */
 public class UIOptionPanel<T> : UIPanel
 {
 	// A button that can be toggled on or off.
 	public class OptionButton : UIElement
 	{
-		private static int NextIndex = 0;
-
-		private string _hoverText;
-		private int _index = NextIndex++;
+		private LocalizedText _hoverText;
 
 		public bool Selected = false;
 		public T Val;
+		public required int GroupIndex;
 
-		public OptionButton(string hoverText, T val)
+		public OptionButton(in OptionGroup<T>.Option o)
 		{
-			_hoverText = hoverText;
-			Val = val;
+			_hoverText = o.Name;
+			Val = o.Value;
+
 			Width.Pixels = 40;
 			Height.Pixels = 40;
-		}
 
-		// Hack to prevent `UIGrid` from reordering these buttons.
-		public override int CompareTo(object? other)
-		{
-			if (other is OptionButton b)
-			{
-				return _index.CompareTo(b._index);
-			}
-			else
-			{
-				return 0;
-			}
+			o.Icon.VAlign = o.Icon.HAlign = 0.5f;
+			o.Icon.IgnoresMouseInteraction = true;
+
+			Append(o.Icon);
 		}
 
 		protected override void DrawSelf(SpriteBatch sb)
@@ -61,57 +67,71 @@ public class UIOptionPanel<T> : UIPanel
 
 			if (IsMouseHovering)
 			{
-				Main.instance.MouseText(_hoverText);
+				Main.instance.MouseText(_hoverText.Value);
 			}
 		}
 	}
 
-	// An option button that displays an item as an icon.
-	public class ItemIconOptionButton : OptionButton
-	{
-		private Item _item;
-
-		public ItemIconOptionButton(Item item, string hoverText, T val) : base(hoverText, val)
-		{
-			_item = item;
-		}
-
-		protected override void DrawSelf(SpriteBatch sb)
-		{
-			base.DrawSelf(sb);
-			var dims = GetDimensions();
-			QuiteEnoughRecipes.DrawItemIcon(_item, -1, sb, dims.Center(), dims.Width / 50, 32, Color.White);
-		}
-	}
-
-	private UIGrid _optionGrid;
+	private List<List<OptionButton>> _groups = [];
+	private UIAutoExtendGrid _grid = new();
 
 	/*
-	 * This will be activated when the option selection changes. If an option was enabled, this will
-	 * be called with the value associated with that option. If all options were disabled, this will
-	 * be called with null.
+	 * This will be activated when the option selection changes. This will be called with a list of
+	 * all enabled options.
 	 */
-	public event Action<T?>? OnSelectionChanged;
+	public event Action<List<T>>? OnSelectionChanged;
 
 	public UIOptionPanel()
 	{
+		_grid.Width.Percent = 1;
+
 		var scroll = new UIScrollbar();
 		scroll.Height.Percent = 1;
 		scroll.HAlign = 1;
 
-		_optionGrid = new();
-		_optionGrid.Height.Percent = 1;
-		_optionGrid.Width = new StyleDimension(-scroll.Width.Pixels, 1);
-		_optionGrid.SetScrollbar(scroll);
+		/*
+		 * Instead of using `UIList` or `UIGrid` directly, we wrap a `UIAutoExtendGrid` in a
+		 * `UIList`. `UIList` and `UIGrid` try to reorder their elements, which is a pain, so we can
+		 * instead just borrow the scrolling capabilities of `UIList` and use our own grid.
+		 */
+		var list = new UIList();
+		list.Height.Percent = 1;
+		list.Width = new StyleDimension(-scroll.Width.Pixels, 1);
+		list.SetScrollbar(scroll);
+		list.Add(_grid);
 
-		Append(_optionGrid);
+		Append(list);
 		Append(scroll);
 	}
 
-	// Add an option button with the value `val`. When hovered, it will display the text `name`.
-	public void AddItemIconOption(Item item, string name, T val)
+	public void AddGroup(in OptionGroup<T> group)
 	{
-		_optionGrid.Add(new ItemIconOptionButton(item, name, val));
+		if (group.Name != null)
+		{
+			var text = new UIText(group.Name){
+				Width = new(0, 1),
+				TextOriginX = 0,
+				TextOriginY = 1
+			};
+
+			// Add padding to groups after the first.
+			if (_groups.Count != 0)
+			{
+				text.Height.Pixels = 30;
+			}
+
+			_grid.Append(text);
+		}
+
+		var buttons = group.Options
+			.Select(g => new OptionButton(g){ GroupIndex = _groups.Count })
+			.ToList();
+		_groups.Add(buttons);
+
+		foreach (var button in buttons)
+		{
+			_grid.Append(button);
+		}
 	}
 
 	public override void LeftClick(UIMouseEvent e)
@@ -120,24 +140,34 @@ public class UIOptionPanel<T> : UIPanel
 		if (e.Target is OptionButton pressedButton)
 		{
 			bool newSelectedState = !pressedButton.Selected;
-			foreach (var b in _optionGrid._items.OfType<OptionButton>())
+
+			foreach (var b in _groups[pressedButton.GroupIndex])
 			{
 				b.Selected = false;
 			}
 
 			pressedButton.Selected = newSelectedState;
-			OnSelectionChanged?.Invoke(newSelectedState ? pressedButton.Val : default(T?));
+
+			OnSelectionChanged?.Invoke(GetSelectedValues());
 		}
 	}
 
 	// Disable all active options. This function *will* activate the `OnSelectionChanged` event.
 	public void DisableAllOptions()
 	{
-		foreach (var b in _optionGrid._items.OfType<OptionButton>())
+		foreach (var b in _groups.SelectMany(b => b))
 		{
 			b.Selected = false;
 		}
 
-		OnSelectionChanged?.Invoke(default(T?));
+		OnSelectionChanged?.Invoke([]);
+	}
+
+	private List<T> GetSelectedValues()
+	{
+		return _groups.SelectMany(b => b)
+			.Where(b => b.Selected)
+			.Select(b => b.Val)
+			.ToList();
 	}
 }

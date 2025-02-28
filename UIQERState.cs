@@ -472,38 +472,38 @@ public class UIQERState : UIState
 
 	private static void AddItemFilters(UIIngredientSearchPage<ItemIngredient, UIItemPanel> page)
 	{
-		IEnumerable<(int, string, Predicate<Item>)> filters = [
-			(ItemID.StoneBlock, "Tiles", ItemPredicates.IsTile),
-			(ItemID.Furnace, "CraftingStations", ItemPredicates.IsCraftingStation),
-			(ItemID.SuspiciousLookingEye, "BossSummons", ItemPredicates.IsBossSummon),
-			(ItemID.GoodieBag, "LootItems", ItemPredicates.IsLootItem),
-			(ItemID.InfernoPotion, "Potions", ItemPredicates.IsPotion),
-			(ItemID.Apple, "Food", ItemPredicates.IsFood),
-			(ItemID.WoodFishingPole, "Fishing", ItemPredicates.IsFishing),
-			(ItemID.RedDye, "Dye", ItemPredicates.IsDye),
-			(ItemID.AnkletoftheWind, "Accessories", ItemPredicates.IsAccessory),
-			(ItemID.ExoticEasternChewToy, "Pets", ItemPredicates.IsPet),
-			(ItemID.SlimySaddle, "Mounts", ItemPredicates.IsMount),
-			(ItemID.CreativeWings, "Wings", ItemPredicates.IsWings),
-			(ItemID.GrapplingHook, "Hooks", ItemPredicates.IsHook),
-			(ItemID.CopperPickaxe, "Tools", ItemPredicates.IsTool),
-			(ItemID.CopperChainmail, "Armor", ItemPredicates.IsArmor),
-			(ItemID.RedHat, "Vanity", ItemPredicates.IsVanity),
-
-			(ItemID.CopperShortsword, "MeleeWeapons", ItemPredicates.IsMeleeWeapon),
-			(ItemID.WoodenBow, "RangedWeapons", ItemPredicates.IsRangedWeapon),
-			(ItemID.WandofSparking, "MagicWeapons", ItemPredicates.IsMagicWeapon),
-			(ItemID.BabyBirdStaff, "SummonWeapons", ItemPredicates.IsSummonWeapon),
-
-			(ItemID.FlareGun, "ClasslessWeapons", ItemPredicates.IsClasslessWeapon)
+		IEnumerable<(int, string, Predicate<ItemIngredient>)> filters = [
+			(ItemID.StoneBlock, "Tiles", i => ItemPredicates.IsTile(i.Item)),
+			(ItemID.Furnace, "CraftingStations", i => ItemPredicates.IsCraftingStation(i.Item)),
+			(ItemID.SuspiciousLookingEye, "BossSummons", i => ItemPredicates.IsBossSummon(i.Item)),
+			(ItemID.GoodieBag, "LootItems", i => ItemPredicates.IsLootItem(i.Item)),
+			(ItemID.InfernoPotion, "Potions", i => ItemPredicates.IsPotion(i.Item)),
+			(ItemID.Apple, "Food", i => ItemPredicates.IsFood(i.Item)),
+			(ItemID.WoodFishingPole, "Fishing", i => ItemPredicates.IsFishing(i.Item)),
+			(ItemID.RedDye, "Dye", i => ItemPredicates.IsDye(i.Item)),
+			(ItemID.AnkletoftheWind, "Accessories", i => ItemPredicates.IsAccessory(i.Item)),
+			(ItemID.ExoticEasternChewToy, "Pets", i => ItemPredicates.IsPet(i.Item)),
+			(ItemID.SlimySaddle, "Mounts", i => ItemPredicates.IsMount(i.Item)),
+			(ItemID.CreativeWings, "Wings", i => ItemPredicates.IsWings(i.Item)),
+			(ItemID.GrapplingHook, "Hooks", i => ItemPredicates.IsHook(i.Item)),
+			(ItemID.CopperPickaxe, "Tools", i => ItemPredicates.IsTool(i.Item)),
+			(ItemID.CopperChainmail, "Armor", i => ItemPredicates.IsArmor(i.Item)),
+			(ItemID.RedHat, "Vanity", i => ItemPredicates.IsVanity(i.Item)),
 		];
 
-		foreach (var (id, key, pred) in filters)
-		{
-			page.AddFilter(new(id),
-				Language.GetTextValue($"Mods.QuiteEnoughRecipes.Filters.{key}"),
-				i => pred(i.Item));
-		}
+		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups.ItemFilters";
+		page.AddFilterGroup(MakeOptionGroup(filters, keyParent));
+
+		keyParent = "Mods.QuiteEnoughRecipes.OptionGroups.WeaponFilters";
+		IEnumerable<(int, string, Predicate<ItemIngredient>)> damageFilters = [
+			(ItemID.CopperShortsword, "MeleeWeapons", i => ItemPredicates.IsMeleeWeapon(i.Item)),
+			(ItemID.WoodenBow, "RangedWeapons", i => ItemPredicates.IsRangedWeapon(i.Item)),
+			(ItemID.WandofSparking, "MagicWeapons", i => ItemPredicates.IsMagicWeapon(i.Item)),
+			(ItemID.BabyBirdStaff, "SummonWeapons", i => ItemPredicates.IsSummonWeapon(i.Item)),
+			(ItemID.FlareGun, "ClasslessWeapons", i => ItemPredicates.IsClasslessWeapon(i.Item))
+		];
+
+		var group = MakeOptionGroup(damageFilters, keyParent);
 
 		// We only add the thrower class filter if there are mods that add throwing weapons.
 		if (FindIconItemForDamageClass(DamageClass.Throwing) is Item iconItem)
@@ -513,9 +513,9 @@ public class UIQERState : UIState
 			 * are *exactly* in the throwing class, since modded classes that just *derive* from
 			 * throwing (like rogue) will also be shown below with the other modded classes.
 			 */
-			page.AddFilter(iconItem,
-				Language.GetTextValue("Mods.QuiteEnoughRecipes.Filters.ThrowingWeapons"),
-				i => i.Item.DamageType == DamageClass.Throwing && ItemPredicates.IsWeapon(i.Item));
+			group.Options.Add(
+				new(new UIItemIcon(iconItem, false), Language.GetText($"{keyParent}.ThrowingWeapons"),
+					i => i.Item.DamageType == DamageClass.Throwing && ItemPredicates.IsWeapon(i.Item)));
 		}
 
 		/*
@@ -541,65 +541,69 @@ public class UIQERState : UIState
 			if (icon == null) { continue; }
 
 			// Adjust the name so instead of "rogue damage Weapons", we get "Rogue Weapons".
-			var name = Language.GetText("Mods.QuiteEnoughRecipes.Filters.OtherWeapons")
-				.Format(BaseDamageClassName(dcs[0].DisplayName.Value));
-			page.AddFilter(icon, $"{name}",
-				i => dcs.Any(dc => ItemPredicates.IsWeaponInDamageClass(i.Item, dc)));
+			var name = Language.GetText($"{keyParent}.OtherWeapons")
+				.WithFormatArgs(BaseDamageClassName(dcs[0].DisplayName.Value));
+			group.Options.Add(
+				new(new UIItemIcon(icon, false), name,
+					i => dcs.Any(dc => ItemPredicates.IsWeaponInDamageClass(i.Item, dc))));
 		}
+
+		page.AddFilterGroup(group);
 	}
 
 	private static void AddItemSorts(UIIngredientSearchPage<ItemIngredient, UIItemPanel> page)
 	{
-		page.AddSort(new Item(ItemID.AlphabetStatue1),
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.ID"),
-			(x, y) => x.Item.type.CompareTo(y.Item.type));
-		page.AddSort(new Item(ItemID.AlphabetStatueA),
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Alphabetical"),
-			(x, y) => x.Item.Name.CompareTo(y.Item.Name));
-		page.AddSort(new Item(ItemID.StarStatue),
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Rarity"),
-			(x, y) => x.Item.rare.CompareTo(y.Item.rare));
-		page.AddSort(new Item(ItemID.ChestStatue),
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.Sorts.Value"),
-			(x, y) => x.Item.value.CompareTo(y.Item.value));
+		IEnumerable<(int, string, Comparison<ItemIngredient>)> sorts = [
+			(ItemID.AlphabetStatue1, "ID", (x, y) => x.Item.type.CompareTo(y.Item.type)),
+			(ItemID.AlphabetStatueA, "Alphabetical", (x, y) => x.Name.CompareTo(y.Name)),
+			(ItemID.StarStatue, "Rarity", (x, y) => x.Item.rare.CompareTo(y.Item.rare)),
+			(ItemID.ChestStatue, "Value", (x, y) => x.Item.value.CompareTo(y.Item.value))
+		];
+
+		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups.ItemSorts";
+		page.AddSortGroup(MakeOptionGroup(sorts, keyParent));
 	}
 
 	private static void AddNPCFilters(UIIngredientSearchPage<NPCIngredient, UINPCPanel> page)
 	{
-		IEnumerable<(int, string, Predicate<int>)> filters = [
+		IEnumerable<(int, string, Predicate<NPCIngredient>)> filters = [
 			(ItemID.SlimeCrown, "Bosses",
-				n => TryGetBestiaryInfoElement<BossBestiaryInfoElement>(n) != null),
-			(ItemID.GoldCoin, "TownNPCs", n => TryGetNPC(n)?.isLikeATownNPC ?? false)
+				n => TryGetBestiaryInfoElement<BossBestiaryInfoElement>(n.ID) != null),
+			(ItemID.GoldCoin, "TownNPCs", n => TryGetNPC(n.ID)?.isLikeATownNPC ?? false)
 		];
 
-		foreach (var (id, key, pred) in filters)
-		{
-			page.AddFilter(new(id),
-				Language.GetTextValue($"Mods.QuiteEnoughRecipes.Filters.{key}"),
-				n => pred(n.ID));
-		}
+		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups.NPCFilters";
+		page.AddFilterGroup(MakeOptionGroup(filters, keyParent));
 	}
 
 	private static void AddNPCSorts(UIIngredientSearchPage<NPCIngredient, UINPCPanel> page)
 	{
-		IEnumerable<(int, string, Comparison<int>)> sorts = [
-			(ItemID.AlphabetStatue1, "ID", (x, y) => x.CompareTo(y)),
-			(ItemID.AlphabetStatueA, "Alphabetical",
-				(x, y) => Lang.GetNPCNameValue(x).CompareTo(Lang.GetNPCNameValue(y))),
+		IEnumerable<(int, string, Comparison<NPCIngredient>)> sorts = [
+			(ItemID.AlphabetStatue1, "ID", (x, y) => x.ID.CompareTo(y.ID)),
+			(ItemID.AlphabetStatueA, "Alphabetical", (x, y) => x.Name.CompareTo(y.Name)),
 			(ItemID.StarStatue, "Rarity", (x, y) => {
-				int xRare = TryGetNPC(x)?.rarity ?? 0;
-				int yRare = TryGetNPC(y)?.rarity ?? 0;
+				int xRare = TryGetNPC(x.ID)?.rarity ?? 0;
+				int yRare = TryGetNPC(y.ID)?.rarity ?? 0;
 				return xRare.CompareTo(yRare);
 			})
 		];
 
-		foreach (var (id, key, comp) in sorts)
+		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups.NPCSorts";
+		page.AddSortGroup(MakeOptionGroup(sorts, keyParent));
+	}
+
+	private static OptionGroup<T> MakeOptionGroup<T>(IEnumerable<(int, string, T)> opts,
+		string keyParent)
+	{
+		var group = new OptionGroup<T>{ Name = Language.GetText($"{keyParent}.Name") };
+
+		foreach (var (id, key, v) in opts)
 		{
-			page.AddSort(new(id),
-				Language.GetTextValue($"Mods.QuiteEnoughRecipes.Sorts.{key}"),
-				(x, y) => comp(x.ID, y.ID));
+			var icon = new UIItemIcon(new(id), false);
+			group.Options.Add(new(icon, Language.GetText($"{keyParent}.{key}"), v));
 		}
 
+		return group;
 	}
 
 	private static T? TryGetBestiaryInfoElement<T>(int npcID)
