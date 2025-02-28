@@ -16,7 +16,7 @@ namespace QuiteEnoughRecipes;
 public interface IIngredient
 {
 	// These are used for searching.
-	public string? Name => null;
+	public string Name => "";
 	public Mod? Mod => null;
 	public IEnumerable<string> GetTooltipLines() => [];
 
@@ -34,7 +34,7 @@ public interface IIngredientElement
 
 public record struct ItemIngredient(Item Item) : IIngredient
 {
-	public string? Name => Item.Name;
+	public string Name => Item.Name;
 	public Mod? Mod => Item.ModItem?.Mod;
 
 	public IEnumerable<string> GetTooltipLines()
@@ -75,7 +75,7 @@ public record struct ItemIngredient(Item Item) : IIngredient
 
 public record struct NPCIngredient(int ID) : IIngredient
 {
-	public string? Name => Lang.GetNPCNameValue(ID);
+	public string Name => Lang.GetNPCNameValue(ID);
 	public Mod? Mod => NPCLoader.GetNPC(ID)?.Mod;
 
 	[UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_key")]
