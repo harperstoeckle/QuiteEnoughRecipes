@@ -133,6 +133,7 @@ public class UIQERState : UIState
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
 
 		AddItemFilters(itemSearchPage);
+		itemSearchPage.AddFilterGroup(MakeModFilterGroup(allItems));
 		AddItemSorts(itemSearchPage);
 
 		var allNPCs = Enumerable.Range(0, NPCLoader.NPCCount)
@@ -146,6 +147,7 @@ public class UIQERState : UIState
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.NPCSearchHelp"));
 
 		AddNPCFilters(npcSearchPage);
+		npcSearchPage.AddFilterGroup(MakeModFilterGroup(allNPCs));
 		AddNPCSorts(npcSearchPage);
 
 		AddHandler(new RecipeHandlers.Basic());
@@ -605,6 +607,32 @@ public class UIQERState : UIState
 		{
 			var icon = new UIItemIcon(new(id), false);
 			group.Options.Add(new(icon, Language.GetText($"{keyParent}.{key}"), v));
+		}
+
+		return group;
+	}
+
+	// Make an option group for mods that are present in a master list of ingredients.
+	private static OptionGroup<Predicate<T>> MakeModFilterGroup<T>(IEnumerable<T> ingredients)
+		where T : IIngredient
+	{
+		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups.Mods";
+		var group = new OptionGroup<Predicate<T>>{
+			Name = Language.GetText($"{keyParent}.Name")
+		};
+
+		var mods = ingredients
+			.Select(i => i.Mod)
+			.Where(m => m != null)
+			.Select(m => m!)
+			.Distinct()
+			.OrderBy(m => m.DisplayNameClean);
+
+		foreach (var mod in mods)
+		{
+			var name = Language.GetText($"{keyParent}.ModName").WithFormatArgs(mod.DisplayNameClean);
+			var icon = mod.ModSourceBestiaryInfoElement.GetFilterImage();
+			group.Options.Add(new(icon, name, i => i.Mod == mod));
 		}
 
 		return group;

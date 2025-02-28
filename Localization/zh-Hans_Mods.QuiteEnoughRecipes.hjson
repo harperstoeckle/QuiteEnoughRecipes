@@ -125,6 +125,11 @@ OptionGroups: {
 		// Alphabetical: "{$ItemSorts.Alphabetical}"
 		// Rarity: "{$ItemSorts.Rarity}"
 	}
+
+	Mods: {
+		// Name: Mods
+		// ModName: "{0}"
+	}
 }
 
 // Tooltips.DropChance: "{0} drop chance"
