@@ -595,7 +595,11 @@ public class UIQERState : UIState
 	private static OptionGroup<T> MakeOptionGroup<T>(IEnumerable<(int, string, T)> opts,
 		string keyParent)
 	{
-		var group = new OptionGroup<T>{ Name = Language.GetText($"{keyParent}.Name") };
+		var group = new OptionGroup<T>();
+		if (Language.Exists($"{keyParent}.Name"))
+		{
+			group.Name = Language.GetText($"{keyParent}.Name");
+		}
 
 		foreach (var (id, key, v) in opts)
 		{

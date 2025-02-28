@@ -77,7 +77,6 @@ Tabs: {
 
 OptionGroups: {
 	ItemFilters: {
-		// Name: Item Filters
 		Tiles: 物块
 		CraftingStations: 合成站
 		LootItems: 掉落物
@@ -96,7 +95,7 @@ OptionGroups: {
 	}
 
 	WeaponFilters: {
-		// Name: Weapon Filters
+		// Name: Damage Types
 		MeleeWeapons: 近战伤害武器
 		RangedWeapons: 远程伤害武器
 		MagicWeapons: 魔法伤害武器
@@ -109,7 +108,6 @@ OptionGroups: {
 	}
 
 	ItemSorts: {
-		// Name: Item Sort Options
 		ID: 按ID排序
 		Alphabetical: 按字母排序
 		Rarity: 按稀有度排序
@@ -117,14 +115,12 @@ OptionGroups: {
 	}
 
 	NPCFilters: {
-		// Name: NPC Filters
 		// Bosses: Bosses
 		// TownNPCs: Town NPCs
 		// RareNPCs: Rare
 	}
 
 	NPCSorts: {
-		// Name: NPC Sort Options
 		// ID: "{$ItemSorts.ID}"
 		// Alphabetical: "{$ItemSorts.Alphabetical}"
 		// Rarity: "{$ItemSorts.Rarity}"
