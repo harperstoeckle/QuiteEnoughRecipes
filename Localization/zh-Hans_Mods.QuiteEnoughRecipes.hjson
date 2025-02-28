@@ -75,96 +75,59 @@ Tabs: {
 	GlobalDrops: 全局掉落
 }
 
-Filters: {
-	Tiles: 物块
-	CraftingStations: 合成站
-	LootItems: 掉落物
-	Fishing: 鱼获
-	Dye: 染料
-	Accessories: 配饰
-	Tools: 工具
-	Armor: 盔甲
-	Vanity: 时装
-	Potions: 药水
-	Food: 食物
-	Wings: 翅膀
-	Pets: 宠物
-	Mounts: 坐骑
-	Hooks: 抓钩
-	MeleeWeapons: 近战伤害武器
-	RangedWeapons: 远程伤害武器
-	MagicWeapons: 魔法伤害武器
-	SummonWeapons: 召唤伤害武器
-	ClasslessWeapons: 无职业伤害武器
-	ThrowingWeapons: 投掷伤害武器
-	BossSummons: Boss召唤物
-	# Used to format other damage types.
-	OtherWeapons: "{0}武器"
-	# NPCs
-	// Bosses: Bosses
-	// TownNPCs: Town NPCs
-	// RareNPCs: Rare
-}
-
-Sorts: {
-	ID: 按ID排序
-	Alphabetical: 按字母排序
-	Rarity: 按稀有度排序
-	Value: 按价值排序
-}
-
 OptionGroups: {
 	ItemFilters: {
 		// Name: Item Filters
-		// Tiles: "{$Filters.Tiles}"
-		// CraftingStations: "{$Filters.CraftingStations}"
-		// LootItems: "{$Filters.LootItems}"
-		// Fishing: "{$Filters.Fishing}"
-		// Dye: "{$Filters.Dye}"
-		// Accessories: "{$Filters.Accessories}"
-		// Tools: "{$Filters.Tools}"
-		// Armor: "{$Filters.Armor}"
-		// Vanity: "{$Filters.Vanity}"
-		// Potions: "{$Filters.Potions}"
-		// Food: "{$Filters.Food}"
-		// Wings: "{$Filters.Wings}"
-		// Pets: "{$Filters.Pets}"
-		// Mounts: "{$Filters.Mounts}"
-		// Hooks: "{$Filters.Hooks}"
+		Tiles: 物块
+		CraftingStations: 合成站
+		LootItems: 掉落物
+		Fishing: 鱼获
+		Dye: 染料
+		Accessories: 配饰
+		Tools: 工具
+		Armor: 盔甲
+		Vanity: 时装
+		Potions: 药水
+		Food: 食物
+		Wings: 翅膀
+		Pets: 宠物
+		Mounts: 坐骑
+		Hooks: 抓钩
 	}
 
 	WeaponFilters: {
 		// Name: Weapon Filters
-		// MeleeWeapons: "{$Filters.MeleeWeapons}"
-		// RangedWeapons: "{$Filters.RangedWeapons}"
-		// MagicWeapons: "{$Filters.MagicWeapons}"
-		// SummonWeapons: "{$Filters.SummonWeapons}"
-		// ClasslessWeapons: "{$Filters.ClasslessWeapons}"
-		// ThrowingWeapons: "{$Filters.ThrowingWeapons}"
-		// BossSummons: "{$Filters.BossSummons}"
-		// OtherWeapons: "{$Filters.OtherWeapons}"
+		MeleeWeapons: 近战伤害武器
+		RangedWeapons: 远程伤害武器
+		MagicWeapons: 魔法伤害武器
+		SummonWeapons: 召唤伤害武器
+		ClasslessWeapons: 无职业伤害武器
+		ThrowingWeapons: 投掷伤害武器
+		BossSummons: Boss召唤物
+		# Used to format other damage types.
+		OtherWeapons: "{0}武器"
 	}
 
 	ItemSorts: {
 		// Name: Item Sort Options
-		// ID: "{$Sorts.ID}"
-		// Alphabetical: "{$Sorts.Alphabetical}"
-		// Rarity: "{$Sorts.Rarity}"
-		// Value: "{$Sorts.Value}"
+		ID: 按ID排序
+		Alphabetical: 按字母排序
+		Rarity: 按稀有度排序
+		Value: 按价值排序
 	}
 
 	NPCFilters: {
 		// Name: NPC Filters
-		// Bosses: "{$Filters.Bosses}"
-		// TownNPCs: "{$Filters.TownNPCs}"
-		// RareNPCs: "{$Filters.RareNPCs}"
+		// Bosses: Bosses
+		// TownNPCs: Town NPCs
+		// RareNPCs: Rare
 	}
 
 	NPCSorts: {
 		// Name: NPC Sort Options
-		// ID: "{$Sorts.ID}"
-		// Alphabetical: "{$Sorts.Alphabetical}"
-		// Rarity: "{$Sorts.Rarity}"
+		// ID: "{$ItemSorts.ID}"
+		// Alphabetical: "{$ItemSorts.Alphabetical}"
+		// Rarity: "{$ItemSorts.Rarity}"
 	}
 }
 
