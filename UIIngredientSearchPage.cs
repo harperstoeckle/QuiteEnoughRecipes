@@ -85,46 +85,6 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 	where T : IIngredient
 	where E : UIElement, IScrollableGridElement<T>, new()
 {
-	private struct SearchQuery
-	{
-		public string Name;
-		public string? Mod;
-		public string? Tooltip;
-
-		public bool Matches(T i)
-		{
-			if (!string.IsNullOrWhiteSpace(Name) &&
-				(i.Name == null || !NormalizeForSearch(i.Name).Contains(Name)))
-			{
-				return false;
-			}
-
-			if (!string.IsNullOrWhiteSpace(Mod) &&
-				(i.Mod == null || !NormalizeForSearch(RemoveWhitespace(i.Mod.DisplayNameClean)).Contains(Mod)))
-			{
-				return false;
-			}
-
-			if (!string.IsNullOrWhiteSpace(Tooltip))
-			{
-				// Needed to be usable in a lambda.
-				var tooltip = Tooltip;
-				if (!i.GetTooltipLines().Any(l => NormalizeForSearch(l).Contains(tooltip)))
-				{
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		// Used to remove whitespace
-		private static readonly Regex WhitespaceRegex = new(@"\s+");
-		private string RemoveWhitespace(string s)
-		{
-			return WhitespaceRegex.Replace(s, "");
-		}
-	}
 
 	// Icon that provides help when hovered.
 	private class HelpIcon : UIElement
@@ -273,7 +233,7 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 	// Update what ingredients are being displayed based on the search bar and filters.
 	private void UpdateDisplayedIngredients()
 	{
-		var query = ParseSearchText(_searchText ?? "");
+		var query = SearchQuery.FromSearchText(_searchText ?? "");
 
 		_filteredIngredients.Clear();
 		_filteredIngredients.AddRange(
@@ -287,43 +247,4 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 		_ingredientList.Values = _filteredIngredients;
 	}
 
-	/*
-	 * Put text in a standard form so that searching can be effectively done using
-	 * `string.Contains`.
-	 */
-	private static string NormalizeForSearch(string s)
-	{
-		return s.Trim().ToLower();
-	}
-
-	private static SearchQuery ParseSearchText(string text)
-	{
-		var query = new SearchQuery();
-		var parts = text.Split("#", 2);
-
-		if (parts.Length >= 2)
-		{
-			query.Tooltip = NormalizeForSearch(parts[1]);
-		}
-
-		/*
-		 * TODO: These could be made more efficient by not re-compiling the regexes every time, but
-		 * it's probably fine since this only happens once when the search is changed.
-		 *
-		 * This will just use the first specified mod and ignore the rest.
-		 */
-		var modCaptures = Regex.Matches(parts[0], @"@(\S+)");
-		if (modCaptures.Count >= 1)
-		{
-			query.Mod = NormalizeForSearch(modCaptures[0].Groups[1].Value);
-		}
-
-		/*
-		 * We remove *any* @ from the name, even if it doesn't have any characters after it that
-		 * might be part of a mod.
-		 */
-		query.Name = NormalizeForSearch(Regex.Replace(parts[0], @"@\S*\s*", ""));
-
-		return query;
-	}
 }
