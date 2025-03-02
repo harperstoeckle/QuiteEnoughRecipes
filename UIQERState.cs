@@ -152,7 +152,7 @@ public class UIQERState : UIState
 	private UIItemPanel? _hoveredItemPanel = null;
 
 	// This will contain at most one of the options panels (sort, filter).
-	private UIPopupContainer _optionPanelContainer = new();
+	private UIContainer _optionPanelContainer = new();
 
 	// This will be re-focused when the browser is opened.
 	private IFocusableSearchPage? _pageToFocusOnOpen = null;
@@ -211,7 +211,7 @@ public class UIQERState : UIState
 		recipePanel.Height.Percent = 0.8f;
 		recipePanel.VAlign = 0.5f;
 
-		var recipeContainer = new UIPopupContainer();
+		var recipeContainer = new UIContainer();
 		recipeContainer.Width.Percent = 1;
 		recipeContainer.Height.Percent = 1;
 
@@ -243,7 +243,7 @@ public class UIQERState : UIState
 		ingredientListPanel.Height.Percent = 0.8f;
 		ingredientListPanel.VAlign = 0.5f;
 
-		var ingredientListContainer = new UIPopupContainer();
+		var ingredientListContainer = new UIContainer();
 		ingredientListContainer.Width.Percent = 1;
 		ingredientListContainer.Height.Percent = 1;
 

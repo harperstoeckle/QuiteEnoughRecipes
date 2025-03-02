@@ -124,7 +124,7 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 	 * This is a reference to a popup container in the parent that will be used to display the
 	 * filter and sort panels.
 	 */
-	private UIPopupContainer _optionPanelContainer;
+	private UIContainer _optionPanelContainer;
 
 	private OptionPanelToggleButton _filterToggleButton = new("Images/UI/Bestiary/Button_Filtering",
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
@@ -140,7 +140,7 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 	 * `squareSideLength` is the side length of the grid squares, and `padding` is the amount of
 	 * padding between grid squares.
 	 */
-	public UISearchPage(UIPopupContainer optionPanelContainer, IQueryable<T> queryElement,
+	public UISearchPage(UIContainer optionPanelContainer, IQueryable<T> queryElement,
 		LocalizedText helpText)
 	{
 		const float BarHeight = 50;

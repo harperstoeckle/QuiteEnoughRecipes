@@ -4,12 +4,12 @@ namespace QuiteEnoughRecipes;
 
 /*
  * A container that may or may not contain another element. It is only active if it has an element
- * in it. This is used for things like the filter and sort panels, which are supposed to float above
- * other UI elements when open, but shouldn't do anything when closed.
+ * in it. This should be used in any situation where content is regularly swapped out, like tabs,
+ * or with popup-like content, like option panels.
  */
-public class UIPopupContainer : UIElement
+public class UIContainer : UIElement
 {
-	public UIPopupContainer()
+	public UIContainer()
 	{
 		IgnoresMouseInteraction = true;
 	}
