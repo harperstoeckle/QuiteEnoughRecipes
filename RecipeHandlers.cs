@@ -22,7 +22,7 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.WorkBench);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
+		public IEnumerable<IRecipe> GetRecipes(IIngredient ing, QueryType queryType)
 		{
 			if (!(ing is ItemIngredient i)) { yield break; }
 
@@ -31,7 +31,7 @@ public static class RecipeHandlers
 				if (queryType == QueryType.Sources && r.createItem.type == i.Item.type
 					|| queryType == QueryType.Uses && RecipeAcceptsItem(r, i.Item))
 				{
-					yield return new UIRecipePanel(r);
+					yield return new BasicRecipe(r);
 				}
 			}
 		}
@@ -45,7 +45,7 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.Furnace);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
+		public IEnumerable<IRecipe> GetRecipes(IIngredient ing, QueryType queryType)
 		{
 			if (!(queryType == QueryType.Uses && ing is ItemIngredient i))
 			{
@@ -56,7 +56,7 @@ public static class RecipeHandlers
 			{
 				if (r.requiredTile.Contains(i.Item.createTile))
 				{
-					yield return new UIRecipePanel(r);
+					yield return new BasicRecipe(r);
 				}
 			}
 		}
@@ -69,7 +69,7 @@ public static class RecipeHandlers
 		
 		public Item TabItem { get; } = new(ItemID.BottomlessShimmerBucket);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
+		public IEnumerable<IRecipe> GetRecipes(IIngredient ing, QueryType queryType)
 		{
 			if (!(ing is ItemIngredient i)) { yield break; }
 
@@ -79,7 +79,10 @@ public static class RecipeHandlers
 				{
 					if (ShimmerTransformResult(id) == i.Item.type)
 					{
-						yield return new UIRecipePanel(new(i.Item.type), [new(id)]);
+						yield return new BasicRecipe{
+							Result = new(i.Item.type),
+							RequiredItems = [new(id)]
+						};
 					}
 				}
 			}
@@ -87,7 +90,10 @@ public static class RecipeHandlers
 			{
 				int id = ShimmerTransformResult(i.Item.type);
 				if (id == -1) { yield break; }
-				yield return new UIRecipePanel(new(id), [new(i.Item.type)]);
+				yield return new BasicRecipe{
+					Result = new(id),
+					RequiredItems = [new(id)]
+				};
 			}
 		}
 	}
@@ -99,7 +105,7 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.GoldCoin);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
+		public IEnumerable<IRecipe> GetRecipes(IIngredient ing, QueryType queryType)
 		{
 			switch (ing, queryType)
 			{
@@ -108,7 +114,7 @@ public static class RecipeHandlers
 				{
 					if (shop.ActiveEntries.Any(e => e.Item.type == i.Item.type))
 					{
-						yield return new UINPCShopPanel(shop);
+						yield return new NPCShopRecipe{ Shop = shop };
 					}
 				}
 
@@ -119,7 +125,7 @@ public static class RecipeHandlers
 				{
 					if (shop.ActiveEntries.Any(e => MatchesCurrency(i.Item, e.Item)))
 					{
-						yield return new UINPCShopPanel(shop);
+						yield return new NPCShopRecipe{ Shop = shop };
 					}
 				}
 
@@ -130,7 +136,7 @@ public static class RecipeHandlers
 				{
 					if (shop.NpcType == n.ID)
 					{
-						yield return new UINPCShopPanel(shop);
+						yield return new NPCShopRecipe{ Shop = shop };
 					}
 				}
 
@@ -156,7 +162,7 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.CultistBossBag);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
+		public IEnumerable<IRecipe> GetRecipes(IIngredient ing, QueryType queryType)
 		{
 			if (!(ing is ItemIngredient i)) { yield break; }
 
@@ -170,8 +176,10 @@ public static class RecipeHandlers
 					var droppedItems = GetItemDrops(item.type);
 					if (droppedItems.Any(info => info.itemId == i.Item.type))
 					{
-						yield return new UIDropsPanel(
-							new UIItemPanel(item.Clone(), 70), droppedItems);
+						yield return new ItemDropsRecipe{
+							Item = item.Clone(),
+							Drops = droppedItems
+						};
 					}
 				}
 			}
@@ -180,7 +188,10 @@ public static class RecipeHandlers
 				var droppedItems = GetItemDrops(i.Item.type);
 				if (droppedItems.Count > 0)
 				{
-					yield return new UIDropsPanel(new UIItemPanel(i.Item, 70), droppedItems);
+					yield return new ItemDropsRecipe{
+						Item = i.Item,
+						Drops = droppedItems
+					};
 				}
 			}
 		}
@@ -194,7 +205,7 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.ZombieArm);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
+		public IEnumerable<IRecipe> GetRecipes(IIngredient ing, QueryType queryType)
 		{
 			switch (ing, queryType)
 			{
@@ -212,10 +223,10 @@ public static class RecipeHandlers
 					var droppedItems = GetNPCDrops(id);
 					if (droppedItems.Any(info => info.itemId == i.Item.type))
 					{
-						yield return new UIDropsPanel(new UINPCPanel(id){
-							Width = new StyleDimension(72, 0),
-							Height = new StyleDimension(72, 0)
-						}, droppedItems);
+						yield return new NPCDropsRecipe{
+							NPCID = id,
+							Drops = droppedItems
+						};
 					}
 				}
 
@@ -227,10 +238,10 @@ public static class RecipeHandlers
 				var drops = GetNPCDrops(n.ID);
 				if (drops.Count > 0)
 				{
-					yield return new UIDropsPanel(new UINPCPanel(n.ID){
-						Width = new StyleDimension(72, 0),
-						Height = new StyleDimension(72, 0)
-					}, drops);
+					yield return new NPCDropsRecipe{
+						NPCID = n.ID,
+						Drops = drops
+					};
 				}
 
 				break;
@@ -246,7 +257,7 @@ public static class RecipeHandlers
 
 		public Item TabItem { get; } = new(ItemID.Heart);
 
-		public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType)
+		public IEnumerable<IRecipe> GetRecipes(IIngredient ing, QueryType queryType)
 		{
 			if (!(queryType == QueryType.Sources && ing is ItemIngredient i))
 			{
@@ -256,11 +267,7 @@ public static class RecipeHandlers
 			var drops = GetGlobalDrops();
 			if (drops.Any(info => info.itemId == i.Item.type))
 			{
-				/*
-				 * Cheaty way to do this. The "left element" that would usually be a portrait is
-				 * empty, so all that's visible is the grid.
-				 */
-				yield return new UIDropsPanel(new UIElement(), drops);
+				yield return new GlobalDropsRecipe{ Drops = drops };
 			}
 		}
 	}

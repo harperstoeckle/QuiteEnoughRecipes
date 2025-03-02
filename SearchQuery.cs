@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 namespace QuiteEnoughRecipes;
 
 // Used to search ingredients.
-public struct SearchQuery
+public class SearchQuery
 {
 	private string _name;
 	private string? _mod;

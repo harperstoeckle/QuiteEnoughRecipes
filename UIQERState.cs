@@ -61,7 +61,8 @@ public class UIQERState : UIState
 		 */
 		public bool ShowRecipes(IIngredient ingredient, QueryType queryType)
 		{
-			var recipeDisplays = _handler.GetRecipeDisplays(ingredient, queryType).ToList();
+			var recipeDisplays = _handler.GetRecipes(ingredient, queryType)
+				.Select(r => r.Element).ToList();
 			if (recipeDisplays.Count == 0) { return false; }
 			_recipeList.Clear();
 			_recipeList.AddRange(recipeDisplays);

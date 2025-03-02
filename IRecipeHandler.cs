@@ -21,7 +21,7 @@ public interface IRecipeHandler
 	 * Given an ingredient, returns a sequence of UI elements showing recipes that either use or
 	 * result in that ingredient.
 	 */
-	public IEnumerable<UIElement> GetRecipeDisplays(IIngredient ing, QueryType queryType);
+	public IEnumerable<IRecipe> GetRecipes(IIngredient ing, QueryType queryType);
 }
 
 public enum QueryType
