@@ -34,7 +34,6 @@ public class UIContainer : UIElement
 	}
 
 	public virtual void OnOpen() {}
-	public virtual void OnClose() {}
 
 	// If `e` is the current active element, toggle it off. Otherwise, enable it.
 	public void Toggle(UIElement e)
