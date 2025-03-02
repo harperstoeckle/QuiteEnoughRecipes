@@ -114,6 +114,39 @@ public class UIQERState : UIState
 		}
 	}
 
+	private class UIPopupContainer : UIContainer
+	{
+		public override void OnOpen()
+		{
+			var dims = Parent?.GetInnerDimensions() ?? new CalculatedStyle();
+
+			var mousePos = Main.MouseScreen - dims.Position();
+			var popupSize = GetOuterDimensions().ToRectangle().Size();
+
+			var pos = mousePos - new Vector2(popupSize.X - 10, 10);
+
+			if (pos.X < 0)
+			{
+				pos.X = mousePos.X - 10;
+			}
+			if (pos.Y + popupSize.Y > dims.Height)
+			{
+				pos.Y = dims.Height - popupSize.Y;
+			}
+
+			Left.Pixels = pos.X;
+			Top.Pixels = pos.Y;
+
+			Recalculate();
+		}
+
+		protected override void DrawSelf(SpriteBatch sb)
+		{
+			base.DrawSelf(sb);
+			if (IsOpen && !ContainsPoint(Main.MouseScreen)) { Close(); }
+		}
+	}
+
 	// Enough to reconstruct (enough of) the recipe panel state.
 	private class HistoryEntry
 	{
@@ -152,7 +185,7 @@ public class UIQERState : UIState
 	private UIItemPanel? _hoveredItemPanel = null;
 
 	// This will contain at most one of the options panels (sort, filter).
-	private UIContainer _optionPanelContainer = new();
+	private UIPopupContainer _optionPanelContainer = new();
 
 	// This will be re-focused when the browser is opened.
 	private IFocusableSearchPage? _pageToFocusOnOpen = null;
@@ -234,8 +267,6 @@ public class UIQERState : UIState
 		 */
 		_optionPanelContainer.Width.Percent = 0.25f;
 		_optionPanelContainer.Height.Percent = 0.5f;
-		_optionPanelContainer.Top.Percent = 0.1f;
-		_optionPanelContainer.Left.Percent = 0.26f;
 
 		var ingredientListPanel = new UIPanel();
 		ingredientListPanel.Left.Percent = 0.51f;

@@ -9,6 +9,8 @@ namespace QuiteEnoughRecipes;
  */
 public class UIContainer : UIElement
 {
+	public bool IsOpen => Elements.Count != 0;
+
 	public UIContainer()
 	{
 		IgnoresMouseInteraction = true;
@@ -21,6 +23,8 @@ public class UIContainer : UIElement
 		e.Activate();
 		e.Recalculate();
 		IgnoresMouseInteraction = false;
+
+		OnOpen();
 	}
 
 	public void Close()
@@ -28,6 +32,9 @@ public class UIContainer : UIElement
 		RemoveAllChildren();
 		IgnoresMouseInteraction = true;
 	}
+
+	public virtual void OnOpen() {}
+	public virtual void OnClose() {}
 
 	// If `e` is the current active element, toggle it off. Otherwise, enable it.
 	public void Toggle(UIElement e)
