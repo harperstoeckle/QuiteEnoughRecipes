@@ -89,8 +89,8 @@ public class UIQERState : UIState
 		public LocalizedText HoverName => _handler.HoverName;
 		public Item TabItem => _handler.TabItem;
 
-		private UIRecipePage(IRecipeHandler handler, UIRecipeList list) :
-			base(new(), list, Language.GetText(""))
+		private UIRecipePage(IRecipeHandler handler, UIContainer popupContainer, UIRecipeList list) :
+			base(popupContainer, list, Language.GetText(""))
 		{
 			_list = list;
 			_handler = handler;
@@ -99,7 +99,9 @@ public class UIQERState : UIState
 			Height.Percent = 1;
 		}
 
-		public UIRecipePage(IRecipeHandler handler) : this(handler, new()) {}
+		public UIRecipePage(IRecipeHandler handler, UIContainer popupContainer) :
+			this(handler, popupContainer, new())
+		{}
 
 		/*
 		 * Attempts to show recipes for `ingredient`. If there are no recipes, this element remains
@@ -351,7 +353,7 @@ public class UIQERState : UIState
 		IngameFancyUI.Close();
 	}
 
-	public void AddHandler(IRecipeHandler handler) => _allTabs.Add(new(handler));
+	public void AddHandler(IRecipeHandler handler) => _allTabs.Add(new(handler, _optionPanelContainer));
 
 	public void ShowSources(IIngredient i) => TryPushPage(i, QueryType.Sources);
 	public void ShowUses(IIngredient i) => TryPushPage(i, QueryType.Uses);
@@ -516,6 +518,7 @@ public class UIQERState : UIState
 		if (_history.Count > MaxHistorySize)
 		{
 			_history.RemoveRange(0, _history.Count - MaxHistorySize);
+			_historyIndex = _history.Count - 1;
 		}
 	}
 
