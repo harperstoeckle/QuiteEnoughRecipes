@@ -89,7 +89,6 @@ public class OptionPanelToggleButton : UIElement
  * updating it whenever the search options change.
  */
 public class UISearchPage<T> : UIElement, IFocusableSearchPage
-	where T : IIngredient
 {
 	// Icon that provides help when hovered.
 	private class HelpIcon : UIElement
