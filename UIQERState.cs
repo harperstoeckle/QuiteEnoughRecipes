@@ -19,41 +19,87 @@ namespace QuiteEnoughRecipes;
 
 public class UIQERState : UIState
 {
-	private class UIRecipePage : UIElement
+	// Inner part of recipe page; can be searched.
+	private class UIRecipeList : UIElement, IQueryable<IRecipe>
 	{
-		private IRecipeHandler _handler;
+		private record RecipeEntry(IRecipe Recipe, UIElement Elem, List<IIngredient> Ingredients) {}
+
+		private List<RecipeEntry> _entries = [];
 		private UIList _recipeList = new(){
 			Width = new(-ScrollBarWidth, 1),
 			Height = new(0, 1),
 			ListPadding = 30
 		};
 
-		// Each tab has its own associated scrollbar.
-		private UIScrollbar _scrollbar = new(){
+		public UIScrollbar Scrollbar { get; } = new(){
 			Height = new(0, 1),
 			HAlign = 1
 		};
 
+		public UIRecipeList()
+		{
+			_recipeList.SetScrollbar(Scrollbar);
+			_recipeList.ManualSortMethod = l => {};
+
+			Append(_recipeList);
+			Append(Scrollbar);
+		}
+
+		public void SetSearchText(string text)
+		{
+			var query = SearchQuery.FromSearchText(text);
+
+			var recipesToView = _entries
+				.Where(e => e.Ingredients.Any(i => query.Matches(i)))
+				.Select(e => e.Elem);
+
+			_recipeList.Clear();
+
+			foreach (var e in recipesToView)
+			{
+				_recipeList.Add(e);
+			}
+		}
+
+		public void SetFilters(List<Predicate<IRecipe>> filters) {}
+		public void SetSortComparison(Comparison<IRecipe>? comparison) {}
+
+		public void SetRecipes(IEnumerable<IRecipe> recipes)
+		{
+			_entries.Clear();
+			_entries.AddRange(
+				recipes.Select(r => new RecipeEntry(r, r.Element, r.GetIngredients().ToList())));
+
+			// Hack.
+			SetSearchText("");
+		}
+	}
+
+	private class UIRecipePage : UISearchPage<IRecipe>
+	{
+		private IRecipeHandler _handler;
 		public float ScrollViewPosition
 		{
-			get => _scrollbar.ViewPosition;
-			set => _scrollbar.ViewPosition = value;
+			get => _list.Scrollbar.ViewPosition;
+			set => _list.Scrollbar.ViewPosition = value;
 		}
+
+		private UIRecipeList _list;
 
 		public LocalizedText HoverName => _handler.HoverName;
 		public Item TabItem => _handler.TabItem;
 
-		public UIRecipePage(IRecipeHandler handler)
+		private UIRecipePage(IRecipeHandler handler, UIRecipeList list) :
+			base(new(), list, Language.GetText(""))
 		{
+			_list = list;
 			_handler = handler;
-			_recipeList.SetScrollbar(_scrollbar);
 
 			Width.Percent = 1;
 			Height.Percent = 1;
-
-			Append(_recipeList);
-			Append(_scrollbar);
 		}
+
+		public UIRecipePage(IRecipeHandler handler) : this(handler, new()) {}
 
 		/*
 		 * Attempts to show recipes for `ingredient`. If there are no recipes, this element remains
@@ -61,11 +107,9 @@ public class UIQERState : UIState
 		 */
 		public bool ShowRecipes(IIngredient ingredient, QueryType queryType)
 		{
-			var recipeDisplays = _handler.GetRecipes(ingredient, queryType)
-				.Select(r => r.Element).ToList();
-			if (recipeDisplays.Count == 0) { return false; }
-			_recipeList.Clear();
-			_recipeList.AddRange(recipeDisplays);
+			var recipes = _handler.GetRecipes(ingredient, queryType).ToList();
+			if (recipes.Count == 0) { return false; }
+			_list.SetRecipes(recipes);
 			return true;
 		}
 	}
