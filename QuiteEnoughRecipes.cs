@@ -44,7 +44,8 @@ public class QuiteEnoughRecipes : Mod
 	 * When displaying the name of an ingredient that comes from a mod, this should be appended
 	 * immediately after the name so that it's clear what mod the ingredient came from.
 	 */
-	public static string GetModTagText(Mod mod) => $"   [c/56665e:〈{mod.DisplayNameClean}〉]";
+	public static string GetModTagText(Mod mod) =>
+		AddColorTagSafe($"   〈{mod.DisplayNameClean}〉", new Color(0x56, 0x66, 0x5e));
 
 	// Get text for the buy price of an item. This supports custom currencies.
 	public static string GetBuyPriceText(Item item)
@@ -100,5 +101,15 @@ public class QuiteEnoughRecipes : Mod
 			AddCoinText(Colors.AlphaDarken(Colors.CoinCopper), copper, 18);
 
 		return text.ToString();
+	}
+
+	/*
+	 * Make a tagged string in color `c`. `s` *may* contain brackets; they will also be
+	 * color-coded appropriately.
+	 */
+	public static string AddColorTagSafe(string s, Color c)
+	{
+		s = s.Replace("]", $"][c/{c.Hex3()}:]");
+		return $"[c/{c.Hex3()}:{s}]";
 	}
 }
