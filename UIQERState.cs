@@ -89,8 +89,8 @@ public class UIQERState : UIState
 		public LocalizedText HoverName => _handler.HoverName;
 		public Item TabItem => _handler.TabItem;
 
-		private UIRecipePage(IRecipeHandler handler, UIContainer popupContainer, UIRecipeList list) :
-			base(popupContainer, list, Language.GetText(""))
+		private UIRecipePage(IRecipeHandler handler, UIRecipeList list) :
+			base(list, Language.GetText(""))
 		{
 			_list = list;
 			_handler = handler;
@@ -99,9 +99,7 @@ public class UIQERState : UIState
 			Height.Percent = 1;
 		}
 
-		public UIRecipePage(IRecipeHandler handler, UIContainer popupContainer) :
-			this(handler, popupContainer, new())
-		{}
+		public UIRecipePage(IRecipeHandler handler) : this(handler, new()) {}
 
 		/*
 		 * Attempts to show recipes for `ingredient`. If there are no recipes, this element remains
@@ -186,8 +184,8 @@ public class UIQERState : UIState
 	 */
 	private UIItemPanel? _hoveredItemPanel = null;
 
-	// This will contain at most one of the options panels (sort, filter).
-	private UIPopupContainer _optionPanelContainer = new();
+	// This will contain the current popup. For example, this is used for filters and sorts.
+	private UIPopupContainer _popupContainer = new();
 
 	// This will be re-focused when the browser is opened.
 	private IFocusableSearchPage? _pageToFocusOnOpen = null;
@@ -209,8 +207,7 @@ public class UIQERState : UIState
 			.ToList();
 
 		var itemGrid = new UIQueryableIngredientGrid<ItemIngredient, UIItemPanel>(allItems);
-		var itemSearchPage = new UISearchPage<ItemIngredient>(
-			_optionPanelContainer, itemGrid,
+		var itemSearchPage = new UISearchPage<ItemIngredient>(itemGrid,
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
 
 		itemSearchPage.AddFilterGroup(OptionGroups.NormalItemFilters());
@@ -225,8 +222,7 @@ public class UIQERState : UIState
 			.ToList();
 
 		var npcGrid = new UIQueryableIngredientGrid<NPCIngredient, UINPCPanel>(allNPCs);
-		var npcSearchPage = new UISearchPage<NPCIngredient>(
-			_optionPanelContainer, npcGrid,
+		var npcSearchPage = new UISearchPage<NPCIngredient>(npcGrid,
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.NPCSearchHelp"));
 
 		npcSearchPage.AddFilterGroup(OptionGroups.NPCFilters());
@@ -268,8 +264,8 @@ public class UIQERState : UIState
 		 * of the way for the most part. Since it's not inside the bounds of the item list panel, it
 		 * has to be appended directly to the main element.
 		 */
-		_optionPanelContainer.Width.Percent = 0.25f;
-		_optionPanelContainer.Height.Percent = 0.5f;
+		_popupContainer.Width.Percent = 0.25f;
+		_popupContainer.Height.Percent = 0.5f;
 
 		var ingredientListPanel = new UIPanel();
 		ingredientListPanel.Left.Percent = 0.51f;
@@ -302,7 +298,6 @@ public class UIQERState : UIState
 				_pageToFocusOnOpen = s;
 			}
 
-			_optionPanelContainer.Close();
 			ingredientListContainer.Open(page);
 		};
 
@@ -312,7 +307,7 @@ public class UIQERState : UIState
 		Append(ingredientTabBar);
 		Append(recipePanel);
 		Append(_recipeTabBar);
-		Append(_optionPanelContainer);
+		Append(_popupContainer);
 	}
 
 	public override void Update(GameTime t)
@@ -354,7 +349,7 @@ public class UIQERState : UIState
 		IngameFancyUI.Close();
 	}
 
-	public void AddHandler(IRecipeHandler handler) => _allTabs.Add(new(handler, _optionPanelContainer));
+	public void AddHandler(IRecipeHandler handler) => _allTabs.Add(new(handler));
 
 	public void ShowSources(IIngredient i) => TryPushPage(i, QueryType.Sources);
 	public void ShowUses(IIngredient i) => TryPushPage(i, QueryType.Uses);
@@ -391,15 +386,6 @@ public class UIQERState : UIState
 			UIQERSearchBar.UnfocusAll();
 		}
 
-		/*
-		 * Don't close the filter panel while we're in the middle of opening it, but close it with
-		 * any other click.
-		 */
-		if (!(e.Target is OptionPanelToggleButton) && !_optionPanelContainer.IsMouseHovering)
-		{
-			_optionPanelContainer.Close();
-		}
-
 		if (e.Target is IIngredientElement s && s.Ingredient != null)
 		{
 			ShowSources(s.Ingredient);
@@ -411,11 +397,6 @@ public class UIQERState : UIState
 		if (!(e.Target is UIQERSearchBar))
 		{
 			UIQERSearchBar.UnfocusAll();
-		}
-
-		if (!(e.Target is OptionPanelToggleButton) && !_optionPanelContainer.IsMouseHovering)
-		{
-			_optionPanelContainer.Close();
 		}
 
 		if (e.Target is IIngredientElement s && s.Ingredient != null)
@@ -433,6 +414,9 @@ public class UIQERState : UIState
 	{
 		if (e.Target == _hoveredItemPanel) { _hoveredItemPanel = null; }
 	}
+
+	// Open `e` in a popup at the cursor.
+	public void OpenPopup(UIElement e) => _popupContainer.Open(e);
 
 	public void ModifyTooltips(Mod mod, Item item, List<TooltipLine> tooltips)
 	{

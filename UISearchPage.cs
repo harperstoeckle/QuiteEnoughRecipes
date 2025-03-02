@@ -120,12 +120,6 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 
 	private IQueryable<T> _queryable;
 
-	/*
-	 * This is a reference to a popup container in the parent that will be used to display the
-	 * filter and sort panels.
-	 */
-	private UIContainer _optionPanelContainer;
-
 	private OptionPanelToggleButton _filterToggleButton = new("Images/UI/Bestiary/Button_Filtering",
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
 	private UIOptionPanel<Predicate<T>> _filterPanel = new();
@@ -140,12 +134,10 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 	 * `squareSideLength` is the side length of the grid squares, and `padding` is the amount of
 	 * padding between grid squares.
 	 */
-	public UISearchPage(UIContainer optionPanelContainer, IQueryable<T> queryElement,
-		LocalizedText helpText)
+	public UISearchPage(IQueryable<T> queryElement, LocalizedText helpText)
 	{
 		const float BarHeight = 50;
 
-		_optionPanelContainer = optionPanelContainer;
 		_queryable = queryElement;
 
 		Width.Percent = 1;
@@ -165,13 +157,13 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 			_queryable.SetSortComparison(comp.FirstOrDefault());
 		};
 
-		_filterToggleButton.OnLeftClick += (b, e) => _optionPanelContainer.Toggle(_filterPanel);
+		_filterToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_filterPanel);
 		_filterToggleButton.OnRightClick += (b, e) => _filterPanel.DisableAllOptions();
 
 		float offset = _filterToggleButton.Width.Pixels + 10;
 
 		_sortToggleButton.Left.Pixels = offset;
-		_sortToggleButton.OnLeftClick += (b, e) => _optionPanelContainer.Toggle(_sortPanel);
+		_sortToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_sortPanel);
 		_sortToggleButton.OnRightClick += (b, e) => _sortPanel.DisableAllOptions();
 
 		offset += _sortToggleButton.Width.Pixels + 10;
