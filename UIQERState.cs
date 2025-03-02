@@ -129,8 +129,9 @@ public class UIQERState : UIState
 			.Select(i => new ItemIngredient(i))
 			.ToList();
 
-		var itemSearchPage = new UIIngredientSearchPage<ItemIngredient, UIItemPanel>(
-			_optionPanelContainer, allItems,
+		var itemGrid = new UIQueryableIngredientGrid<ItemIngredient, UIItemPanel>(allItems);
+		var itemSearchPage = new UISearchPage<ItemIngredient>(
+			_optionPanelContainer, itemGrid,
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
 
 		AddItemFilters(itemSearchPage);
@@ -143,8 +144,9 @@ public class UIQERState : UIState
 			.OrderBy(n => ContentSamples.NpcBestiarySortingId[n.ID])
 			.ToList();
 
-		var npcSearchPage = new UIIngredientSearchPage<NPCIngredient, UINPCPanel>(
-			_optionPanelContainer, allNPCs,
+		var npcGrid = new UIQueryableIngredientGrid<NPCIngredient, UINPCPanel>(allNPCs);
+		var npcSearchPage = new UISearchPage<NPCIngredient>(
+			_optionPanelContainer, npcGrid,
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.NPCSearchHelp"));
 
 		AddNPCFilters(npcSearchPage);
@@ -473,7 +475,7 @@ public class UIQERState : UIState
 			Regex.Replace(name, @"^\s*(.*?)\s*damage\s*$", @"$1", RegexOptions.IgnoreCase));
 	}
 
-	private static void AddItemFilters(UIIngredientSearchPage<ItemIngredient, UIItemPanel> page)
+	private static void AddItemFilters(UISearchPage<ItemIngredient> page)
 	{
 		IEnumerable<(int, string, Predicate<ItemIngredient>)> filters = [
 			(ItemID.StoneBlock, "Tiles", i => ItemPredicates.IsTile(i.Item)),
@@ -554,7 +556,7 @@ public class UIQERState : UIState
 		page.AddFilterGroup(group);
 	}
 
-	private static void AddItemSorts(UIIngredientSearchPage<ItemIngredient, UIItemPanel> page)
+	private static void AddItemSorts(UISearchPage<ItemIngredient> page)
 	{
 		IEnumerable<(int, string, Comparison<ItemIngredient>)> sorts = [
 			(ItemID.AlphabetStatue1, "ID", (x, y) => x.Item.type.CompareTo(y.Item.type)),
@@ -567,7 +569,7 @@ public class UIQERState : UIState
 		page.AddSortGroup(MakeOptionGroup(sorts, keyParent));
 	}
 
-	private static void AddNPCFilters(UIIngredientSearchPage<NPCIngredient, UINPCPanel> page)
+	private static void AddNPCFilters(UISearchPage<NPCIngredient> page)
 	{
 		IEnumerable<(int, string, Predicate<NPCIngredient>)> filters = [
 			(ItemID.SlimeCrown, "Bosses",
@@ -579,7 +581,7 @@ public class UIQERState : UIState
 		page.AddFilterGroup(MakeOptionGroup(filters, keyParent));
 	}
 
-	private static void AddNPCSorts(UIIngredientSearchPage<NPCIngredient, UINPCPanel> page)
+	private static void AddNPCSorts(UISearchPage<NPCIngredient> page)
 	{
 		IEnumerable<(int, string, Comparison<NPCIngredient>)> sorts = [
 			(ItemID.AlphabetStatue1, "ID", (x, y) => x.ID.CompareTo(y.ID)),

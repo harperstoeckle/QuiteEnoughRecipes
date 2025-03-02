@@ -16,6 +16,13 @@ using Terraria;
 
 namespace QuiteEnoughRecipes;
 
+public interface IQueryable<T>
+{
+	public void SetSearchText(string text);
+	public void SetFilters(List<Predicate<T>> filters);
+	public void SetSortComparison(Comparison<T>? comparison);
+}
+
 // A page containing a search bar that can automatically be focused.
 public interface IFocusableSearchPage
 {
@@ -78,14 +85,12 @@ public class OptionPanelToggleButton : UIElement
 }
 
 /*
- * A page including a scrollable list of ingredients, a search bar, and filter options. This
- * contains a list of type `T`, which are displayed in elements of type `E` in a grid.
+ * A page with a search bar, filters, and sorting options. It maintains an `IQueryable` element,
+ * updating it whenever the search options change.
  */
-public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
+public class UISearchPage<T> : UIElement, IFocusableSearchPage
 	where T : IIngredient
-	where E : UIElement, IScrollableGridElement<T>, new()
 {
-
 	// Icon that provides help when hovered.
 	private class HelpIcon : UIElement
 	{
@@ -114,10 +119,7 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 		}
 	}
 
-	private List<T> _allIngredients;
-	private List<T> _filteredIngredients;
-
-	private UIScrollableGrid<T, E> _ingredientList = new();
+	private IQueryable<T> _queryable;
 
 	/*
 	 * This is a reference to a popup container in the parent that will be used to display the
@@ -128,30 +130,24 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 	private OptionPanelToggleButton _filterToggleButton = new("Images/UI/Bestiary/Button_Filtering",
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
 	private UIOptionPanel<Predicate<T>> _filterPanel = new();
-	private List<Predicate<T>> _activeFilters = [];
 
 	private OptionPanelToggleButton _sortToggleButton = new("Images/UI/Bestiary/Button_Sorting",
 			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SortHover"));
 	private UIOptionPanel<Comparison<T>> _sortPanel = new();
-	private Comparison<T>? _activeSortComparison = null;
 
 	private UIQERSearchBar _searchBar = new();
-	private string? _searchText = null;
 
 	/*
 	 * `squareSideLength` is the side length of the grid squares, and `padding` is the amount of
 	 * padding between grid squares.
 	 */
-	public UIIngredientSearchPage(UIPopupContainer optionPanelContainer, List<T> allIngredients,
+	public UISearchPage(UIPopupContainer optionPanelContainer, IQueryable<T> queryElement,
 		LocalizedText helpText)
 	{
 		const float BarHeight = 50;
-		const float ScrollBarWidth = 30;
-
-		_allIngredients = allIngredients;
-		_filteredIngredients = new(_allIngredients);
 
 		_optionPanelContainer = optionPanelContainer;
+		_queryable = queryElement;
 
 		Width.Percent = 1;
 		Height.Percent = 1;
@@ -160,29 +156,15 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 		_filterPanel.Height.Percent = 1;
 		_filterPanel.OnSelectionChanged += preds => {
 			_filterToggleButton.OptionSelected = preds.Count != 0;
-			_activeFilters.Clear();
-			_activeFilters.AddRange(preds);
-			UpdateDisplayedIngredients();
+			_queryable.SetFilters(preds);
 		};
 
 		_sortPanel.Width.Percent = 1;
 		_sortPanel.Height.Percent = 1;
 		_sortPanel.OnSelectionChanged += comp => {
 			_sortToggleButton.OptionSelected = comp.Count != 0;
-			_activeSortComparison = comp.FirstOrDefault();
-			UpdateDisplayedIngredients();
+			_queryable.SetSortComparison(comp.FirstOrDefault());
 		};
-
-		var scroll = new UIScrollbar();
-		scroll.Height = new StyleDimension(-BarHeight, 1);
-		scroll.HAlign = 1;
-		scroll.VAlign = 1;
-
-		_ingredientList.Scrollbar = scroll;
-		_ingredientList.Values = _filteredIngredients;
-		_ingredientList.Width = new StyleDimension(-ScrollBarWidth, 1);
-		_ingredientList.Height = new StyleDimension(-BarHeight, 1);
-		_ingredientList.VAlign = 1;
 
 		_filterToggleButton.OnLeftClick += (b, e) => _optionPanelContainer.Toggle(_filterPanel);
 		_filterToggleButton.OnRightClick += (b, e) => _filterPanel.DisableAllOptions();
@@ -202,17 +184,26 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 		_searchBar.Width = new StyleDimension(-offset - helpIcon.Width.Pixels - 10, 1);
 		_searchBar.Left.Pixels = offset;
 		_searchBar.OnContentsChanged += s => {
-			_searchText = s;
-			UpdateDisplayedIngredients();
+			_queryable.SetSearchText(s ?? "");
 		};
 
-		Append(_ingredientList);
-		Append(scroll);
+		/*
+		 * There aren't generic constructors, so there's no way to require that `queryElement` be
+		 * a `UIElement`, so we have to do that check here.
+		 */
+		if (queryElement is UIElement e)
+		{
+			e.Width.Percent = 1;
+			e.Height = new StyleDimension(-BarHeight, 1);
+			e.VAlign = 1;
+
+			Append(e);
+		}
+
 		Append(_filterToggleButton);
 		Append(_sortToggleButton);
 		Append(_searchBar);
 		Append(helpIcon);
-
 	}
 
 	public void FocusSearchBar()
@@ -229,22 +220,4 @@ public class UIIngredientSearchPage<T, E> : UIElement, IFocusableSearchPage
 	{
 		_sortPanel.AddGroup(g);
 	}
-
-	// Update what ingredients are being displayed based on the search bar and filters.
-	private void UpdateDisplayedIngredients()
-	{
-		var query = SearchQuery.FromSearchText(_searchText ?? "");
-
-		_filteredIngredients.Clear();
-		_filteredIngredients.AddRange(
-			_allIngredients.Where(i => query.Matches(i) && (_activeFilters.All(f => f(i)))));
-
-		if (_activeSortComparison != null)
-		{
-			_filteredIngredients.Sort(_activeSortComparison);
-		}
-
-		_ingredientList.Values = _filteredIngredients;
-	}
-
 }
