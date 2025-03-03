@@ -15,14 +15,13 @@ namespace QuiteEnoughRecipes;
 // Standard QER sorts and filters.
 public static class OptionGroups
 {
+
 	// Make an option group for mods that are present in a master list of ingredients.
-	public static OptionGroup<Predicate<T>> MakeModFilterGroup<T>(IEnumerable<T> ingredients)
+	public static UIOptionGroup<Predicate<T>> MakeModFilterGroup<T>(IEnumerable<T> ingredients)
 		where T : IIngredient
 	{
 		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups.Mods";
-		var group = new OptionGroup<Predicate<T>>{
-			Name = Language.GetText($"{keyParent}.Name")
-		};
+		var group = new UIOptionGroup<Predicate<T>>(Language.GetText($"{keyParent}.Name"));
 
 		var mods = ingredients
 			.Select(i => i.Mod)
@@ -35,13 +34,17 @@ public static class OptionGroups
 		{
 			var name = Language.GetText($"{keyParent}.ModName").WithFormatArgs(mod.DisplayNameClean);
 			var icon = mod.ModSourceBestiaryInfoElement.GetFilterImage();
-			group.Options.Add(new(icon, name, i => i.Mod == mod));
+			var button = new UIOptionToggleButton<Predicate<T>>(i => i.Mod == mod, icon){
+				HoverText = name
+			};
+
+			group.AddOption(button);
 		}
 
 		return group;
 	}
 
-	public static OptionGroup<Predicate<ItemIngredient>> NormalItemFilters()
+	public static UIOptionGroup<Predicate<ItemIngredient>> NormalItemFilters()
 	{
 		IEnumerable<(int, string, Predicate<ItemIngredient>)> filters = [
 			(ItemID.StoneBlock, "Tiles", i => ItemPredicates.IsTile(i.Item)),
@@ -67,7 +70,7 @@ public static class OptionGroups
 		return MakeOptionGroup(filters, keyParent);
 	}
 
-	public static OptionGroup<Predicate<ItemIngredient>> WeaponItemFilters()
+	public static UIOptionGroup<Predicate<ItemIngredient>> WeaponItemFilters()
 	{
 		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups.WeaponFilters";
 		IEnumerable<(int, string, Predicate<ItemIngredient>)> damageFilters = [
@@ -83,14 +86,16 @@ public static class OptionGroups
 		// We only add the thrower class filter if there are mods that add throwing weapons.
 		if (FindIconItemForDamageClass(DamageClass.Throwing) is Item iconItem)
 		{
+			Predicate<ItemIngredient> pred = i => i.Item.DamageType == DamageClass.Throwing
+				&& ItemPredicates.IsWeapon(i.Item);
+			var name = Language.GetText($"{keyParent}.ThrowingWeapons");
+
 			/*
 			 * Unlike the other modded damage classes, we only want to show throwing weapons that
 			 * are *exactly* in the throwing class, since modded classes that just *derive* from
 			 * throwing (like rogue) will also be shown below with the other modded classes.
 			 */
-			group.Options.Add(
-				new(new UIItemIcon(iconItem, false), Language.GetText($"{keyParent}.ThrowingWeapons"),
-					i => i.Item.DamageType == DamageClass.Throwing && ItemPredicates.IsWeapon(i.Item)));
+			group.AddOption(MakeOptionButton(iconItem.type, name, pred));
 		}
 
 		/*
@@ -115,18 +120,20 @@ public static class OptionGroups
 			// This damage class has no items, so we can't really make a filter for it.
 			if (icon == null) { continue; }
 
+			Predicate<ItemIngredient> pred = i =>
+				dcs.Any(dc => ItemPredicates.IsWeaponInDamageClass(i.Item, dc));
+
 			// Adjust the name so instead of "rogue damage Weapons", we get "Rogue Weapons".
 			var name = Language.GetText($"{keyParent}.OtherWeapons")
 				.WithFormatArgs(BaseDamageClassName(dcs[0].DisplayName.Value));
-			group.Options.Add(
-				new(new UIItemIcon(icon, false), name,
-					i => dcs.Any(dc => ItemPredicates.IsWeaponInDamageClass(i.Item, dc))));
+
+			group.AddOption(MakeOptionButton(icon.type, name, pred));
 		}
 
 		return group;
 	}
 
-	public static OptionGroup<Comparison<ItemIngredient>> ItemSorts()
+	public static UIOptionGroup<Comparison<ItemIngredient>> ItemSorts()
 	{
 		IEnumerable<(int, string, Comparison<ItemIngredient>)> sorts = [
 			(ItemID.AlphabetStatue1, "ID", (x, y) => x.Item.type.CompareTo(y.Item.type)),
@@ -139,7 +146,7 @@ public static class OptionGroups
 		return MakeOptionGroup(sorts, keyParent);
 	}
 
-	public static OptionGroup<Predicate<NPCIngredient>> NPCFilters()
+	public static UIOptionGroup<Predicate<NPCIngredient>> NPCFilters()
 	{
 		IEnumerable<(int, string, Predicate<NPCIngredient>)> filters = [
 			(ItemID.SlimeCrown, "Bosses",
@@ -151,7 +158,7 @@ public static class OptionGroups
 		return MakeOptionGroup(filters, keyParent);
 	}
 
-	public static OptionGroup<Comparison<NPCIngredient>> NPCSorts()
+	public static UIOptionGroup<Comparison<NPCIngredient>> NPCSorts()
 	{
 		IEnumerable<(int, string, Comparison<NPCIngredient>)> sorts = [
 			(ItemID.AlphabetStatue1, "ID", (x, y) => x.ID.CompareTo(y.ID)),
@@ -167,22 +174,30 @@ public static class OptionGroups
 		return MakeOptionGroup(sorts, keyParent);
 	}
 
-	private static OptionGroup<T> MakeOptionGroup<T>(IEnumerable<(int, string, T)> opts,
+	// Just a convenient way to turn a list of tuples into an option group.
+	private static UIOptionGroup<T> MakeOptionGroup<T>(IEnumerable<(int, string, T)> opts,
 		string keyParent)
 	{
-		var group = new OptionGroup<T>();
-		if (Language.Exists($"{keyParent}.Name"))
-		{
-			group.Name = Language.GetText($"{keyParent}.Name");
-		}
+		var name = Language.Exists($"{keyParent}.Name")
+			? Language.GetText($"{keyParent}.Name")
+			: null;
+
+		var group = new UIOptionGroup<T>(name);
 
 		foreach (var (id, key, v) in opts)
 		{
-			var icon = new UIItemIcon(new(id), false);
-			group.Options.Add(new(icon, Language.GetText($"{keyParent}.{key}"), v));
+			group.AddOption(MakeOptionButton(id, Language.GetText(key), v));
 		}
 
 		return group;
+	}
+
+	private static UIOptionToggleButton<T> MakeOptionButton<T>(int itemID, LocalizedText text,
+		T v)
+	{
+		return new UIOptionToggleButton<T>(v, new UIItemIcon(new(itemID), false)){
+			HoverText = text
+		};
 	}
 
 	/*

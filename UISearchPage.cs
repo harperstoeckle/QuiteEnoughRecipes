@@ -158,13 +158,13 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 		};
 
 		_filterToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_filterPanel);
-		_filterToggleButton.OnRightClick += (b, e) => _filterPanel.DisableAllOptions();
+		_filterToggleButton.OnRightClick += (b, e) => _filterPanel.DeselectAllOptions();
 
 		float offset = _filterToggleButton.Width.Pixels + 10;
 
 		_sortToggleButton.Left.Pixels = offset;
 		_sortToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_sortPanel);
-		_sortToggleButton.OnRightClick += (b, e) => _sortPanel.DisableAllOptions();
+		_sortToggleButton.OnRightClick += (b, e) => _sortPanel.DeselectAllOptions();
 
 		offset += _sortToggleButton.Width.Pixels + 10;
 
@@ -202,13 +202,13 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 		_searchBar.SetTakingInput(true);
 	}
 
-	public void AddFilterGroup(in OptionGroup<Predicate<T>> g)
+	public void AddFilterElement(IOptionElement<Predicate<T>> e)
 	{
-		_filterPanel.AddGroup(g);
+		_filterPanel.AddOption(e);
 	}
 
-	public void AddSortGroup(in OptionGroup<Comparison<T>> g)
+	public void AddSortElement(IOptionElement<Comparison<T>> e)
 	{
-		_sortPanel.AddGroup(g);
+		_sortPanel.AddOption(e);
 	}
 }
