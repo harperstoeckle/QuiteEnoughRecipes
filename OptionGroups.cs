@@ -186,7 +186,7 @@ public static class OptionGroups
 
 		foreach (var (id, key, v) in opts)
 		{
-			group.AddOption(MakeOptionButton(id, Language.GetText(key), v));
+			group.AddOption(MakeOptionButton(id, Language.GetText($"{keyParent}.{key}"), v));
 		}
 
 		return group;
