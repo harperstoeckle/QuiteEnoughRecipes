@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using Terraria.GameContent.UI.Elements;
+using Terraria.ID;
 using Terraria.Localization;
-using Terraria.ModLoader.UI.Elements;
 using Terraria.UI;
 using Terraria;
 
@@ -44,7 +44,7 @@ public class UIOptionGroup<T> : UIAutoExtendGrid, IOptionElement<T>
 
 	public event Action<IOptionElement<T>>? OnValueChanged;
 
-	public UIOptionGroup(LocalizedText? header)
+	public UIOptionGroup(LocalizedText? header = null)
 	{
 		Width.Percent = 1;
 
@@ -52,7 +52,9 @@ public class UIOptionGroup<T> : UIAutoExtendGrid, IOptionElement<T>
 		{
 			Append(new UIText(header){
 				Width = new(0, 1),
-				TextOriginX = 0
+				Height = new(20, 0),
+				TextOriginX = 0,
+				TextOriginY = 0
 			});
 		}
 	}
@@ -157,6 +159,8 @@ public class UIOptionPanel<T> : UIPanel
 
 	public UIOptionPanel()
 	{
+		BackgroundColor = new Color(33, 43, 79) * 0.8f;
+
 		var scroll = new UIScrollbar();
 		scroll.Height.Percent = 1;
 		scroll.HAlign = 1;
@@ -167,7 +171,7 @@ public class UIOptionPanel<T> : UIPanel
 		 * instead just borrow the scrolling capabilities of `UIList` and use our own grid.
 		 */
 		_list.Height.Percent = 1;
-		_list.Width = new StyleDimension(-scroll.Width.Pixels, 1);
+		_list.Width = new StyleDimension(-30, 1);
 		_list.SetScrollbar(scroll);
 		_list.ManualSortMethod = l => {};
 
@@ -178,7 +182,16 @@ public class UIOptionPanel<T> : UIPanel
 	public void AddOption(IOptionElement<T> option)
 	{
 		_options.Add(option);
+
+		if (_list.Count > 0)
+		{
+			_list.Add(new UIHorizontalSeparator(){
+				Width = new(0, 1),
+				Color = new Color(66, 86, 158) * 0.8f
+			});
+		}
 		_list.Add(option.Element);
+
 		option.OnValueChanged += o => OnSelectionChanged?.Invoke(GetSelectedOptions());
 	}
 
