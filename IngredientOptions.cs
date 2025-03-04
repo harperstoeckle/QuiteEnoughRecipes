@@ -32,7 +32,7 @@ public class IngredientOptionAttribute : Attribute
  * creative item groups for categorization when possible. This may change in the future if it turns
  * out they're not accurate enough.
  */
-static class ItemPredicates
+static class IngredientOptions
 {
 	public static readonly string KeyParent = "Mods.QuiteEnoughRecipes.OptionGroups";
 
@@ -44,7 +44,7 @@ static class ItemPredicates
 			: null;
 		var group = new UIOptionGroup<T>(heading);
 
-		var optionButtons = typeof(ItemPredicates)
+		var optionButtons = typeof(IngredientOptions)
 			.GetMethods(BindingFlags.Public | BindingFlags.Static)
 			.SelectMany(GetOptionsFromMethod<T>);
 		foreach (var button in optionButtons) { group.AddOption(button); }
