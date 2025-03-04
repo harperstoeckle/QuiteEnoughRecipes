@@ -36,7 +36,7 @@ static class IngredientOptions
 {
 	public static readonly string KeyParent = "Mods.QuiteEnoughRecipes.OptionGroups";
 
-	// Get options in the given item group that take type `T`.
+	// Get options in the given item group that are of type `T`.
 	public static UIOptionGroup<T> GetOptionGroup<T>(string groupName) where T : Delegate
 	{
 		var heading = Language.Exists($"{KeyParent}.{groupName}")
