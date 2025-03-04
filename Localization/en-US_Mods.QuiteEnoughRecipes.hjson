@@ -120,9 +120,9 @@ OptionGroups: {
 	}
 
 	NPCSorts: {
-		ByID: "{$ItemSorts.ID}"
-		ByName: "{$ItemSorts.Alphabetical}"
-		ByRarity: "{$ItemSorts.Rarity}"
+		ByID: "{$ItemSorts.ByID}"
+		ByName: "{$ItemSorts.ByName}"
+		ByRarity: "{$ItemSorts.ByRarity}"
 	}
 
 	Mods: {

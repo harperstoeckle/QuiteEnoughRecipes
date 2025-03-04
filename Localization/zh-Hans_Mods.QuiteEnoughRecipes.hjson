@@ -97,12 +97,12 @@ OptionGroups: {
 
 	WeaponFilters: {
 		// Name: Damage Types
-		IsMeleeWeapons: 近战伤害武器
-		IsRangedWeapons: 远程伤害武器
-		IsMagicWeapons: 魔法伤害武器
-		IsSummonWeapons: 召唤伤害武器
-		IsClasslessWeapons: 无职业伤害武器
-		IsThrowingWeapons: 投掷伤害武器
+		IsMeleeWeapon: 近战伤害武器
+		IsRangedWeapon: 远程伤害武器
+		IsMagicWeapon: 魔法伤害武器
+		IsSummonWeapon: 召唤伤害武器
+		IsClasslessWeapon: 无职业伤害武器
+		IsThrowingWeapon: 投掷伤害武器
 		# Used to format other damage types.
 		IsOtherWeapon: "{0}武器"
 	}
@@ -120,9 +120,9 @@ OptionGroups: {
 	}
 
 	NPCSorts: {
-		// ByID: "{$ItemSorts.ID}"
-		// ByName: "{$ItemSorts.Alphabetical}"
-		// ByRarity: "{$ItemSorts.Rarity}"
+		// ByID: "{$ItemSorts.ByID}"
+		// ByName: "{$ItemSorts.ByName}"
+		// ByRarity: "{$ItemSorts.ByRarity}"
 	}
 
 	Mods: {
