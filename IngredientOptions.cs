@@ -1,17 +1,18 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System;
+using Terraria.GameContent.Bestiary;
 using Terraria.GameContent.UI.Elements;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
+using Terraria.UI;
 using Terraria;
 
 using ItemGroup = Terraria.ID.ContentSamples.CreativeHelper.ItemGroup;
-using System.Reflection;
-using Terraria.GameContent.Bestiary;
 
 namespace QuiteEnoughRecipes;
 
@@ -93,6 +94,24 @@ static class IngredientOptions
 		}
 
 		return group;
+	}
+
+	/*
+	 * Get a option group of filters for ingredients of type `T`, but with the filters made
+	 * generic so that they can be applied to any ingredient.
+	 */
+	public static IOptionElement<Predicate<IIngredient>> GetGenericFilterGroup<T>(
+		string groupName) where T : IIngredient
+	{
+		return GetOptionGroup<Predicate<T>>(groupName).Map(MakeGenericPredicate<T, IIngredient>);
+	}
+
+	// Same as `GetGenericFilterGroup`, but for comparisons.
+	public static IOptionElement<Comparison<IIngredient>> GetGenericSortGroup<T>(
+		string groupName) where T : IIngredient
+	{
+		return GetOptionGroup<Comparison<T>>(groupName)
+			.Map(MakeGenericComparison<T, IIngredient>);
 	}
 
 	public static bool IsWeaponInDamageClass(ItemIngredient i, DamageClass dc) =>
@@ -349,5 +368,41 @@ static class IngredientOptions
 	{
 		var d = Delegate.CreateDelegate(typeof(T), m, false);
 		return d == null ? null : (d as T);
+	}
+
+	/*
+	 * Convert a predicate to one acting on a less derived type such that the predicate returns
+	 * true if and only if the provided value is of the correct type *and* the original predicate
+	 * returns true with that value.
+	 */
+	private static Predicate<U> MakeGenericPredicate<T, U>(Predicate<T> pred) where T : U
+	{
+		return u => u is T t && pred(t);
+	}
+
+	/*
+	 * Make a generic version of a comparison, similarly to `MakeGenericPredicate`. The comparison
+	 * is performed as follows:
+	 * - If the objects are not both of the correct runtime type, then the names of their types
+	 *   are compared.
+	 * - Otherwise, they are compared with `comp`.
+	 */
+	private static Comparison<U> MakeGenericComparison<T, U>(Comparison<T> comp) where T : U
+	{
+		return (x, y) => {
+			// Neither should ever be null.
+			if (x == null || y == null)
+			{
+				return -1;
+			}
+			else if (x is T xt && y is T yt)
+			{
+				return comp(xt, yt);
+			}
+			else
+			{
+				return x.GetType().Name.CompareTo(y.GetType().Name);
+			}
+		};
 	}
 }

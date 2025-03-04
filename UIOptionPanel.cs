@@ -31,6 +31,45 @@ public interface IOptionElement<T>
 	public event Action<IOptionElement<T>>? OnValueChanged;
 }
 
+// Option element that applies a function to its value.
+public class MappedOptionElement<T, U> : IOptionElement<U>
+{
+	private IOptionElement<T> _inner;
+	private Func<T, U> _func;
+
+	public UIElement Element => _inner.Element;
+
+	public U? Value
+	{
+		get
+		{
+			var v = _inner.Value;
+			return v == null ? default(U?) : _func(v);
+		}
+	}
+
+	public event Action<IOptionElement<U>>? OnValueChanged;
+
+	public MappedOptionElement(IOptionElement<T> inner, Func<T, U> func)
+	{
+		_inner = inner;
+		_func = func;
+
+		_inner.OnValueChanged += e => OnValueChanged?.Invoke(this);
+	}
+
+	public void Deselect() => _inner.Deselect();
+}
+
+public static class OptionElementExtensions
+{
+	// Used to convert one type of `OptionElement` to another by a function.
+	public static IOptionElement<U> Map<T, U>(this IOptionElement<T> e, Func<T, U> f)
+	{
+		return new MappedOptionElement<T, U>(e, f);
+	}
+}
+
 /*
  * Group of options, placed in a grid, with an optional header. At most one of the contained options
  * can be enabled at once.
