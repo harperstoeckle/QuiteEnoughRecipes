@@ -215,12 +215,15 @@ public class UIQERState : UIState
 		 * at the same time.
 		 */
 		var itemFilters = new UIOptionGroup<Predicate<ItemIngredient>>{ Padding = 20 };
-		itemFilters.AddOption(OptionGroups.NormalItemFilters());
-		itemFilters.AddOption(OptionGroups.WeaponItemFilters());
+		itemFilters.AddOption(
+			IngredientOptions.GetOptionGroup<Predicate<ItemIngredient>>("ItemFilters"));
+		itemFilters.AddOption(
+			IngredientOptions.GetOptionGroup<Predicate<ItemIngredient>>("WeaponFilters"));
 
 		itemSearchPage.AddFilterElement(itemFilters);
-		itemSearchPage.AddFilterElement(OptionGroups.MakeModFilterGroup(allItems));
-		itemSearchPage.AddSortElement(OptionGroups.ItemSorts());
+		itemSearchPage.AddFilterElement(IngredientOptions.MakeModFilterGroup(allItems));
+		itemSearchPage.AddSortElement(
+			IngredientOptions.GetOptionGroup<Comparison<ItemIngredient>>("ItemSorts"));
 
 		var allNPCs = Enumerable.Range(0, NPCLoader.NPCCount)
 			.Where(n => Main.BestiaryDB.FindEntryByNPCID(n).Icon != null)
@@ -232,9 +235,11 @@ public class UIQERState : UIState
 		var npcSearchPage = new UISearchPage<NPCIngredient>(npcGrid,
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.NPCSearchHelp"));
 
-		npcSearchPage.AddFilterElement(OptionGroups.NPCFilters());
-		npcSearchPage.AddFilterElement(OptionGroups.MakeModFilterGroup(allNPCs));
-		npcSearchPage.AddSortElement(OptionGroups.NPCSorts());
+		npcSearchPage.AddFilterElement(
+			IngredientOptions.GetOptionGroup<Predicate<NPCIngredient>>("NPCFilters"));
+		npcSearchPage.AddFilterElement(IngredientOptions.MakeModFilterGroup(allNPCs));
+		npcSearchPage.AddSortElement(
+			IngredientOptions.GetOptionGroup<Comparison<NPCIngredient>>("NPCSorts"));
 
 		AddHandler(new RecipeHandlers.Basic());
 		AddHandler(new RecipeHandlers.CraftingStations());

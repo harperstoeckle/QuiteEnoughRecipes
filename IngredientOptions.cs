@@ -46,7 +46,7 @@ static class IngredientOptions
 
 		var optionButtons = typeof(IngredientOptions)
 			.GetMethods(BindingFlags.Public | BindingFlags.Static)
-			.SelectMany(GetOptionsFromMethod<T>);
+			.SelectMany(m => GetOptionsFromMethod<T>(m, groupName));
 		foreach (var button in optionButtons) { group.AddOption(button); }
 
 		return group;
@@ -61,6 +61,38 @@ static class IngredientOptions
 		}
 
 		return groups.Any(g => result.Group == g);
+	}
+
+	/*
+	 * Make an option group for mods that are present in a master list of ingredients.
+	 *
+	 * TODO: Fit this into the reflection-based system.
+	 */
+	public static UIOptionGroup<Predicate<T>> MakeModFilterGroup<T>(IEnumerable<T> ingredients)
+		where T : IIngredient
+	{
+		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups.Mods";
+		var group = new UIOptionGroup<Predicate<T>>(Language.GetText($"{keyParent}.Name"));
+
+		var mods = ingredients
+			.Select(i => i.Mod)
+			.Where(m => m != null)
+			.Select(m => m!)
+			.Distinct()
+			.OrderBy(m => m.DisplayNameClean);
+
+		foreach (var mod in mods)
+		{
+			var name = Language.GetText($"{keyParent}.ModName").WithFormatArgs(mod.DisplayNameClean);
+			var icon = mod.ModSourceBestiaryInfoElement.GetFilterImage();
+			var button = new UIOptionToggleButton<Predicate<T>>(i => i.Mod == mod, icon){
+				HoverText = name
+			};
+
+			group.AddOption(button);
+		}
+
+		return group;
 	}
 
 	public static bool IsWeaponInDamageClass(ItemIngredient i, DamageClass dc) =>
@@ -290,11 +322,12 @@ static class IngredientOptions
 	 * parent) and returning a sequence of option elements of type `T`, then the result of that
 	 * will be used.
 	 */
-	private static IEnumerable<IOptionElement<T>> GetOptionsFromMethod<T>(MethodInfo m)
+	private static IEnumerable<IOptionElement<T>> GetOptionsFromMethod<T>(MethodInfo m,
+		string group)
 		where T : Delegate
 	{
 		var attr = m.GetCustomAttribute<IngredientOptionAttribute>();
-		if (attr == null) { return []; }
+		if (attr == null || attr.Group != group) { return []; }
 
 		var pred = m.CreateDelegate<T>();
 		if (pred != null)
