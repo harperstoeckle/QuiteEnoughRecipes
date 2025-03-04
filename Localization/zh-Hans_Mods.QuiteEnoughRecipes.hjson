@@ -77,53 +77,52 @@ Tabs: {
 
 OptionGroups: {
 	ItemFilters: {
-		Tiles: 物块
-		CraftingStations: 合成站
-		BossSummons: Boss召唤物
-		LootItems: 掉落物
-		Fishing: 鱼获
-		Dye: 染料
-		Accessories: 配饰
-		Tools: 工具
-		Armor: 盔甲
-		Vanity: 时装
-		Potions: 药水
-		Food: 食物
-		Wings: 翅膀
-		Pets: 宠物
-		Mounts: 坐骑
-		Hooks: 抓钩
+		IsTile: 物块
+		IsCraftingStation: 合成站
+		IsBossSummon: Boss召唤物
+		IsLootItem: 掉落物
+		IsFishing: 鱼获
+		IsDye: 染料
+		IsAccessory: 配饰
+		IsTool: 工具
+		IsArmor: 盔甲
+		IsVanity: 时装
+		IsPotion: 药水
+		IsFood: 食物
+		IsWings: 翅膀
+		IsPet: 宠物
+		IsMount: 坐骑
+		IsHook: 抓钩
 	}
 
 	WeaponFilters: {
 		// Name: Damage Types
-		MeleeWeapons: 近战伤害武器
-		RangedWeapons: 远程伤害武器
-		MagicWeapons: 魔法伤害武器
-		SummonWeapons: 召唤伤害武器
-		ClasslessWeapons: 无职业伤害武器
-		ThrowingWeapons: 投掷伤害武器
+		IsMeleeWeapons: 近战伤害武器
+		IsRangedWeapons: 远程伤害武器
+		IsMagicWeapons: 魔法伤害武器
+		IsSummonWeapons: 召唤伤害武器
+		IsClasslessWeapons: 无职业伤害武器
+		IsThrowingWeapons: 投掷伤害武器
 		# Used to format other damage types.
-		OtherWeapons: "{0}武器"
+		IsOtherWeapon: "{0}武器"
 	}
 
 	ItemSorts: {
-		ID: 按ID排序
-		Alphabetical: 按字母排序
-		Rarity: 按稀有度排序
-		Value: 按价值排序
+		ByID: 按ID排序
+		ByName: 按字母排序
+		ByRarity: 按稀有度排序
+		ByValue: 按价值排序
 	}
 
 	NPCFilters: {
-		// Bosses: Bosses
-		// TownNPCs: Town NPCs
-		// RareNPCs: Rare
+		// IsBoss: Bosses
+		// IsTownNPC: Town NPCs
 	}
 
 	NPCSorts: {
-		// ID: "{$ItemSorts.ID}"
-		// Alphabetical: "{$ItemSorts.Alphabetical}"
-		// Rarity: "{$ItemSorts.Rarity}"
+		// ByID: "{$ItemSorts.ID}"
+		// ByName: "{$ItemSorts.Alphabetical}"
+		// ByRarity: "{$ItemSorts.Rarity}"
 	}
 
 	Mods: {

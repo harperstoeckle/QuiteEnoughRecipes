@@ -150,7 +150,7 @@ static class IngredientOptions
 		{
 			Predicate<ItemIngredient> pred = i => i.Item.DamageType == DamageClass.Throwing
 				&& IsWeapon(i);
-			var name = Language.GetText($"{keyParent}.ThrowingWeapons");
+			var name = Language.GetText($"{keyParent}.IsThrowingWeapon");
 
 			/*
 			 * Unlike the other modded damage classes, we only want to show throwing weapons that
@@ -185,7 +185,7 @@ static class IngredientOptions
 			Predicate<ItemIngredient> pred = i => dcs.Any(dc => IsWeaponInDamageClass(i, dc));
 
 			// Adjust the name so instead of "rogue damage Weapons", we get "Rogue Weapons".
-			var name = Language.GetText($"{keyParent}.OtherWeapons")
+			var name = Language.GetText($"{keyParent}.IsOtherWeapon")
 				.WithFormatArgs(BaseDamageClassName(dcs[0].DisplayName.Value));
 
 			yield return MakeOptionButton(icon.type, name, pred);

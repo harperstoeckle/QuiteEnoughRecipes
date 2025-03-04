@@ -77,53 +77,52 @@ Tabs: {
 
 OptionGroups: {
 	ItemFilters: {
-		Tiles: Tiles
-		CraftingStations: Crafting Stations
-		BossSummons: Boss Summons
-		LootItems: Loot Items
-		Fishing: Fishing
-		Dye: Dye
-		Accessories: Accessories
-		Tools: Tools
-		Armor: Armor
-		Vanity: Vanity
-		Potions: Potions
-		Food: Food
-		Wings: Wings
-		Pets: Pets
-		Mounts: Mounts
-		Hooks: Hooks
+		IsTile: Tiles
+		IsCraftingStation: Crafting Stations
+		IsBossSummon: Boss Summons
+		IsLootItem: Loot Items
+		IsFishing: Fishing
+		IsDye: Dye
+		IsAccessory: Accessories
+		IsTool: Tools
+		IsArmor: Armor
+		IsVanity: Vanity
+		IsPotion: Potions
+		IsFood: Food
+		IsWings: Wings
+		IsPet: Pets
+		IsMount: Mounts
+		IsHook: Hooks
 	}
 
 	WeaponFilters: {
 		Name: Damage Types
-		MeleeWeapons: Melee Weapons
-		RangedWeapons: Ranged Weapons
-		MagicWeapons: Magic Weapons
-		SummonWeapons: Summoner Weapons
-		ClasslessWeapons: Classless Weapons
-		ThrowingWeapons: Throwing Weapons
+		IsMeleeWeapon: Melee Weapons
+		IsRangedWeapon: Ranged Weapons
+		IsMagicWeapon: Magic Weapons
+		IsSummonWeapon: Summoner Weapons
+		IsClasslessWeapon: Classless Weapons
+		IsThrowingWeapon: Throwing Weapons
 		# Used to format other damage types.
-		OtherWeapons: "{0} Weapons"
+		IsOtherWeapon: "{0} Weapons"
 	}
 
 	ItemSorts: {
-		ID: Sort by ID
-		Alphabetical: Sort Alphabetically
-		Rarity: Sort by Rarity
-		Value: Sort by Value
+		ByID: Sort by ID
+		ByName: Sort Alphabetically
+		ByRarity: Sort by Rarity
+		ByValue: Sort by Value
 	}
 
 	NPCFilters: {
-		Bosses: Bosses
-		TownNPCs: Town NPCs
-		RareNPCs: Rare
+		IsBoss: Bosses
+		IsTownNPC: Town NPCs
 	}
 
 	NPCSorts: {
-		ID: "{$ItemSorts.ID}"
-		Alphabetical: "{$ItemSorts.Alphabetical}"
-		Rarity: "{$ItemSorts.Rarity}"
+		ByID: "{$ItemSorts.ID}"
+		ByName: "{$ItemSorts.Alphabetical}"
+		ByRarity: "{$ItemSorts.Rarity}"
 	}
 
 	Mods: {
