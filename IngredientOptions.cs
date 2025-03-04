@@ -39,8 +39,8 @@ static class IngredientOptions
 	// Get options in the given item group that are of type `T`.
 	public static UIOptionGroup<T> GetOptionGroup<T>(string groupName) where T : Delegate
 	{
-		var heading = Language.Exists($"{KeyParent}.{groupName}")
-			? Language.GetText($"{KeyParent}.{groupName}")
+		var heading = Language.Exists($"{KeyParent}.{groupName}.Name")
+			? Language.GetText($"{KeyParent}.{groupName}.Name")
 			: null;
 		var group = new UIOptionGroup<T>(heading);
 
@@ -170,7 +170,7 @@ static class IngredientOptions
 	[IngredientOption("WeaponFilters", ItemID.BabyBirdStaff)]
 	public static bool IsSummonWeapon(ItemIngredient i) => IsInGroup(i, ItemGroup.SummonWeapon);
 
-	[IngredientOption("WeaponFilters", ItemID.BabyBirdStaff)]
+	[IngredientOption("WeaponFilters", ItemID.FlareGun)]
 	public static bool IsClasslessWeapon(ItemIngredient i) => IsWeaponInDamageClass(i, DamageClass.Default);
 
 	[IngredientOption("WeaponFilters")]
@@ -230,7 +230,7 @@ static class IngredientOptions
 	public static int ByID(ItemIngredient x, ItemIngredient y) =>
 		x.Item.type.CompareTo(y.Item.type);
 
-	[IngredientOption("ItemSorts", ItemID.AlphabetStatue1)]
+	[IngredientOption("ItemSorts", ItemID.AlphabetStatueA)]
 	public static int ByName(ItemIngredient x, ItemIngredient y) => x.Name.CompareTo(y.Name);
 
 	[IngredientOption("ItemSorts", ItemID.StarStatue)]
@@ -329,19 +329,25 @@ static class IngredientOptions
 		var attr = m.GetCustomAttribute<IngredientOptionAttribute>();
 		if (attr == null || attr.Group != group) { return []; }
 
-		var pred = m.CreateDelegate<T>();
+		var pred = TryCreateDelegate<T>(m);
 		if (pred != null)
 		{
 			var text = Language.GetText($"{KeyParent}.{attr.Group}.{m.Name}");
 			return [MakeOptionButton(attr.IconID, text, pred)];
 		}
 
-		var listGen = m.CreateDelegate<Func<string, IEnumerable<IOptionElement<T>>>>();
+		var listGen = TryCreateDelegate<Func<string, IEnumerable<IOptionElement<T>>>>(m);
 		if (listGen != null)
 		{
 			return listGen($"{KeyParent}.{attr.Group}");
 		}
 
 		return [];
+	}
+
+	private static T? TryCreateDelegate<T>(MethodInfo m) where T : Delegate
+	{
+		var d = Delegate.CreateDelegate(typeof(T), m, false);
+		return d == null ? null : (d as T);
 	}
 }
