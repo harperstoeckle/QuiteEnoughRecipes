@@ -15,11 +15,15 @@ public interface IOptionElement<T>
 {
 	// If `IsEnabled` is false, then the value won't be used.
 	public bool IsEnabled { get; }
+	public bool IsDefaulted { get; }
 
 	public T Value { get; }
 	public UIElement Element { get; }
 
-	// Reset to the default state. This should not actiate `OnValueChanged`.
+	/*
+	 * Reset to the default state. This should not actiate `OnValueChanged`. After calling this,
+	 * `IsDefaulted` should be true.
+	 */
 	public void Reset();
 
 	// Disable this element. After calling this, `IsEnabled` should be set to false.
@@ -40,6 +44,7 @@ public class MappedOptionElement<T, U> : IOptionElement<U>
 	private Func<T, U> _func;
 
 	public bool IsEnabled => _inner.IsEnabled;
+	public bool IsDefaulted => _inner.IsDefaulted;
 	public UIElement Element => _inner.Element;
 	public U Value => _func(_inner.Value);
 
@@ -75,6 +80,7 @@ public class UIOptionGroup<T> : UIAutoExtendGrid, IOptionElement<IEnumerable<T>>
 	private List<IOptionElement<IEnumerable<T>>> _subgroups = [];
 
 	public bool IsEnabled => _subgroups.Any(o => o.IsEnabled);
+	public bool IsDefaulted => _subgroups.All(o => o.IsDefaulted);
 	public IEnumerable<T> Value => _subgroups.Where(o => o.IsEnabled).SelectMany(o => o.Value);
 	public UIElement Element => this;
 
@@ -149,6 +155,7 @@ public class UIOptionToggleButton<T> : UIElement, IOptionElement<T>
 	private OptionRules _rules;
 
 	public required LocalizedText HoverText;
+	public bool IsDefaulted => IsEnabled == ((_rules & OptionRules.EnabledByDefault) != 0);
 	public bool IsEnabled { get; private set; } = false;
 	public T Value { get; set; }
 	public UIElement Element => this;
@@ -215,6 +222,7 @@ public class UIOptionPanel<T> : UIPanel, IOptionElement<IEnumerable<T>>
 	private UIList _list = new(){ ListPadding = 20 };
 
 	public bool IsEnabled => _groups.Any(g => g.IsEnabled);
+	public bool IsDefaulted => _groups.All(g => g.IsDefaulted);
 	public IEnumerable<T> Value => _groups.Where(o => o.IsEnabled).SelectMany(o => o.Value);
 	public UIElement Element => this;
 

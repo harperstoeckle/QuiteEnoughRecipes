@@ -147,7 +147,7 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 		_filterPanel.Height.Percent = 1;
 		_filterPanel.OnValueChanged += f => {
 			var preds = f.Value.ToList();
-			_filterToggleButton.OptionSelected = preds.Count != 0;
+			_filterToggleButton.OptionSelected = !f.IsDefaulted;
 			_queryable.SetFilters(preds);
 		};
 
@@ -155,7 +155,7 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 		_sortPanel.Height.Percent = 1;
 		_sortPanel.OnValueChanged += f => {
 			var comp = f.Value.FirstOrDefault();
-			_sortToggleButton.OptionSelected = comp != null;
+			_sortToggleButton.OptionSelected = !f.IsDefaulted;
 			_queryable.SetSortComparison(comp);
 		};
 
