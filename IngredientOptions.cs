@@ -20,11 +20,14 @@ public class IngredientOptionAttribute : Attribute
 {
 	public string Group;
 	public int IconID;
+	public OptionRules Rules;
 
-	public IngredientOptionAttribute(string group, int iconID = 0)
+	public IngredientOptionAttribute(string group, int iconID = 0,
+		OptionRules rules = OptionRules.Optional)
 	{
 		Group = group;
 		IconID = iconID;
+		Rules = rules;
 	}
 };
 
@@ -100,18 +103,19 @@ static class IngredientOptions
 	 * Get a option group of filters for ingredients of type `T`, but with the filters made
 	 * generic so that they can be applied to any ingredient.
 	 */
-	public static IOptionElement<Predicate<IIngredient>> GetGenericFilterGroup<T>(
+	public static IOptionElement<IEnumerable<Predicate<IIngredient>>> GetGenericFilterGroup<T>(
 		string groupName) where T : IIngredient
 	{
-		return GetOptionGroup<Predicate<T>>(groupName).Map(MakeGenericPredicate<T, IIngredient>);
+		return GetOptionGroup<Predicate<T>>(groupName)
+			.Map(vs => vs.Select(MakeGenericPredicate<T, IIngredient>));
 	}
 
 	// Same as `GetGenericFilterGroup`, but for comparisons.
-	public static IOptionElement<Comparison<IIngredient>> GetGenericSortGroup<T>(
+	public static IOptionElement<IEnumerable<Comparison<IIngredient>>> GetGenericSortGroup<T>(
 		string groupName) where T : IIngredient
 	{
 		return GetOptionGroup<Comparison<T>>(groupName)
-			.Map(MakeGenericComparison<T, IIngredient>);
+			.Map(vs => vs.Select(MakeGenericComparison<T, IIngredient>));
 	}
 
 	public static bool IsWeaponInDamageClass(ItemIngredient i, DamageClass dc) =>
@@ -245,18 +249,18 @@ static class IngredientOptions
 	#endregion
 
 	#region Item Sorts
-	[IngredientOption("ItemSorts", ItemID.AlphabetStatue1)]
+	[IngredientOption("ItemSorts", ItemID.AlphabetStatue1, OptionRules.DefaultSelection)]
 	public static int ByID(ItemIngredient x, ItemIngredient y) =>
 		x.Item.type.CompareTo(y.Item.type);
 
-	[IngredientOption("ItemSorts", ItemID.AlphabetStatueA)]
+	[IngredientOption("ItemSorts", ItemID.AlphabetStatueA, OptionRules.Selection)]
 	public static int ByName(ItemIngredient x, ItemIngredient y) => x.Name.CompareTo(y.Name);
 
-	[IngredientOption("ItemSorts", ItemID.StarStatue)]
+	[IngredientOption("ItemSorts", ItemID.StarStatue, OptionRules.Selection)]
 	public static int ByRarity(ItemIngredient x, ItemIngredient y) =>
 		x.Item.rare.CompareTo(y.Item.rare);
 
-	[IngredientOption("ItemSorts", ItemID.ChestStatue)]
+	[IngredientOption("ItemSorts", ItemID.ChestStatue, OptionRules.Selection)]
 	public static int ByValue(ItemIngredient x, ItemIngredient y) =>
 		x.Item.value.CompareTo(y.Item.value);
 	#endregion
@@ -271,13 +275,13 @@ static class IngredientOptions
 	#endregion
 
 	#region NPC Sorts
-	[IngredientOption("NPCSorts", ItemID.AlphabetStatue1)]
+	[IngredientOption("NPCSorts", ItemID.AlphabetStatue1, OptionRules.DefaultSelection)]
 	public static int ByID(NPCIngredient x, NPCIngredient y) => x.ID.CompareTo(y.ID);
 
-	[IngredientOption("NPCSorts", ItemID.AlphabetStatueA)]
+	[IngredientOption("NPCSorts", ItemID.AlphabetStatueA, OptionRules.Selection)]
 	public static int ByName(NPCIngredient x, NPCIngredient y) => x.Name.CompareTo(y.Name);
 
-	[IngredientOption("NPCSorts", ItemID.StarStatue)]
+	[IngredientOption("NPCSorts", ItemID.StarStatue, OptionRules.Selection)]
 	public static int ByRarity(NPCIngredient x, NPCIngredient y)
 	{
 		int xRare = TryGetNPC(x.ID)?.rarity ?? 0;
@@ -287,10 +291,10 @@ static class IngredientOptions
 	#endregion
 
 	private static UIOptionToggleButton<T> MakeOptionButton<T>(int itemID, LocalizedText text,
-		T v)
+		T v, OptionRules rules = OptionRules.Optional)
 	{
-		return new UIOptionToggleButton<T>(v, new UIItemIcon(new(itemID), false)){
-			HoverText = text
+		return new UIOptionToggleButton<T>(v, new UIItemIcon(new(itemID), false), rules){
+			HoverText = text,
 		};
 	}
 
@@ -352,7 +356,7 @@ static class IngredientOptions
 		if (pred != null)
 		{
 			var text = Language.GetText($"{KeyParent}.{attr.Group}.{m.Name}");
-			return [MakeOptionButton(attr.IconID, text, pred)];
+			return [MakeOptionButton(attr.IconID, text, pred, attr.Rules)];
 		}
 
 		var listGen = TryCreateDelegate<Func<string, IEnumerable<IOptionElement<T>>>>(m);

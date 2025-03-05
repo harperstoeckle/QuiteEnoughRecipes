@@ -13,20 +13,22 @@ namespace QuiteEnoughRecipes;
 
 public interface IOptionElement<T>
 {
-	/*
-	 * If this is null, then the element is considered to be in a "default state", and it won't be
-	 * included in the list of selected options by `UIOptionPanel`.
-	 */
-	public T? Value { get; }
+	// If `IsEnabled` is false, then the value won't be used.
+	public bool IsEnabled { get; }
+
+	public T Value { get; }
 	public UIElement Element { get; }
 
-	// `Value` should be null after this is called.
-	public void Deselect();
+	// Reset to the default state. This should not actiate `OnValueChanged`.
+	public void Reset();
+
+	// Disable this element. After calling this, `IsEnabled` should be set to false.
+	public void Disable();
 
 	/*
-	 * This should be activated whenever the value or selection status of this element is changed by
-	 * some external source. I.e., this should be activated when a button is clicked, but it should
-	 * not be activated when `Deselect` is called.
+	 * This should be activated whenever the value or enabled status of this element is changed by
+	 * some external source. I.e., this should be activated when a button is clicked, but it
+	 * should not be activated when `Reset` is called.
 	 */
 	public event Action<IOptionElement<T>>? OnValueChanged;
 }
@@ -37,16 +39,9 @@ public class MappedOptionElement<T, U> : IOptionElement<U>
 	private IOptionElement<T> _inner;
 	private Func<T, U> _func;
 
+	public bool IsEnabled => _inner.IsEnabled;
 	public UIElement Element => _inner.Element;
-
-	public U? Value
-	{
-		get
-		{
-			var v = _inner.Value;
-			return v == null ? default(U?) : _func(v);
-		}
-	}
+	public U Value => _func(_inner.Value);
 
 	public event Action<IOptionElement<U>>? OnValueChanged;
 
@@ -58,7 +53,8 @@ public class MappedOptionElement<T, U> : IOptionElement<U>
 		_inner.OnValueChanged += e => OnValueChanged?.Invoke(this);
 	}
 
-	public void Deselect() => _inner.Deselect();
+	public void Reset() => _inner.Reset();
+	public void Disable() => _inner.Disable();
 }
 
 public static class OptionElementExtensions
@@ -71,17 +67,18 @@ public static class OptionElementExtensions
 }
 
 /*
- * Group of options, placed in a grid, with an optional header. At most one of the contained options
- * can be enabled at once.
+ * Group of options, placed in a grid, with an optional header. It will attempt to ensure that
+ * only at most one option can be enabled at once.
  */
-public class UIOptionGroup<T> : UIAutoExtendGrid, IOptionElement<T>
+public class UIOptionGroup<T> : UIAutoExtendGrid, IOptionElement<IEnumerable<T>>
 {
-	private List<IOptionElement<T>> _options = [];
+	private List<IOptionElement<IEnumerable<T>>> _subgroups = [];
 
-	public T? Value { get; private set; } = default(T?);
+	public bool IsEnabled => _subgroups.Any(o => o.IsEnabled);
+	public IEnumerable<T> Value => _subgroups.Where(o => o.IsEnabled).SelectMany(o => o.Value);
 	public UIElement Element => this;
 
-	public event Action<IOptionElement<T>>? OnValueChanged;
+	public event Action<IOptionElement<IEnumerable<T>>>? OnValueChanged;
 
 	public UIOptionGroup(LocalizedText? header = null)
 	{
@@ -98,50 +95,73 @@ public class UIOptionGroup<T> : UIAutoExtendGrid, IOptionElement<T>
 		}
 	}
 
-	public void Deselect()
+	public void Reset() { foreach (var o in _subgroups) { o.Reset(); } }
+	public void Disable() { foreach (var o in _subgroups) { o.Disable(); } }
+
+	public void AddSubgroup(IOptionElement<IEnumerable<T>> group)
 	{
-		Value = default(T?);
-		foreach (var o in _options) { o.Deselect(); }
-	}
+		Append(group.Element);
+		_subgroups.Add(group);
 
-	public void AddOption(IOptionElement<T> option)
-	{
-		Append(option.Element);
-		_options.Add(option);
-
-		option.OnValueChanged += o => {
-			Value = o.Value;
-
+		group.OnValueChanged += g => {
 			// New option selected; deselect everything else.
-			if (o.Value != null)
+			if (g.IsEnabled)
 			{
-				foreach (var opt in _options)
+				foreach (var opt in _subgroups)
 				{
-					if (o != opt) { opt.Deselect(); }
+					if (g != opt) { opt.Disable(); }
 				}
 			}
 
 			OnValueChanged?.Invoke(this);
 		};
 	}
+
+	public void AddOption(IOptionElement<T> option)
+	{
+		// TODO: Does this add any meaningful overhead?
+		AddSubgroup(option.Map<T, IEnumerable<T>>(v => [v]));
+	}
+}
+
+[Flags]
+public enum OptionRules
+{
+	AllowDisable = 1 << 0,
+	AllowEnable = 1 << 1,
+	EnabledByDefault = 1 << 2,
+
+	/*
+	 * Part of an option group where any option can be on or off. It doesn't make sense to have
+	 * this on by default.
+	 */
+	Optional = AllowDisable | AllowEnable,
+
+	// Parts of an option group where at least one option must be enabled at a time.
+	// `DefaultSelection`
+	Selection = AllowEnable,
+	DefaultSelection = AllowEnable | EnabledByDefault
 }
 
 // A button that can be toggled on or off.
 public class UIOptionToggleButton<T> : UIElement, IOptionElement<T>
 {
-	private bool _isSelected = false;
-	private T _value;
+	private OptionRules _rules;
 
 	public required LocalizedText HoverText;
-
-	public T? Value => _isSelected ? _value : default(T?);
+	public bool IsEnabled { get; private set; } = false;
+	public T Value { get; set; }
 	public UIElement Element => this;
 
 	public event Action<IOptionElement<T>>? OnValueChanged;
 
-	public UIOptionToggleButton(T value, UIElement icon)
+	public UIOptionToggleButton(T value, UIElement icon,
+		OptionRules rules = OptionRules.Optional)
 	{
-		_value = value;
+		Value = value;
+		_rules = rules;
+
+		Reset();
 
 		Width.Pixels = 40;
 		Height.Pixels = 40;
@@ -152,20 +172,25 @@ public class UIOptionToggleButton<T> : UIElement, IOptionElement<T>
 		Append(icon);
 	}
 
-	public void Deselect() => _isSelected = false;
+	public void Reset() => IsEnabled = (_rules & OptionRules.EnabledByDefault) != 0;
+	public void Disable() => IsEnabled = false;
 
 	public override void LeftClick(UIMouseEvent e)
 	{
 		base.LeftClick(e);
-		_isSelected = !_isSelected;
 
-		OnValueChanged?.Invoke(this);
+		if ((_rules & OptionRules.AllowEnable) != 0 && !IsEnabled
+			|| (_rules & OptionRules.AllowDisable) != 0 && IsEnabled)
+		{
+			IsEnabled = !IsEnabled;
+			OnValueChanged?.Invoke(this);
+		}
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
 	{
 		// TODO: Maybe this should just be done with the greyscale panel and a mask.
-		var texture = _isSelected
+		var texture = IsEnabled
 			? Main.Assets.Request<Texture2D>("Images/UI/CharCreation/PanelGrayscale").Value
 			: Main.Assets.Request<Texture2D>("Images/UI/CharCreation/CategoryPanel").Value;
 
@@ -181,20 +206,23 @@ public class UIOptionToggleButton<T> : UIElement, IOptionElement<T>
 }
 
 /*
- * Contains a scrollable list of UI elements that each might provide a value of type `T`. When one
- * of these values is changed (usually by user input), the `UIOptionPanel` will send out a
- * notification via `OnSelectionChanged` with a list of all active options.
+ * Contains a scrollable list of option groups, each separated by a horizontal line. Unlike
+ * `UIOptionGroup`, this will *not* disable other options when an option is enabled.
  */
-public class UIOptionPanel<T> : UIPanel
+public class UIOptionPanel<T> : UIPanel, IOptionElement<IEnumerable<T>>
 {
-	private List<IOptionElement<T>> _options = [];
+	private List<IOptionElement<IEnumerable<T>>> _groups = [];
 	private UIList _list = new(){ ListPadding = 20 };
+
+	public bool IsEnabled => _groups.Any(g => g.IsEnabled);
+	public IEnumerable<T> Value => _groups.Where(o => o.IsEnabled).SelectMany(o => o.Value);
+	public UIElement Element => this;
 
 	/*
 	 * This will be activated when the option selection changes. This will be called with a list of
 	 * all enabled options.
 	 */
-	public event Action<List<T>>? OnSelectionChanged;
+	public event Action<IOptionElement<IEnumerable<T>>>? OnValueChanged;
 
 	public UIOptionPanel()
 	{
@@ -218,9 +246,9 @@ public class UIOptionPanel<T> : UIPanel
 		Append(scroll);
 	}
 
-	public void AddOption(IOptionElement<T> option)
+	public void AddGroup(IOptionElement<IEnumerable<T>> group)
 	{
-		_options.Add(option);
+		_groups.Add(group);
 
 		if (_list.Count > 0)
 		{
@@ -229,20 +257,18 @@ public class UIOptionPanel<T> : UIPanel
 				Color = new Color(66, 86, 158) * 0.8f
 			});
 		}
-		_list.Add(option.Element);
+		_list.Add(group.Element);
 
-		option.OnValueChanged += o => OnSelectionChanged?.Invoke(GetSelectedOptions());
+		group.OnValueChanged += o => OnValueChanged?.Invoke(this);
 	}
 
-	// Disable all active options. This function *will* activate the `OnSelectionChanged` event.
-	public void DeselectAllOptions()
-	{
-		foreach (var o in _options) { o.Deselect(); }
-		OnSelectionChanged?.Invoke([]);
-	}
+	public void Reset() { foreach (var g in _groups) { g.Reset(); } }
+	public void Disable() { foreach (var o in _groups) { o.Disable(); } }
 
-	private List<T> GetSelectedOptions()
+	// This will reset the options in this panel, but also activate the `OnValueChanged` event.
+	public void ResetWithEvent()
 	{
-		return _options.Where(o => o.Value != null).Select(o => o.Value!).ToList();
+		Reset();
+		OnValueChanged?.Invoke(this);
 	}
 }

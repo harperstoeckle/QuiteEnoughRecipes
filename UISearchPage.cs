@@ -145,26 +145,28 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 
 		_filterPanel.Width.Percent = 1;
 		_filterPanel.Height.Percent = 1;
-		_filterPanel.OnSelectionChanged += preds => {
+		_filterPanel.OnValueChanged += f => {
+			var preds = f.Value.ToList();
 			_filterToggleButton.OptionSelected = preds.Count != 0;
 			_queryable.SetFilters(preds);
 		};
 
 		_sortPanel.Width.Percent = 1;
 		_sortPanel.Height.Percent = 1;
-		_sortPanel.OnSelectionChanged += comp => {
-			_sortToggleButton.OptionSelected = comp.Count != 0;
-			_queryable.SetSortComparison(comp.FirstOrDefault());
+		_sortPanel.OnValueChanged += f => {
+			var comp = f.Value.FirstOrDefault();
+			_sortToggleButton.OptionSelected = comp != null;
+			_queryable.SetSortComparison(comp);
 		};
 
 		_filterToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_filterPanel);
-		_filterToggleButton.OnRightClick += (b, e) => _filterPanel.DeselectAllOptions();
+		_filterToggleButton.OnRightClick += (b, e) => _filterPanel.ResetWithEvent();
 
 		float offset = _filterToggleButton.Width.Pixels + 10;
 
 		_sortToggleButton.Left.Pixels = offset;
 		_sortToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_sortPanel);
-		_sortToggleButton.OnRightClick += (b, e) => _sortPanel.DeselectAllOptions();
+		_sortToggleButton.OnRightClick += (b, e) => _sortPanel.ResetWithEvent();
 
 		offset += _sortToggleButton.Width.Pixels + 10;
 
@@ -202,13 +204,23 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 		_searchBar.SetTakingInput(true);
 	}
 
-	public void AddFilterElement(IOptionElement<Predicate<T>> e)
+	public void AddFilterGroup(IOptionElement<IEnumerable<Predicate<T>>> e)
 	{
-		_filterPanel.AddOption(e);
+		_filterPanel.AddGroup(e);
 	}
 
-	public void AddSortElement(IOptionElement<Comparison<T>> e)
+	public void AddSortGroup(IOptionElement<IEnumerable<Comparison<T>>> e)
 	{
-		_sortPanel.AddOption(e);
+		_sortPanel.AddGroup(e);
+	}
+
+	/*
+	 * Reset the sort and filter options to their default values and apply them. This should be
+	 * called after adding all of the sorts and filters.
+	 */
+	public void ApplyDefaults()
+	{
+		_filterPanel.ResetWithEvent();
+		_sortPanel.ResetWithEvent();
 	}
 }
