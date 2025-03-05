@@ -77,34 +77,36 @@ Tabs: {
 
 OptionGroups: {
 	ItemFilters: {
-		IsTile: 物块
-		IsCraftingStation: 合成站
-		IsBossSummon: Boss召唤物
-		IsLootItem: 掉落物
-		IsFishing: 鱼获
-		IsDye: 染料
-		IsAccessory: 配饰
-		IsTool: 工具
-		IsArmor: 盔甲
-		IsVanity: 时装
-		IsPotion: 药水
-		IsFood: 食物
-		IsWings: 翅膀
-		IsPet: 宠物
-		IsMount: 坐骑
-		IsHook: 抓钩
-	}
+		Misc: {
+			IsTile: 物块
+			IsCraftingStation: 合成站
+			IsBossSummon: Boss召唤物
+			IsLootItem: 掉落物
+			IsFishing: 鱼获
+			IsDye: 染料
+			IsAccessory: 配饰
+			IsTool: 工具
+			IsArmor: 盔甲
+			IsVanity: 时装
+			IsPotion: 药水
+			IsFood: 食物
+			IsWings: 翅膀
+			IsPet: 宠物
+			IsMount: 坐骑
+			IsHook: 抓钩
+		}
 
-	WeaponFilters: {
-		// Name: Damage Types
-		IsMeleeWeapon: 近战伤害武器
-		IsRangedWeapon: 远程伤害武器
-		IsMagicWeapon: 魔法伤害武器
-		IsSummonWeapon: 召唤伤害武器
-		IsClasslessWeapon: 无职业伤害武器
-		IsThrowingWeapon: 投掷伤害武器
-		# Used to format other damage types.
-		IsOtherWeapon: "{0}武器"
+		Weapons: {
+			// Name: Damage Types
+			IsMeleeWeapon: 近战伤害武器
+			IsRangedWeapon: 远程伤害武器
+			IsMagicWeapon: 魔法伤害武器
+			IsSummonWeapon: 召唤伤害武器
+			IsClasslessWeapon: 无职业伤害武器
+			IsThrowingWeapon: 投掷伤害武器
+			# Used to format other damage types.
+			IsOtherWeapon: "{0}武器"
+		}
 	}
 
 	ItemSorts: {

@@ -77,34 +77,36 @@ Tabs: {
 
 OptionGroups: {
 	ItemFilters: {
-		IsTile: Tiles
-		IsCraftingStation: Crafting Stations
-		IsBossSummon: Boss Summons
-		IsLootItem: Loot Items
-		IsFishing: Fishing
-		IsDye: Dye
-		IsAccessory: Accessories
-		IsTool: Tools
-		IsArmor: Armor
-		IsVanity: Vanity
-		IsPotion: Potions
-		IsFood: Food
-		IsWings: Wings
-		IsPet: Pets
-		IsMount: Mounts
-		IsHook: Hooks
-	}
+		Misc: {
+			IsTile: Tiles
+			IsCraftingStation: Crafting Stations
+			IsBossSummon: Boss Summons
+			IsLootItem: Loot Items
+			IsFishing: Fishing
+			IsDye: Dye
+			IsAccessory: Accessories
+			IsTool: Tools
+			IsArmor: Armor
+			IsVanity: Vanity
+			IsPotion: Potions
+			IsFood: Food
+			IsWings: Wings
+			IsPet: Pets
+			IsMount: Mounts
+			IsHook: Hooks
+		}
 
-	WeaponFilters: {
-		Name: Damage Types
-		IsMeleeWeapon: Melee Weapons
-		IsRangedWeapon: Ranged Weapons
-		IsMagicWeapon: Magic Weapons
-		IsSummonWeapon: Summoner Weapons
-		IsClasslessWeapon: Classless Weapons
-		IsThrowingWeapon: Throwing Weapons
-		# Used to format other damage types.
-		IsOtherWeapon: "{0} Weapons"
+		Weapons: {
+			Name: Damage Types
+			IsMeleeWeapon: Melee Weapons
+			IsRangedWeapon: Ranged Weapons
+			IsMagicWeapon: Magic Weapons
+			IsSummonWeapon: Summoner Weapons
+			IsClasslessWeapon: Classless Weapons
+			IsThrowingWeapon: Throwing Weapons
+			# Used to format other damage types.
+			IsOtherWeapon: "{0} Weapons"
+		}
 	}
 
 	ItemSorts: {

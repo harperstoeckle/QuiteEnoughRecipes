@@ -48,10 +48,11 @@ static class IngredientOptions
 			: null;
 		var group = new UIOptionGroup<T>(heading);
 
-		var optionButtons = typeof(IngredientOptions)
-			.GetMethods(BindingFlags.Public | BindingFlags.Static)
-			.SelectMany(m => GetOptionsFromMethod<T>(m, groupName));
-		foreach (var button in optionButtons) { group.AddOption(button); }
+		var funcs = typeof(IngredientOptions).GetMethods(BindingFlags.Public | BindingFlags.Static);
+		foreach (var func in funcs)
+		{
+			AddOptionsFromMethod(group, func, groupName);
+		}
 
 		return group;
 	}
@@ -124,79 +125,82 @@ static class IngredientOptions
 		&& i.Item.ammo == AmmoID.None;
 
 	#region Item Filters
-	[IngredientOption("ItemFilters", ItemID.StoneBlock)]
+	[IngredientOption("ItemFilters")]
+	public static IEnumerable<string> GetItemSubgroups() => ["ItemFilters.Misc", "ItemFilters.Weapons"];
+
+	[IngredientOption("ItemFilters.Misc", ItemID.StoneBlock)]
 	public static bool IsTile(ItemIngredient i) => IsInGroup(i, ItemGroup.CraftingObjects,
 		ItemGroup.Torches, ItemGroup.Wood, ItemGroup.Crates, ItemGroup.PlacableObjects,
 		ItemGroup.Blocks, ItemGroup.Rope, ItemGroup.Walls);
 
-	[IngredientOption("ItemFilters", ItemID.Furnace)]
+	[IngredientOption("ItemFilters.Misc", ItemID.Furnace)]
 	public static bool IsCraftingStation(ItemIngredient i) => IsInGroup(i, ItemGroup.CraftingObjects);
 
-	[IngredientOption("ItemFilters", ItemID.SuspiciousLookingEye)]
+	[IngredientOption("ItemFilters.Misc", ItemID.SuspiciousLookingEye)]
 	public static bool IsBossSummon(ItemIngredient i) => IsInGroup(i, ItemGroup.BossItem,
 		ItemGroup.BossSpawners);
 
-	[IngredientOption("ItemFilters", ItemID.GoodieBag)]
+	[IngredientOption("ItemFilters.Misc", ItemID.GoodieBag)]
 	public static bool IsLootItem(ItemIngredient i) => IsInGroup(i, ItemGroup.Crates, ItemGroup.BossBags,
 		ItemGroup.GoodieBags);
 
-	[IngredientOption("ItemFilters", ItemID.InfernoPotion)]
+	[IngredientOption("ItemFilters.Misc", ItemID.InfernoPotion)]
 	public static bool IsPotion(ItemIngredient i) => IsInGroup(i, ItemGroup.LifePotions,
 		ItemGroup.ManaPotions, ItemGroup.BuffPotion, ItemGroup.Flask);
 
-	[IngredientOption("ItemFilters", ItemID.Apple)]
+	[IngredientOption("ItemFilters.Misc", ItemID.Apple)]
 	public static bool IsFood(ItemIngredient i) => IsInGroup(i, ItemGroup.Food);
 
-	[IngredientOption("ItemFilters", ItemID.WoodFishingPole)]
+	[IngredientOption("ItemFilters.Misc", ItemID.WoodFishingPole)]
 	public static bool IsFishing(ItemIngredient i) => IsInGroup(i, ItemGroup.FishingRods,
 		ItemGroup.FishingQuestFish, ItemGroup.Fish, ItemGroup.FishingBait);
 
-	[IngredientOption("ItemFilters", ItemID.RedDye)]
+	[IngredientOption("ItemFilters.Misc", ItemID.RedDye)]
 	public static bool IsDye(ItemIngredient i) => IsInGroup(i, ItemGroup.DyeMaterial, ItemGroup.Dye,
 		ItemGroup.HairDye);
 
-	[IngredientOption("ItemFilters", ItemID.AnkletoftheWind)]
+	[IngredientOption("ItemFilters.Misc", ItemID.AnkletoftheWind)]
 	public static bool IsAccessory(ItemIngredient i) => IsInGroup(i, ItemGroup.Accessories);
 
-	[IngredientOption("ItemFilters", ItemID.ExoticEasternChewToy)]
+	[IngredientOption("ItemFilters.Misc", ItemID.ExoticEasternChewToy)]
 	public static bool IsPet(ItemIngredient i) => IsInGroup(i, ItemGroup.VanityPet);
 
-	[IngredientOption("ItemFilters", ItemID.SlimySaddle)]
+	[IngredientOption("ItemFilters.Misc", ItemID.SlimySaddle)]
 	public static bool IsMount(ItemIngredient i) => IsInGroup(i, ItemGroup.Mount, ItemGroup.Minecart);
 
-	[IngredientOption("ItemFilters", ItemID.CreativeWings)]
+	[IngredientOption("ItemFilters.Misc", ItemID.CreativeWings)]
 	public static bool IsWings(ItemIngredient i) => i.Item.wingSlot >= 0;
 
-	[IngredientOption("ItemFilters", ItemID.GrapplingHook)]
+	[IngredientOption("ItemFilters.Misc", ItemID.GrapplingHook)]
 	public static bool IsHook(ItemIngredient i) => IsInGroup(i, ItemGroup.Hook);
 
-	[IngredientOption("ItemFilters", ItemID.CopperPickaxe)]
+	[IngredientOption("ItemFilters.Misc", ItemID.CopperPickaxe)]
 	public static bool IsTool(ItemIngredient i) => IsInGroup(i, ItemGroup.Pickaxe, ItemGroup.Axe,
 		ItemGroup.Hammer);
 
-	[IngredientOption("ItemFilters", ItemID.CopperChainmail)]
+	[IngredientOption("ItemFilters.Misc", ItemID.CopperChainmail)]
 	public static bool IsArmor(ItemIngredient i) => IsInGroup(i, ItemGroup.Headgear, ItemGroup.Torso,
 		ItemGroup.Pants) && !IsVanity(i);
 
-	[IngredientOption("ItemFilters", ItemID.RedHat)]
+	[IngredientOption("ItemFilters.Misc", ItemID.RedHat)]
 	public static bool IsVanity(ItemIngredient i) => i.Item.vanity;
 
-	[IngredientOption("WeaponFilters", ItemID.CopperShortsword)]
+	[IngredientOption("ItemFilters.Weapons", ItemID.CopperShortsword)]
 	public static bool IsMeleeWeapon(ItemIngredient i) => IsInGroup(i, ItemGroup.MeleeWeapon);
 
-	[IngredientOption("WeaponFilters", ItemID.WoodenBow)]
+	[IngredientOption("ItemFilters.Weapons", ItemID.WoodenBow)]
 	public static bool IsRangedWeapon(ItemIngredient i) => IsInGroup(i, ItemGroup.RangedWeapon);
 
-	[IngredientOption("WeaponFilters", ItemID.WandofSparking)]
+	[IngredientOption("ItemFilters.Weapons", ItemID.WandofSparking)]
 	public static bool IsMagicWeapon(ItemIngredient i) => IsInGroup(i, ItemGroup.MagicWeapon);
 
-	[IngredientOption("WeaponFilters", ItemID.BabyBirdStaff)]
+	[IngredientOption("ItemFilters.Weapons", ItemID.BabyBirdStaff)]
 	public static bool IsSummonWeapon(ItemIngredient i) => IsInGroup(i, ItemGroup.SummonWeapon);
 
-	[IngredientOption("WeaponFilters", ItemID.FlareGun)]
+	[IngredientOption("ItemFilters.Weapons", ItemID.FlareGun)]
 	public static bool IsClasslessWeapon(ItemIngredient i) => IsWeaponInDamageClass(i, DamageClass.Default);
 
-	[IngredientOption("WeaponFilters")]
+	[IngredientOption("ItemFilters.Weapons")]
 	public static IEnumerable<IOptionElement<Predicate<ItemIngredient>>> CustomWeaponFilters(
 		string keyParent)
 	{
@@ -356,32 +360,50 @@ static class IngredientOptions
 	}
 
 	/*
-	 * Get filter objects represented by a reflected method. If it matches the delegate type `T`,
-	 * then it will be converted to that. If it is a function taking a string (localization key
-	 * parent) and returning a sequence of option elements of type `T`, then the result of that
-	 * will be used.
+	 * Add option(s) represented by the method `m` to the option group `group`. `T` must be a
+	 * delegate type. `m` is handled as follows:
+	 * - If `m` does not have an `IngredientOption` attribute, or if the group name specified in
+	 *   the attribute is not `groupName`, then nothing is done.
+	 * - If `m` is directly convertible to the delegate type `T` then it is added as an option
+	 *   button directly based on the specification given in the `IngredientOption` attribute.
+	 * - If `m` is convertible to a delegate of type `(string) -> IEnumerable<IOptionElement<T>>`,
+	 *   then it will be called with the group's localization key as an argument, and all of the
+	 *   returned option elements will be added to `group`.
+	 * - If `m` is convertible to a delegate of type `() -> IEnumerable<string>`, then this is s
+	 *   subgroup specifier; each returned string is treated as a group name, and will be added to
+	 *   `group` as a subgroup.
 	 */
-	private static IEnumerable<IOptionElement<T>> GetOptionsFromMethod<T>(MethodInfo m,
-		string group)
+	private static void AddOptionsFromMethod<T>(UIOptionGroup<T> group, MethodInfo m,
+		string groupName)
 		where T : Delegate
 	{
 		var attr = m.GetCustomAttribute<IngredientOptionAttribute>();
-		if (attr == null || attr.Group != group) { return []; }
+		if (attr == null || attr.Group != groupName) { return; }
 
 		var pred = TryCreateDelegate<T>(m);
 		if (pred != null)
 		{
 			var text = Language.GetText($"{KeyParent}.{attr.Group}.{m.Name}");
-			return [MakeOptionButton(attr.IconID, text, pred, attr.Rules)];
+			group.AddOption(MakeOptionButton(attr.IconID, text, pred, attr.Rules));
 		}
 
 		var listGen = TryCreateDelegate<Func<string, IEnumerable<IOptionElement<T>>>>(m);
 		if (listGen != null)
 		{
-			return listGen($"{KeyParent}.{attr.Group}");
+			foreach (var option in listGen($"{KeyParent}.{attr.Group}"))
+			{
+				group.AddOption(option);
+			}
 		}
 
-		return [];
+		var subgroupGen = TryCreateDelegate<Func<IEnumerable<string>>>(m);
+		if (subgroupGen != null)
+		{
+			foreach (var subgroupName in subgroupGen())
+			{
+				group.AddSubgroup(GetOptionGroup<T>(subgroupName));
+			}
+		}
 	}
 
 	private static T? TryCreateDelegate<T>(MethodInfo m) where T : Delegate

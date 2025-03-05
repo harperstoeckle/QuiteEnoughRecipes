@@ -206,17 +206,8 @@ public class UIQERState : UIState
 		var itemSearchPage = new UISearchPage<ItemIngredient>(itemGrid,
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
 
-		/*
-		 * These need to be bundled into a group so that weapon and other filters can't be selected
-		 * at the same time.
-		 */
-		var itemFilters = new UIOptionGroup<Predicate<ItemIngredient>>{ Padding = 20 };
-		itemFilters.AddSubgroup(
+		itemSearchPage.AddFilterGroup(
 			IngredientOptions.GetOptionGroup<Predicate<ItemIngredient>>("ItemFilters"));
-		itemFilters.AddSubgroup(
-			IngredientOptions.GetOptionGroup<Predicate<ItemIngredient>>("WeaponFilters"));
-
-		itemSearchPage.AddFilterGroup(itemFilters);
 		itemSearchPage.AddFilterGroup(IngredientOptions.MakeModFilterGroup(allItems));
 		itemSearchPage.AddSortGroup(
 			IngredientOptions.GetOptionGroup<Comparison<ItemIngredient>>("ItemSorts"));

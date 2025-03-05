@@ -106,6 +106,22 @@ public class UIOptionGroup<T> : UIAutoExtendGrid, IOptionElement<IEnumerable<T>>
 
 	public void AddSubgroup(IOptionElement<IEnumerable<T>> group)
 	{
+		/*
+		 * A bit of a hack. We assume that any group with proper subgroups will *only* have
+		 * proper subgroups, so we give them more space.
+		 */
+		Padding = 20;
+		DoAddSubgroup(group);
+	}
+
+	public void AddOption(IOptionElement<T> option)
+	{
+		// TODO: Does this add any meaningful overhead?
+		DoAddSubgroup(option.Map<T, IEnumerable<T>>(v => [v]));
+	}
+
+	private void DoAddSubgroup(IOptionElement<IEnumerable<T>> group)
+	{
 		Append(group.Element);
 		_subgroups.Add(group);
 
@@ -121,12 +137,6 @@ public class UIOptionGroup<T> : UIAutoExtendGrid, IOptionElement<IEnumerable<T>>
 
 			OnValueChanged?.Invoke(this);
 		};
-	}
-
-	public void AddOption(IOptionElement<T> option)
-	{
-		// TODO: Does this add any meaningful overhead?
-		AddSubgroup(option.Map<T, IEnumerable<T>>(v => [v]));
 	}
 }
 
