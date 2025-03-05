@@ -460,6 +460,9 @@ public class UIQERState : UIState
 		_recipeTabBar.Activate();
 		_recipeTabBar.OpenTabFor(pagesForIngredient[0]);
 
+		// Reset search bars and filters.
+		foreach (var tab in _allTabs) { tab.ApplyDefaults(); }
+
 		return true;
 	}
 

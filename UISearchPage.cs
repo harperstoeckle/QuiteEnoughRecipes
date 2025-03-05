@@ -220,6 +220,7 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 	 */
 	public void ApplyDefaults()
 	{
+		_searchBar.Clear();
 		_filterPanel.ResetWithEvent();
 		_sortPanel.ResetWithEvent();
 	}

@@ -53,7 +53,7 @@ public class UIQERSearchBar : UIPanel
 		};
 
 		// Needed to ensure the search bar starts with the faded text.
-		_search.SetContents(null, true);
+		Clear();
 
 		/*
 		 * TODO: Is there a better way to do this?
@@ -104,7 +104,7 @@ public class UIQERSearchBar : UIPanel
 	public override void RightClick(UIMouseEvent e)
 	{
 		base.RightClick(e);
-		_search.SetContents("");
+		Clear();
 		SetTakingInput(true);
 	}
 
@@ -114,6 +114,11 @@ public class UIQERSearchBar : UIPanel
 		{
 			_search.ToggleTakingText();
 		}
+	}
+
+	public void Clear()
+	{
+		_search.SetContents("");
 	}
 
 	public static void UnfocusAll()
