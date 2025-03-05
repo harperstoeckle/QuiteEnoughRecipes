@@ -108,6 +108,7 @@ OptionGroups: {
 	}
 
 	ItemSorts: {
+		// ByCreative: Sort in Creative Order
 		ByID: 按ID排序
 		ByName: 按字母排序
 		ByRarity: 按稀有度排序
@@ -120,6 +121,7 @@ OptionGroups: {
 	}
 
 	NPCSorts: {
+		// ByBestiary: Sort in Bestiary Order
 		// ByID: "{$ItemSorts.ByID}"
 		// ByName: "{$ItemSorts.ByName}"
 		// ByRarity: "{$ItemSorts.ByRarity}"

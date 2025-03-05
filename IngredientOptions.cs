@@ -249,7 +249,15 @@ static class IngredientOptions
 	#endregion
 
 	#region Item Sorts
-	[IngredientOption("ItemSorts", ItemID.AlphabetStatue1, OptionRules.DefaultSelection)]
+	[IngredientOption("ItemSorts", ItemID.TreeStatue, OptionRules.DefaultSelection)]
+	public static int ByCreative(ItemIngredient x, ItemIngredient y)
+	{
+		var xg = ContentSamples.CreativeHelper.GetItemGroup(x.Item, out int xo);
+		var yg = ContentSamples.CreativeHelper.GetItemGroup(y.Item, out int yo);
+		return (xg, xo, x.Item.type).CompareTo((yg, yo, y.Item.type));
+	}
+
+	[IngredientOption("ItemSorts", ItemID.AlphabetStatue1, OptionRules.Selection)]
 	public static int ByID(ItemIngredient x, ItemIngredient y) =>
 		x.Item.type.CompareTo(y.Item.type);
 
@@ -275,7 +283,15 @@ static class IngredientOptions
 	#endregion
 
 	#region NPC Sorts
-	[IngredientOption("NPCSorts", ItemID.AlphabetStatue1, OptionRules.DefaultSelection)]
+	[IngredientOption("NPCSorts", ItemID.TreeStatue, OptionRules.DefaultSelection)]
+	public static int ByBestiary(NPCIngredient x, NPCIngredient y)
+	{
+		int xid = ContentSamples.NpcBestiarySortingId[x.ID];
+		int yid = ContentSamples.NpcBestiarySortingId[y.ID];
+		return xid.CompareTo(yid);
+	}
+
+	[IngredientOption("NPCSorts", ItemID.AlphabetStatue1, OptionRules.Selection)]
 	public static int ByID(NPCIngredient x, NPCIngredient y) => x.ID.CompareTo(y.ID);
 
 	[IngredientOption("NPCSorts", ItemID.AlphabetStatueA, OptionRules.Selection)]

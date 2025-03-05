@@ -199,10 +199,6 @@ public class UIQERState : UIState
 		var allItems = Enumerable.Range(0, ItemLoader.ItemCount)
 			.Select(i => new Item(i))
 			.Where(i => i.type != 0)
-			.OrderBy(i => {
-				var itemGroup = ContentSamples.CreativeHelper.GetItemGroup(i, out int orderInGroup);
-				return (itemGroup, orderInGroup, i.type);
-			})
 			.Select(i => new ItemIngredient(i))
 			.ToList();
 
@@ -230,7 +226,6 @@ public class UIQERState : UIState
 		var allNPCs = Enumerable.Range(0, NPCLoader.NPCCount)
 			.Where(n => Main.BestiaryDB.FindEntryByNPCID(n).Icon != null)
 			.Select(n => new NPCIngredient(n))
-			.OrderBy(n => ContentSamples.NpcBestiarySortingId[n.ID])
 			.ToList();
 
 		var npcGrid = new UIQueryableIngredientGrid<NPCIngredient, UINPCPanel>(allNPCs);

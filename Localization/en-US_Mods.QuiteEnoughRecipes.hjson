@@ -108,6 +108,7 @@ OptionGroups: {
 	}
 
 	ItemSorts: {
+		ByCreative: Sort in Creative Order
 		ByID: Sort by ID
 		ByName: Sort Alphabetically
 		ByRarity: Sort by Rarity
@@ -120,6 +121,7 @@ OptionGroups: {
 	}
 
 	NPCSorts: {
+		ByBestiary: Sort in Bestiary Order
 		ByID: "{$ItemSorts.ByID}"
 		ByName: "{$ItemSorts.ByName}"
 		ByRarity: "{$ItemSorts.ByRarity}"
