@@ -82,7 +82,11 @@ public class UIQERState : UIState
 
 		public IEnumerable<UIOptionGroup<Predicate<IIngredient>>> GetFilterGroups()
 		{
-			return [IngredientRegistry.Instance.MakeModFilterGroup(Handler.GetIngredientTypes())];
+			return Handler.GetIngredientTypes()
+				.Select(t => IngredientRegistry.Instance.MakeFilterGroup(t))
+				.Concat([
+					IngredientRegistry.Instance.MakeModFilterGroup(Handler.GetIngredientTypes())
+				]);
 		}
 
 		public IEnumerable<UIOptionGroup<Comparison<IIngredient>>> GetSortGroups() => [];

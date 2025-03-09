@@ -24,6 +24,10 @@ public class IngredientRegistry : ModSystem
 	private abstract class AbstractGenericOption<T> : IGenericValue<T>
 	{
 		public abstract T Value { get; }
+
+		// For convenience. The specific ingredient type associated with this option.
+		public abstract Type IngredientType { get; }
+
 		public required LocalizedText Name;
 		public required Func<UIElement> ElementFunc;
 		public required OptionRules Rules;
@@ -40,6 +44,7 @@ public class IngredientRegistry : ModSystem
 	{
 		public required Predicate<T> Predicate;
 		public override Predicate<IIngredient> Value => i => i is T t && Predicate(t);
+		public override Type IngredientType => typeof(T);
 	}
 
 	private class IngredientSort<T> : AbstractGenericOption<Comparison<IIngredient>>
@@ -54,6 +59,7 @@ public class IngredientRegistry : ModSystem
 
 			return Comparison(xt, yt);
 		};
+		public override Type IngredientType => typeof(T);
 	}
 
 	/*
@@ -202,6 +208,16 @@ public class IngredientRegistry : ModSystem
 			f => f.Predicate);
 	}
 
+	// Get the generic filter group for ingredient type `t`.
+	public UIOptionGroup<Predicate<IIngredient>> MakeFilterGroup(Type t)
+	{
+		var opts =  _filters.Where(f => f.IngredientType == t);
+		return MakeOptionGroup<
+			Predicate<IIngredient>,
+			AbstractGenericOption<Predicate<IIngredient>>,
+			Predicate<IIngredient>>(opts, f => f.Value);
+	}
+
 	/*
 	 * Make a filter group for filtering by mod. Only mods included in the list of ingredients of
 	 * type `T` will be used.
@@ -260,6 +276,15 @@ public class IngredientRegistry : ModSystem
 		var opts = _sorts.OfType<IngredientSort<T>>();
 		return MakeOptionGroup<Comparison<T>, IngredientSort<T>, Comparison<IIngredient>>(opts,
 			f => f.Comparison);
+	}
+
+	public UIOptionGroup<Comparison<IIngredient>> MakeSortGroup(Type t)
+	{
+		var opts =  _sorts.Where(f => f.IngredientType == t);
+		return MakeOptionGroup<
+			Comparison<IIngredient>,
+			AbstractGenericOption<Comparison<IIngredient>>,
+			Comparison<IIngredient>>(opts, f => f.Value);
 	}
 
 	private static UIOptionGroup<T> MakeOptionGroup<T, U, V>(IEnumerable<U> opts, Func<U, T> getValue)
