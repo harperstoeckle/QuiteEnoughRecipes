@@ -20,24 +20,33 @@ namespace QuiteEnoughRecipes;
 public class UIQERState : UIState
 {
 	// Inner part of recipe page; can be searched.
-	private class UIRecipeList : UIElement, IQueryable<IRecipe>
+	private class UIRecipeList : UIElement, IQueryable<IIngredient>
 	{
 		private record RecipeEntry(IRecipe Recipe, UIElement Elem, List<IIngredient> Ingredients) {}
 
 		private List<RecipeEntry> _entries = [];
+
+		private string _searchText = "";
+		private List<Predicate<IIngredient>> _filters = [];
+		private Comparison<IIngredient>? _comparision = null;
+
 		private UIList _recipeList = new(){
 			Width = new(-ScrollBarWidth, 1),
 			Height = new(0, 1),
 			ListPadding = 30
 		};
 
+		public IRecipeHandler Handler { get; private set; }
+
 		public UIScrollbar Scrollbar { get; } = new(){
 			Height = new(0, 1),
 			HAlign = 1
 		};
 
-		public UIRecipeList()
+		public UIRecipeList(IRecipeHandler handler)
 		{
+			Handler = handler;
+
 			_recipeList.SetScrollbar(Scrollbar);
 			_recipeList.ManualSortMethod = l => {};
 
@@ -45,26 +54,38 @@ public class UIQERState : UIState
 			Append(Scrollbar);
 		}
 
-		public void SetSearchText(string text)
+		public bool ShowRecipes(IIngredient ingredient, QueryType queryType)
 		{
-			var query = SearchQuery.FromSearchText(text);
-
-			var recipesToView = _entries
-				.Where(e => e.Ingredients.Any(i => query.Matches(i)))
-				.Select(e => e.Elem);
-
-			_recipeList.Clear();
-
-			foreach (var e in recipesToView)
-			{
-				_recipeList.Add(e);
-			}
+			var recipes = Handler.GetRecipes(ingredient, queryType).ToList();
+			if (recipes.Count == 0) { return false; }
+			SetRecipes(recipes);
+			return true;
 		}
 
-		public void SetFilters(List<Predicate<IRecipe>> filters) {}
-		public void SetSortComparison(Comparison<IRecipe>? comparison) {}
-		public IEnumerable<UIOptionGroup<Predicate<IRecipe>>> GetFilterGroups() => [];
-		public IEnumerable<UIOptionGroup<Comparison<IRecipe>>> GetSortGroups() => [];
+		public void SetSearchText(string text)
+		{
+			_searchText = text;
+			UpdateDisplayedRecipes();
+		}
+
+		public void SetFilters(List<Predicate<IIngredient>> filters)
+		{
+			_filters = filters;
+			UpdateDisplayedRecipes();
+		}
+
+		public void SetSortComparison(Comparison<IIngredient>? comparison)
+		{
+			_comparision = comparison;
+			UpdateDisplayedRecipes();
+		}
+
+		public IEnumerable<UIOptionGroup<Predicate<IIngredient>>> GetFilterGroups()
+		{
+			return [IngredientRegistry.Instance.MakeModFilterGroup(Handler.GetIngredientTypes())];
+		}
+
+		public IEnumerable<UIOptionGroup<Comparison<IIngredient>>> GetSortGroups() => [];
 
 		public void SetRecipes(IEnumerable<IRecipe> recipes)
 		{
@@ -75,11 +96,27 @@ public class UIQERState : UIState
 			// Hack.
 			SetSearchText("");
 		}
+
+		private void UpdateDisplayedRecipes()
+		{
+			var query = SearchQuery.FromSearchText(_searchText);
+
+			var recipesToView = _entries
+				.Where(e => e.Ingredients.Any(i => query.Matches(i))
+					&& _filters.All(f => e.Ingredients.Any(i => f(i))))
+				.Select(e => e.Elem);
+
+			_recipeList.Clear();
+
+			foreach (var e in recipesToView)
+			{
+				_recipeList.Add(e);
+			}
+		}
 	}
 
-	private class UIRecipePage : UISearchPage<IRecipe>
+	private class UIRecipePage : UISearchPage<IIngredient>
 	{
-		private IRecipeHandler _handler;
 		public float ScrollViewPosition
 		{
 			get => _list.Scrollbar.ViewPosition;
@@ -88,20 +125,20 @@ public class UIQERState : UIState
 
 		private UIRecipeList _list;
 
-		public LocalizedText HoverName => _handler.HoverName;
-		public Item TabItem => _handler.TabItem;
+		public LocalizedText HoverName => _list.Handler.HoverName;
+		public Item TabItem => _list.Handler.TabItem;
 
-		private UIRecipePage(IRecipeHandler handler, UIRecipeList list) :
-			base(list, Language.GetText(""))
+		private UIRecipePage(UIRecipeList list) : base(list, Language.GetText(""))
 		{
 			_list = list;
-			_handler = handler;
 
 			Width.Percent = 1;
 			Height.Percent = 1;
 		}
 
-		public UIRecipePage(IRecipeHandler handler) : this(handler, new()) {}
+		public UIRecipePage(IRecipeHandler handler) :
+			this(new UIRecipeList(handler))
+		{}
 
 		/*
 		 * Attempts to show recipes for `ingredient`. If there are no recipes, this element remains
@@ -109,10 +146,7 @@ public class UIQERState : UIState
 		 */
 		public bool ShowRecipes(IIngredient ingredient, QueryType queryType)
 		{
-			var recipes = _handler.GetRecipes(ingredient, queryType).ToList();
-			if (recipes.Count == 0) { return false; }
-			_list.SetRecipes(recipes);
-			return true;
+			return _list.ShowRecipes(ingredient, queryType);
 		}
 	}
 

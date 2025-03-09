@@ -209,18 +209,37 @@ public class IngredientRegistry : ModSystem
 	public UIOptionGroup<Predicate<T>> MakeModFilterGroup<T>()
 		where T : IIngredient
 	{
+		_ingredients.TryGetValue(typeof(T), out var list);
+		var mods = (list?.Value ?? []).Select(i => i.Mod)
+			.Where(m => m is not null)
+			.Select(m => m!);
+		return MakeModFilterGroup<T>(mods);
+	}
+
+	// Make a generic mod filter group for ingredients of any type in `ingredientTypes`.
+	public UIOptionGroup<Predicate<IIngredient>> MakeModFilterGroup(
+		IEnumerable<Type> ingredientTypes)
+	{
+		var mods = ingredientTypes
+			.SelectMany(t => _ingredients.TryGetValue(t, out var ings) ? ings.Value : [])
+			.Select(i => i.Mod)
+			.Where(m => m is not null)
+			.Select(m => m!);
+		return MakeModFilterGroup<IIngredient>(mods);
+	}
+
+	/*
+	 * Make a filter group containing each mod in `mods`. Only one filter will be added for each
+	 * different mod in `mods`, and they will be in alphabetical order.
+	 */
+	public UIOptionGroup<Predicate<T>> MakeModFilterGroup<T>(IEnumerable<Mod> mods)
+		where T : IIngredient
+	{
 		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups.Mods";
 		var group = new UIOptionGroup<Predicate<T>>(Language.GetText($"{keyParent}.Name"));
 
-		_ingredients.TryGetValue(typeof(T), out var list);
-		var mods = (list?.Value ?? [])
-			.Select(i => i.Mod)
-			.Where(m => m is not null)
-			.Select(m => m!)
-			.Distinct()
-			.OrderBy(m => m.DisplayNameClean);
-
-		foreach (var mod in mods)
+		var sortedMods = mods.Distinct().OrderBy(m => m.DisplayNameClean);
+		foreach (var mod in sortedMods)
 		{
 			var name = Language.GetText($"{keyParent}.ModName")
 				.WithFormatArgs(mod.DisplayNameClean);
