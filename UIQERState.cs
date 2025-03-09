@@ -1,16 +1,11 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System;
-using Terraria.GameContent.Bestiary;
 using Terraria.GameContent.UI.Elements;
-using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.Localization;
-using Terraria.ModLoader.UI;
 using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria;
@@ -28,7 +23,7 @@ public class UIQERState : UIState
 
 		private string _searchText = "";
 		private List<Predicate<IIngredient>> _filters = [];
-		private Comparison<IIngredient>? _comparision = null;
+		private Comparison<IIngredient>? _comparison = null;
 
 		private UIList _recipeList = new(){
 			Width = new(-ScrollBarWidth, 1),
@@ -76,7 +71,7 @@ public class UIQERState : UIState
 
 		public void SetSortComparison(Comparison<IIngredient>? comparison)
 		{
-			_comparision = comparison;
+			_comparison = comparison;
 			UpdateDisplayedRecipes();
 		}
 
@@ -89,7 +84,11 @@ public class UIQERState : UIState
 				]);
 		}
 
-		public IEnumerable<UIOptionGroup<Comparison<IIngredient>>> GetSortGroups() => [];
+		public IEnumerable<UIOptionGroup<Comparison<IIngredient>>> GetSortGroups()
+		{
+			return Handler.GetIngredientTypes()
+				.Select(t => IngredientRegistry.Instance.MakeSortGroup(t));
+		}
 
 		public void SetRecipes(IEnumerable<IRecipe> recipes)
 		{
@@ -103,6 +102,12 @@ public class UIQERState : UIState
 		{
 			var query = SearchQuery.FromSearchText(_searchText);
 
+			if (_comparison != null)
+			{
+				_entries.Sort((x, y) =>
+					LexicographicalCompare(x.Ingredients, y.Ingredients, _comparison));
+			}
+
 			var recipesToView = _entries
 				.Where(e => e.Ingredients.Any(i => query.Matches(i))
 					&& _filters.All(f => e.Ingredients.Any(i => f(i))))
@@ -110,6 +115,28 @@ public class UIQERState : UIState
 
 			_recipeList.Clear();
 			_recipeList.AddRange(recipesToView);
+		}
+
+		// TODO: Does this already exist in the standard library somewhere?
+		private static int LexicographicalCompare<T>(IEnumerable<T> a, IEnumerable<T> b,
+			Comparison<T> comp)
+		{
+			var aIt = a.GetEnumerator();
+			var bIt = b.GetEnumerator();
+
+			while (true)
+			{
+				bool aHasNext = aIt.MoveNext();
+				bool bHasNext = bIt.MoveNext();
+
+				// Shorter sequences are sorted earlier.
+				if (!aHasNext && !bHasNext) { return 0; }
+				else if (!aHasNext) { return -1; }
+				else if (!bHasNext) { return 1; }
+
+				int compResult = comp(aIt.Current, bIt.Current);
+				if (compResult != 0) { return compResult; }
+			}
 		}
 	}
 
