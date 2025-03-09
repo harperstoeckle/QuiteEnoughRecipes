@@ -4,6 +4,7 @@ using Terraria.GameContent.UI.Elements;
 using Terraria.Localization;
 using Terraria.UI;
 using System.Linq;
+using Terraria.ModLoader;
 
 namespace QuiteEnoughRecipes;
 
@@ -11,7 +12,7 @@ namespace QuiteEnoughRecipes;
  * Used as a general hub for information about ingredients, including full ingredient lists, sorts,
  * and filters.
  */
-public static class IngredientRegistry
+public class IngredientRegistry : ModSystem
 {
 	// Maybe there's a built-in interface for this, but I don't know what it is.
 	private interface IGenericValue<T>
@@ -24,6 +25,7 @@ public static class IngredientRegistry
 		public abstract T Value { get; }
 		public required LocalizedText Name;
 		public required Func<UIElement> ElementFunc;
+		public required OptionRules Rules;
 
 		/*
 		 * Localization key for the header above this option. Options with the same key will be
@@ -67,46 +69,118 @@ public static class IngredientRegistry
 		public IEnumerable<IIngredient> Value => this.Select(i => i as IIngredient);
 	}
 
-	private static List<AbstractGenericOption<Predicate<IIngredient>>> _filters = [];
-	private static List<AbstractGenericOption<Comparison<IIngredient>>> _sorts = [];
+	private List<AbstractGenericOption<Predicate<IIngredient>>> _filters = [];
+	private List<AbstractGenericOption<Comparison<IIngredient>>> _sorts = [];
 
 	// Map ingredient types to master lists of ingredients of that type.
-	private static Dictionary<Type, IGenericValue<IEnumerable<IIngredient>>> _ingredients = new();
+	private Dictionary<Type, IGenericValue<IEnumerable<IIngredient>>> _ingredients = new();
 
-	public static void AddFilter<T>(Predicate<T> pred, int iconItemID, LocalizedText name,
+	public static IngredientRegistry Instance => ModContent.GetInstance<IngredientRegistry>();
+
+	// Reset to the default sorts and filters.
+	public override void Load()
+	{
+
+	}
+
+	public void AddFilter<T>(Predicate<T> pred, int iconItemID, LocalizedText name,
 		string? sectionNameKey = null) where T : IIngredient
 	{
 		_filters.Add(new IngredientFilter<T>{
 			Predicate = pred,
 			Name = name,
 			ElementFunc = () => new UIItemIcon(new(iconItemID), false),
-			SectionNameKey = sectionNameKey
+			SectionNameKey = sectionNameKey,
+			Rules = OptionRules.AllowDisable | OptionRules.AllowEnable
 		});
 	}
 
-	public static void AddSort<T>(Comparison<T> comp, int iconItemID, LocalizedText name,
+	public void AddSort<T>(Comparison<T> comp, int iconItemID, LocalizedText name,
 		string? sectionNameKey = null) where T : IIngredient
 	{
+		// The first added sort is automatically the default.
+		bool shouldBeDefault = !_sorts.Any(s => s is IngredientSort<T>);
+
 		_sorts.Add(new IngredientSort<T>{
 			Comparison = comp,
 			Name = name,
 			ElementFunc = () => new UIItemIcon(new(iconItemID), false),
-			SectionNameKey = sectionNameKey
+			SectionNameKey = sectionNameKey,
+			Rules = OptionRules.AllowEnable
+				| (shouldBeDefault ? OptionRules.EnabledByDefault : 0)
 		});
 	}
 
 	// Add ingredients to the "master list" for a given type.
-	public static void AddIngredients<T>(IEnumerable<T> ingredients)
+	public void AddIngredients<T>(IEnumerable<T> ingredients)
 		where T : IIngredient
 	{
-		if (!_ingredients.TryGetValue(typeof(T), out var list))
+		if (_ingredients.TryGetValue(typeof(T), out var list))
+		{
+			(list as IngredientList<T>)?.AddRange(ingredients);
+		}
+		else
 		{
 			list = new IngredientList<T>(ingredients);
 			_ingredients.Add(typeof(T), list);
 		}
-		else
+	}
+
+	/*
+	 * If no ingredient list exists for `T`, an empty list will be returned. Otherwise, this is the
+	 * master list of ingredients of type `T`.
+	 */
+	public List<T> GetIngredients<T>() where T : IIngredient
+	{
+		_ingredients.TryGetValue(typeof(T), out var list);
+		return list as List<T> ?? [];
+	}
+
+	// Make a filter group element with the filters for type `T`.
+	public UIOptionGroup<Predicate<T>> MakeFilterGroup<T>()
+		where T : IIngredient
+	{
+		var opts = _filters.OfType<IngredientFilter<T>>();
+		return MakeOptionGroup<Predicate<T>, IngredientFilter<T>, Predicate<IIngredient>>(opts,
+			f => f.Predicate);
+	}
+
+	// Make a sort group element with the sort comparisons for type `T`.
+	public UIOptionGroup<Comparison<T>> MakeSortGroup<T>()
+		where T : IIngredient
+	{
+		var opts = _sorts.OfType<IngredientSort<T>>();
+		return MakeOptionGroup<Comparison<T>, IngredientSort<T>, Comparison<IIngredient>>(opts,
+			f => f.Comparison);
+	}
+
+	private static UIOptionGroup<T> MakeOptionGroup<T, U, V>(IEnumerable<U> opts, Func<U, T> getValue)
+		where U : AbstractGenericOption<V>
+	{
+		var group = new UIOptionGroup<T>();
+		var filterSections = opts
+			.GroupBy(f => f.SectionNameKey)
+			.Select(g => g.ToList())
+			.ToList();
+
+		foreach (var section in filterSections)
 		{
-			(list as IngredientList<T>)?.AddRange(ingredients);
+			var heading = section[0].SectionNameKey is not null && Language.Exists(section[0].SectionNameKey)
+				? Language.GetText(section[0].SectionNameKey)
+				: null;
+			var subgroup = new UIOptionGroup<T>();
+
+			foreach (var opt in section)
+			{
+				subgroup.AddOption(
+					new UIOptionToggleButton<T>(getValue(opt), opt.ElementFunc(), opt.Rules){
+						HoverText = opt.Name
+					});
+			}
+
+			group.AddSubgroup(subgroup);
 		}
+
+		return group;
 	}
 }
