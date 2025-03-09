@@ -21,6 +21,10 @@ public interface IQueryable<T>
 	public void SetSearchText(string text);
 	public void SetFilters(List<Predicate<T>> filters);
 	public void SetSortComparison(Comparison<T>? comparison);
+
+	// These will be added to the filter and sort panels.
+	public IEnumerable<UIOptionGroup<Predicate<T>>> GetFilterGroups();
+	public IEnumerable<UIOptionGroup<Comparison<T>>> GetSortGroups();
 }
 
 // A page containing a search bar that can automatically be focused.
@@ -120,14 +124,9 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 
 	private IQueryable<T> _queryable;
 
-	private OptionPanelToggleButton _filterToggleButton = new("Images/UI/Bestiary/Button_Filtering",
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
+
 	private UIOptionPanel<Predicate<T>> _filterPanel = new();
-
-	private OptionPanelToggleButton _sortToggleButton = new("Images/UI/Bestiary/Button_Sorting",
-			Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SortHover"));
 	private UIOptionPanel<Comparison<T>> _sortPanel = new();
-
 	private UIQERSearchBar _searchBar = new();
 
 	/*
@@ -143,32 +142,58 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 		Width.Percent = 1;
 		Height.Percent = 1;
 
-		_filterPanel.Width.Percent = 1;
-		_filterPanel.Height.Percent = 1;
-		_filterPanel.OnValueChanged += f => {
-			var preds = f.Value.ToList();
-			_filterToggleButton.OptionSelected = !f.IsDefaulted;
-			_queryable.SetFilters(preds);
-		};
+		float offset = 0;
 
-		_sortPanel.Width.Percent = 1;
-		_sortPanel.Height.Percent = 1;
-		_sortPanel.OnValueChanged += f => {
-			var comp = f.Value.FirstOrDefault();
-			_sortToggleButton.OptionSelected = !f.IsDefaulted;
-			_queryable.SetSortComparison(comp);
-		};
+		var filters = queryElement.GetFilterGroups().ToList();
+		if (filters.Count > 0)
+		{
+			var filterToggleButton = new OptionPanelToggleButton(
+				"Images/UI/Bestiary/Button_Filtering",
+				Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
 
-		_filterToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_filterPanel);
-		_filterToggleButton.OnRightClick += (b, e) => _filterPanel.ResetWithEvent();
+			_filterPanel.Width.Percent = 1;
+			_filterPanel.Height.Percent = 1;
+			_filterPanel.OnValueChanged += f => {
+				var preds = f.Value.ToList();
+				filterToggleButton.OptionSelected = !f.IsDefaulted;
+				_queryable.SetFilters(preds);
+			};
 
-		float offset = _filterToggleButton.Width.Pixels + 10;
+			foreach (var f in filters) { _filterPanel.AddGroup(f); }
+			_filterPanel.ResetWithEvent();
 
-		_sortToggleButton.Left.Pixels = offset;
-		_sortToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_sortPanel);
-		_sortToggleButton.OnRightClick += (b, e) => _sortPanel.ResetWithEvent();
+			filterToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_filterPanel);
+			filterToggleButton.OnRightClick += (b, e) => _filterPanel.ResetWithEvent();
 
-		offset += _sortToggleButton.Width.Pixels + 10;
+			offset += filterToggleButton.Width.Pixels + 10;
+			Append(filterToggleButton);
+		}
+
+		var sorts = queryElement.GetSortGroups().ToList();
+		if (sorts.Count > 0)
+		{
+			var sortToggleButton = new OptionPanelToggleButton(
+				"Images/UI/Bestiary/Button_Sorting",
+				Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SortHover"));
+
+			_sortPanel.Width.Percent = 1;
+			_sortPanel.Height.Percent = 1;
+			_sortPanel.OnValueChanged += f => {
+				var comp = f.Value.FirstOrDefault();
+				sortToggleButton.OptionSelected = !f.IsDefaulted;
+				_queryable.SetSortComparison(comp);
+			};
+
+			foreach (var s in sorts) { _sortPanel.AddGroup(s); }
+			_sortPanel.ResetWithEvent();
+
+			sortToggleButton.Left.Pixels = offset;
+			sortToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_sortPanel);
+			sortToggleButton.OnRightClick += (b, e) => _sortPanel.ResetWithEvent();
+
+			offset += sortToggleButton.Width.Pixels + 10;
+			Append(sortToggleButton);
+		}
 
 		var helpIcon = new HelpIcon(helpText);
 		helpIcon.HAlign = 1;
@@ -193,8 +218,6 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 			Append(e);
 		}
 
-		Append(_filterToggleButton);
-		Append(_sortToggleButton);
 		Append(_searchBar);
 		Append(helpIcon);
 	}
@@ -204,23 +227,8 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 		_searchBar.SetTakingInput(true);
 	}
 
-	public void AddFilterGroup(IOptionElement<IEnumerable<Predicate<T>>> e)
-	{
-		_filterPanel.AddGroup(e);
-	}
-
-	public void AddSortGroup(IOptionElement<IEnumerable<Comparison<T>>> e)
-	{
-		_sortPanel.AddGroup(e);
-	}
-
-	/*
-	 * Reset the sort and filter options to their default values and apply them. This should be
-	 * called after adding all of the sorts and filters.
-	 */
 	public void ApplyDefaults()
 	{
-		_searchBar.Clear();
 		_filterPanel.ResetWithEvent();
 		_sortPanel.ResetWithEvent();
 	}

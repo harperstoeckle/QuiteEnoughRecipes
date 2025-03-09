@@ -63,6 +63,8 @@ public class UIQERState : UIState
 
 		public void SetFilters(List<Predicate<IRecipe>> filters) {}
 		public void SetSortComparison(Comparison<IRecipe>? comparison) {}
+		public IEnumerable<UIOptionGroup<Predicate<IRecipe>>> GetFilterGroups() => [];
+		public IEnumerable<UIOptionGroup<Comparison<IRecipe>>> GetSortGroups() => [];
 
 		public void SetRecipes(IEnumerable<IRecipe> recipes)
 		{
@@ -196,21 +198,9 @@ public class UIQERState : UIState
 		var itemSearchPage = new UISearchPage<ItemIngredient>(itemGrid,
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
 
-		itemSearchPage.AddFilterGroup(IngredientRegistry.Instance.MakeFilterGroup<ItemIngredient>());
-		itemSearchPage.AddFilterGroup(IngredientRegistry.Instance.MakeModFilterGroup<ItemIngredient>());
-		itemSearchPage.AddSortGroup(IngredientRegistry.Instance.MakeSortGroup<ItemIngredient>());
-
-		itemSearchPage.ApplyDefaults();
-
 		var npcGrid = new UIQueryableIngredientGrid<NPCIngredient, UINPCPanel>();
 		var npcSearchPage = new UISearchPage<NPCIngredient>(npcGrid,
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.NPCSearchHelp"));
-
-		npcSearchPage.AddFilterGroup(IngredientRegistry.Instance.MakeFilterGroup<NPCIngredient>());
-		npcSearchPage.AddFilterGroup(IngredientRegistry.Instance.MakeModFilterGroup<NPCIngredient>());
-		npcSearchPage.AddSortGroup(IngredientRegistry.Instance.MakeSortGroup<NPCIngredient>());
-
-		npcSearchPage.ApplyDefaults();
 
 		AddHandler(new RecipeHandlers.Basic());
 		AddHandler(new RecipeHandlers.CraftingStations());

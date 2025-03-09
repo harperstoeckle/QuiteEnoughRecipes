@@ -61,6 +61,19 @@ public class UIQueryableIngredientGrid<T, E> : UIElement, IQueryable<T>
 		UpdateDisplayedIngredients();
 	}
 
+	public IEnumerable<UIOptionGroup<Predicate<T>>> GetFilterGroups()
+	{
+		return [
+			IngredientRegistry.Instance.MakeFilterGroup<T>(),
+			IngredientRegistry.Instance.MakeModFilterGroup<T>()
+		];
+	}
+
+	public IEnumerable<UIOptionGroup<Comparison<T>>> GetSortGroups()
+	{
+		return [IngredientRegistry.Instance.MakeSortGroup<T>()];
+	}
+
 	// Update what ingredients are being displayed based on the search bar and filters.
 	private void UpdateDisplayedIngredients()
 	{
