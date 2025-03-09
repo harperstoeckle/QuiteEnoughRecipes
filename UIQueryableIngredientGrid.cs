@@ -21,12 +21,12 @@ public class UIQueryableIngredientGrid<T, E> : UIElement, IQueryable<T>
 
 	private UIScrollableGrid<T, E> _grid = new();
 
-	public UIQueryableIngredientGrid(List<T> allIngredients)
+	public UIQueryableIngredientGrid()
 	{
 		const float ScrollBarWidth = 30;
 
-		_allIngredients = allIngredients;
-		_filteredIngredients = new(allIngredients);
+		_allIngredients = IngredientRegistry.Instance.GetIngredients<T>();
+		_filteredIngredients = new(_allIngredients);
 
 		var scroll = new UIScrollbar();
 		scroll.Height.Percent = 1;

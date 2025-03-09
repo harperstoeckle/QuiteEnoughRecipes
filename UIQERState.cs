@@ -192,17 +192,7 @@ public class UIQERState : UIState
 
 	public UIQERState()
 	{
-		/*
-		 * Our "master list" of items is sorted by creative order first and item ID second, so this
-		 * is the order that will be used if no sort order is chosen.
-		 */
-		var allItems = Enumerable.Range(0, ItemLoader.ItemCount)
-			.Select(i => new Item(i))
-			.Where(i => i.type != 0)
-			.Select(i => new ItemIngredient(i))
-			.ToList();
-
-		var itemGrid = new UIQueryableIngredientGrid<ItemIngredient, UIItemPanel>(allItems);
+		var itemGrid = new UIQueryableIngredientGrid<ItemIngredient, UIItemPanel>();
 		var itemSearchPage = new UISearchPage<ItemIngredient>(itemGrid,
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
 
@@ -212,12 +202,7 @@ public class UIQERState : UIState
 
 		itemSearchPage.ApplyDefaults();
 
-		var allNPCs = Enumerable.Range(0, NPCLoader.NPCCount)
-			.Where(n => Main.BestiaryDB.FindEntryByNPCID(n).Icon != null)
-			.Select(n => new NPCIngredient(n))
-			.ToList();
-
-		var npcGrid = new UIQueryableIngredientGrid<NPCIngredient, UINPCPanel>(allNPCs);
+		var npcGrid = new UIQueryableIngredientGrid<NPCIngredient, UINPCPanel>();
 		var npcSearchPage = new UISearchPage<NPCIngredient>(npcGrid,
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.NPCSearchHelp"));
 
