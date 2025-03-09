@@ -107,11 +107,7 @@ public class UIQERState : UIState
 				.Select(e => e.Elem);
 
 			_recipeList.Clear();
-
-			foreach (var e in recipesToView)
-			{
-				_recipeList.Add(e);
-			}
+			_recipeList.AddRange(recipesToView);
 		}
 	}
 
