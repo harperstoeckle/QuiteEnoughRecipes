@@ -31,7 +31,7 @@ public class IngredientRegistry : ModSystem
 		 * Localization key for the header above this option. Options with the same key will be
 		 * grouped in the same section on the option panel.
 		 */
-		public string? SectionNameKey = null;
+		public string SectionNameKey = "";
 	}
 
 	private class IngredientFilter<T> : AbstractGenericOption<Predicate<IIngredient>>
@@ -77,14 +77,58 @@ public class IngredientRegistry : ModSystem
 
 	public static IngredientRegistry Instance => ModContent.GetInstance<IngredientRegistry>();
 
-	// Reset to the default sorts and filters.
-	public override void Load()
+	/*
+	 * Reset to the default sorts and filters. This is currently done during `PostSetupRecipes` to
+	 * ensure that all content from other mods can be properly loaded. However, This should be
+	 * designed in such a way that there's a clear time where other mods can add custom filters and
+	 * stuff.
+	 *
+	 * TODO: Is `PostSetupRecipes` the correct option here?
+	 */
+	public override void PostSetupRecipes()
 	{
+		_filters.Clear();
+		_sorts.Clear();
+		_ingredients.Clear();
 
+		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups";
+
+		var miscItemFilters = IngredientOptions.GetOptionButtons<Predicate<ItemIngredient>>(
+			"ItemFilters.Misc");
+		foreach (var (pred, icon, name) in miscItemFilters)
+		{
+			AddFilter<ItemIngredient>(pred, icon, name, $"{keyParent}.ItemFilters.Misc.Name");
+		}
+
+		var weaponItemFilters = IngredientOptions.GetOptionButtons<Predicate<ItemIngredient>>(
+			"ItemFilters.Weapons");
+		foreach (var (pred, icon, name) in weaponItemFilters)
+		{
+			AddFilter<ItemIngredient>(pred, icon, name, $"{keyParent}.ItemFilters.Weapons.Name");
+		}
+
+		var npcFilters = IngredientOptions.GetOptionButtons<Predicate<NPCIngredient>>("NPCFilters");
+		foreach (var (pred, icon, name) in npcFilters)
+		{
+			AddFilter<NPCIngredient>(pred, icon, name, $"{keyParent}.NPCFilters.Name");
+		}
+
+		var itemSorts = IngredientOptions.GetOptionButtons<Comparison<ItemIngredient>>(
+			"ItemSorts");
+		foreach (var (comp, icon, name) in itemSorts)
+		{
+			AddSort<ItemIngredient>(comp, icon, name, $"{keyParent}.ItemSorts.Name");
+		}
+
+		var npcSorts = IngredientOptions.GetOptionButtons<Comparison<NPCIngredient>>("NPCSorts");
+		foreach (var (comp, icon, name) in npcSorts)
+		{
+			AddSort<NPCIngredient>(comp, icon, name, $"{keyParent}.NPCSorts.Name");
+		}
 	}
 
 	public void AddFilter<T>(Predicate<T> pred, int iconItemID, LocalizedText name,
-		string? sectionNameKey = null) where T : IIngredient
+		string sectionNameKey = "") where T : IIngredient
 	{
 		_filters.Add(new IngredientFilter<T>{
 			Predicate = pred,
@@ -96,7 +140,7 @@ public class IngredientRegistry : ModSystem
 	}
 
 	public void AddSort<T>(Comparison<T> comp, int iconItemID, LocalizedText name,
-		string? sectionNameKey = null) where T : IIngredient
+		string sectionNameKey = "") where T : IIngredient
 	{
 		// The first added sort is automatically the default.
 		bool shouldBeDefault = !_sorts.Any(s => s is IngredientSort<T>);
@@ -165,10 +209,10 @@ public class IngredientRegistry : ModSystem
 
 		foreach (var section in filterSections)
 		{
-			var heading = section[0].SectionNameKey is not null && Language.Exists(section[0].SectionNameKey)
+			var heading = Language.Exists(section[0].SectionNameKey)
 				? Language.GetText(section[0].SectionNameKey)
 				: null;
-			var subgroup = new UIOptionGroup<T>();
+			var subgroup = new UIOptionGroup<T>(heading);
 
 			foreach (var opt in section)
 			{

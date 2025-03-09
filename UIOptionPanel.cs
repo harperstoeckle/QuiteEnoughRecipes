@@ -146,17 +146,6 @@ public enum OptionRules
 	AllowDisable = 1 << 0,
 	AllowEnable = 1 << 1,
 	EnabledByDefault = 1 << 2,
-
-	/*
-	 * Part of an option group where any option can be on or off. It doesn't make sense to have
-	 * this on by default.
-	 */
-	Optional = AllowDisable | AllowEnable,
-
-	// Parts of an option group where at least one option must be enabled at a time.
-	// `DefaultSelection`
-	Selection = AllowEnable,
-	DefaultSelection = AllowEnable | EnabledByDefault
 }
 
 // A button that can be toggled on or off.
@@ -173,7 +162,7 @@ public class UIOptionToggleButton<T> : UIElement, IOptionElement<T>
 	public event Action<IOptionElement<T>>? OnValueChanged;
 
 	public UIOptionToggleButton(T value, UIElement icon,
-		OptionRules rules = OptionRules.Optional)
+		OptionRules rules = OptionRules.AllowDisable | OptionRules.AllowEnable)
 	{
 		Value = value;
 		_rules = rules;

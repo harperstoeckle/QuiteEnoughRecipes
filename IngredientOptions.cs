@@ -20,14 +20,11 @@ public class IngredientOptionAttribute : Attribute
 {
 	public string Group;
 	public int IconID;
-	public OptionRules Rules;
 
-	public IngredientOptionAttribute(string group, int iconID = 0,
-		OptionRules rules = OptionRules.Optional)
+	public IngredientOptionAttribute(string group, int iconID = 0)
 	{
 		Group = group;
 		IconID = iconID;
-		Rules = rules;
 	}
 };
 
@@ -38,23 +35,22 @@ public class IngredientOptionAttribute : Attribute
  */
 static class IngredientOptions
 {
+	// Mostly used by `IngredientRegistry`.
+	public record OptionButtonSpec<T>(T Value, int IconID, LocalizedText Name) {}
+
 	public static readonly string KeyParent = "Mods.QuiteEnoughRecipes.OptionGroups";
 
-	// Get options in the given item group that are of type `T`.
-	public static UIOptionGroup<T> GetOptionGroup<T>(string groupName) where T : Delegate
+	// Get list of option buttons for options of type `T`.
+	public static IEnumerable<OptionButtonSpec<T>> GetOptionButtons<T>(string groupName)
+		where T : Delegate
 	{
 		var heading = Language.Exists($"{KeyParent}.{groupName}.Name")
 			? Language.GetText($"{KeyParent}.{groupName}.Name")
 			: null;
 		var group = new UIOptionGroup<T>(heading);
 
-		var funcs = typeof(IngredientOptions).GetMethods(BindingFlags.Public | BindingFlags.Static);
-		foreach (var func in funcs)
-		{
-			AddOptionsFromMethod(group, func, groupName);
-		}
-
-		return group;
+		return typeof(IngredientOptions).GetMethods(BindingFlags.Public | BindingFlags.Static)
+			.SelectMany(m => GetOptionsFromMethod<T>(m, groupName));
 	}
 
 	// Check if `i` is in the creative item group `g`.
@@ -100,34 +96,12 @@ static class IngredientOptions
 		return group;
 	}
 
-	/*
-	 * Get a option group of filters for ingredients of type `T`, but with the filters made
-	 * generic so that they can be applied to any ingredient.
-	 */
-	public static IOptionElement<IEnumerable<Predicate<IIngredient>>> GetGenericFilterGroup<T>(
-		string groupName) where T : IIngredient
-	{
-		return GetOptionGroup<Predicate<T>>(groupName)
-			.Map(vs => vs.Select(MakeGenericPredicate<T, IIngredient>));
-	}
-
-	// Same as `GetGenericFilterGroup`, but for comparisons.
-	public static IOptionElement<IEnumerable<Comparison<IIngredient>>> GetGenericSortGroup<T>(
-		string groupName) where T : IIngredient
-	{
-		return GetOptionGroup<Comparison<T>>(groupName)
-			.Map(vs => vs.Select(MakeGenericComparison<T, IIngredient>));
-	}
-
 	public static bool IsWeaponInDamageClass(ItemIngredient i, DamageClass dc) =>
 		i.Item.CountsAsClass(dc) && IsWeapon(i);
 	public static bool IsWeapon(ItemIngredient i) => !IsTool(i) && i.Item.damage > 0
 		&& i.Item.ammo == AmmoID.None;
 
 	#region Item Filters
-	[IngredientOption("ItemFilters")]
-	public static IEnumerable<string> GetItemSubgroups() => ["ItemFilters.Misc", "ItemFilters.Weapons"];
-
 	[IngredientOption("ItemFilters.Misc", ItemID.StoneBlock)]
 	public static bool IsTile(ItemIngredient i) => IsInGroup(i, ItemGroup.CraftingObjects,
 		ItemGroup.Torches, ItemGroup.Wood, ItemGroup.Crates, ItemGroup.PlacableObjects,
@@ -201,7 +175,7 @@ static class IngredientOptions
 	public static bool IsClasslessWeapon(ItemIngredient i) => IsWeaponInDamageClass(i, DamageClass.Default);
 
 	[IngredientOption("ItemFilters.Weapons")]
-	public static IEnumerable<IOptionElement<Predicate<ItemIngredient>>> CustomWeaponFilters(
+	public static IEnumerable<OptionButtonSpec<Predicate<ItemIngredient>>> CustomWeaponFilters(
 		string keyParent)
 	{
 		// We only add the thrower class filter if there are mods that add throwing weapons.
@@ -216,7 +190,7 @@ static class IngredientOptions
 			 * are *exactly* in the throwing class, since modded classes that just *derive* from
 			 * throwing (like rogue) will also be shown below with the other modded classes.
 			 */
-			yield return MakeOptionButton(iconItem.type, name, pred);
+			yield return new(pred, iconItem.type, name);
 		}
 
 		/*
@@ -247,13 +221,13 @@ static class IngredientOptions
 			var name = Language.GetText($"{keyParent}.IsOtherWeapon")
 				.WithFormatArgs(BaseDamageClassName(dcs[0].DisplayName.Value));
 
-			yield return MakeOptionButton(icon.type, name, pred);
+			yield return new(pred, icon.type, name);
 		}
 	}
 	#endregion
 
 	#region Item Sorts
-	[IngredientOption("ItemSorts", ItemID.TreeStatue, OptionRules.DefaultSelection)]
+	[IngredientOption("ItemSorts", ItemID.TreeStatue)]
 	public static int ByCreative(ItemIngredient x, ItemIngredient y)
 	{
 		var xg = ContentSamples.CreativeHelper.GetItemGroup(x.Item, out int xo);
@@ -261,18 +235,18 @@ static class IngredientOptions
 		return (xg, xo, x.Item.type).CompareTo((yg, yo, y.Item.type));
 	}
 
-	[IngredientOption("ItemSorts", ItemID.AlphabetStatue1, OptionRules.Selection)]
+	[IngredientOption("ItemSorts", ItemID.AlphabetStatue1)]
 	public static int ByID(ItemIngredient x, ItemIngredient y) =>
 		x.Item.type.CompareTo(y.Item.type);
 
-	[IngredientOption("ItemSorts", ItemID.AlphabetStatueA, OptionRules.Selection)]
+	[IngredientOption("ItemSorts", ItemID.AlphabetStatueA)]
 	public static int ByName(ItemIngredient x, ItemIngredient y) => x.Name.CompareTo(y.Name);
 
-	[IngredientOption("ItemSorts", ItemID.StarStatue, OptionRules.Selection)]
+	[IngredientOption("ItemSorts", ItemID.StarStatue)]
 	public static int ByRarity(ItemIngredient x, ItemIngredient y) =>
 		x.Item.rare.CompareTo(y.Item.rare);
 
-	[IngredientOption("ItemSorts", ItemID.ChestStatue, OptionRules.Selection)]
+	[IngredientOption("ItemSorts", ItemID.ChestStatue)]
 	public static int ByValue(ItemIngredient x, ItemIngredient y) =>
 		x.Item.value.CompareTo(y.Item.value);
 	#endregion
@@ -287,7 +261,7 @@ static class IngredientOptions
 	#endregion
 
 	#region NPC Sorts
-	[IngredientOption("NPCSorts", ItemID.TreeStatue, OptionRules.DefaultSelection)]
+	[IngredientOption("NPCSorts", ItemID.TreeStatue)]
 	public static int ByBestiary(NPCIngredient x, NPCIngredient y)
 	{
 		int xid = ContentSamples.NpcBestiarySortingId[x.ID];
@@ -295,13 +269,13 @@ static class IngredientOptions
 		return xid.CompareTo(yid);
 	}
 
-	[IngredientOption("NPCSorts", ItemID.AlphabetStatue1, OptionRules.Selection)]
+	[IngredientOption("NPCSorts", ItemID.AlphabetStatue1)]
 	public static int ByID(NPCIngredient x, NPCIngredient y) => x.ID.CompareTo(y.ID);
 
-	[IngredientOption("NPCSorts", ItemID.AlphabetStatueA, OptionRules.Selection)]
+	[IngredientOption("NPCSorts", ItemID.AlphabetStatueA)]
 	public static int ByName(NPCIngredient x, NPCIngredient y) => x.Name.CompareTo(y.Name);
 
-	[IngredientOption("NPCSorts", ItemID.StarStatue, OptionRules.Selection)]
+	[IngredientOption("NPCSorts", ItemID.StarStatue)]
 	public static int ByRarity(NPCIngredient x, NPCIngredient y)
 	{
 		int xRare = TryGetNPC(x.ID)?.rarity ?? 0;
@@ -309,14 +283,6 @@ static class IngredientOptions
 		return xRare.CompareTo(yRare);
 	}
 	#endregion
-
-	private static UIOptionToggleButton<T> MakeOptionButton<T>(int itemID, LocalizedText text,
-		T v, OptionRules rules = OptionRules.Optional)
-	{
-		return new UIOptionToggleButton<T>(v, new UIItemIcon(new(itemID), false), rules){
-			HoverText = text,
-		};
-	}
 
 	/*
 	 * Tries to find a low-rarity item to use as an icon for a damage class filter. When applying
@@ -360,91 +326,41 @@ static class IngredientOptions
 	}
 
 	/*
-	 * Add option(s) represented by the method `m` to the option group `group`. `T` must be a
-	 * delegate type. `m` is handled as follows:
+	 * Get option(s) represented by the method `m`. `T` must be a delegate type. `m` is handled as
+	 * follows:
 	 * - If `m` does not have an `IngredientOption` attribute, or if the group name specified in
-	 *   the attribute is not `groupName`, then nothing is done.
+	 *   the attribute is not `groupName`, then no buttons are returned.
 	 * - If `m` is directly convertible to the delegate type `T` then it is added as an option
 	 *   button directly based on the specification given in the `IngredientOption` attribute.
-	 * - If `m` is convertible to a delegate of type `(string) -> IEnumerable<IOptionElement<T>>`,
-	 *   then it will be called with the group's localization key as an argument, and all of the
-	 *   returned option elements will be added to `group`.
-	 * - If `m` is convertible to a delegate of type `() -> IEnumerable<string>`, then this is s
-	 *   subgroup specifier; each returned string is treated as a group name, and will be added to
-	 *   `group` as a subgroup.
+	 * - If `m` is convertible to a delegate of type `(string) ->
+	 *   IEnumerable<OptionButtonSpec<T>>`, then it will be called with the group's localization
+	 *   key as an argument, and the 
 	 */
-	private static void AddOptionsFromMethod<T>(UIOptionGroup<T> group, MethodInfo m,
-		string groupName)
-		where T : Delegate
+	private static IEnumerable<OptionButtonSpec<T>> GetOptionsFromMethod<T>(MethodInfo m,
+		string groupName) where T : Delegate
 	{
 		var attr = m.GetCustomAttribute<IngredientOptionAttribute>();
-		if (attr == null || attr.Group != groupName) { return; }
+		if (attr == null || attr.Group != groupName) { return []; }
 
 		var pred = TryCreateDelegate<T>(m);
 		if (pred != null)
 		{
 			var text = Language.GetText($"{KeyParent}.{attr.Group}.{m.Name}");
-			group.AddOption(MakeOptionButton(attr.IconID, text, pred, attr.Rules));
+			return [new(pred, attr.IconID, text)];
 		}
 
-		var listGen = TryCreateDelegate<Func<string, IEnumerable<IOptionElement<T>>>>(m);
+		var listGen = TryCreateDelegate<Func<string, IEnumerable<OptionButtonSpec<T>>>>(m);
 		if (listGen != null)
 		{
-			foreach (var option in listGen($"{KeyParent}.{attr.Group}"))
-			{
-				group.AddOption(option);
-			}
+			return listGen($"{KeyParent}.{groupName}");
 		}
 
-		var subgroupGen = TryCreateDelegate<Func<IEnumerable<string>>>(m);
-		if (subgroupGen != null)
-		{
-			foreach (var subgroupName in subgroupGen())
-			{
-				group.AddSubgroup(GetOptionGroup<T>(subgroupName));
-			}
-		}
+		return [];
 	}
 
 	private static T? TryCreateDelegate<T>(MethodInfo m) where T : Delegate
 	{
 		var d = Delegate.CreateDelegate(typeof(T), m, false);
 		return d == null ? null : (d as T);
-	}
-
-	/*
-	 * Convert a predicate to one acting on a less derived type such that the predicate returns
-	 * true if and only if the provided value is of the correct type *and* the original predicate
-	 * returns true with that value.
-	 */
-	private static Predicate<U> MakeGenericPredicate<T, U>(Predicate<T> pred) where T : U
-	{
-		return u => u is T t && pred(t);
-	}
-
-	/*
-	 * Make a generic version of a comparison, similarly to `MakeGenericPredicate`. The comparison
-	 * is performed as follows:
-	 * - If the objects are not both of the correct runtime type, then the names of their types
-	 *   are compared.
-	 * - Otherwise, they are compared with `comp`.
-	 */
-	private static Comparison<U> MakeGenericComparison<T, U>(Comparison<T> comp) where T : U
-	{
-		return (x, y) => {
-			// Neither should ever be null.
-			if (x == null || y == null)
-			{
-				return -1;
-			}
-			else if (x is T xt && y is T yt)
-			{
-				return comp(xt, yt);
-			}
-			else
-			{
-				return x.GetType().Name.CompareTo(y.GetType().Name);
-			}
-		};
 	}
 }
