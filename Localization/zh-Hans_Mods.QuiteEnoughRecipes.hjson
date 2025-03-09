@@ -78,6 +78,7 @@ Tabs: {
 OptionGroups: {
 	ItemFilters: {
 		Misc: {
+			// Name: Miscellaneous Item Categories
 			IsTile: 物块
 			IsCraftingStation: 合成站
 			IsBossSummon: Boss召唤物
@@ -97,7 +98,7 @@ OptionGroups: {
 		}
 
 		Weapons: {
-			// Name: Damage Types
+			// Name: Weapon Categories
 			IsMeleeWeapon: 近战伤害武器
 			IsRangedWeapon: 远程伤害武器
 			IsMagicWeapon: 魔法伤害武器
@@ -110,6 +111,7 @@ OptionGroups: {
 	}
 
 	ItemSorts: {
+		// Name: Item Sort Orders
 		// ByCreative: Sort in Creative Order
 		ByID: 按ID排序
 		ByName: 按字母排序
@@ -118,11 +120,13 @@ OptionGroups: {
 	}
 
 	NPCFilters: {
+		// Name: NPC Categories
 		// IsBoss: Bosses
 		// IsTownNPC: Town NPCs
 	}
 
 	NPCSorts: {
+		// Name: NPC Sort Orders
 		// ByBestiary: Sort in Bestiary Order
 		// ByID: "{$ItemSorts.ByID}"
 		// ByName: "{$ItemSorts.ByName}"

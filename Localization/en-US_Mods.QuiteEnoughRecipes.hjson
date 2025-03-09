@@ -78,6 +78,7 @@ Tabs: {
 OptionGroups: {
 	ItemFilters: {
 		Misc: {
+			Name: Miscellaneous Item Categories
 			IsTile: Tiles
 			IsCraftingStation: Crafting Stations
 			IsBossSummon: Boss Summons
@@ -97,7 +98,7 @@ OptionGroups: {
 		}
 
 		Weapons: {
-			Name: Damage Types
+			Name: Weapon Categories
 			IsMeleeWeapon: Melee Weapons
 			IsRangedWeapon: Ranged Weapons
 			IsMagicWeapon: Magic Weapons
@@ -110,6 +111,7 @@ OptionGroups: {
 	}
 
 	ItemSorts: {
+		Name: Item Sort Orders
 		ByCreative: Sort in Creative Order
 		ByID: Sort by ID
 		ByName: Sort Alphabetically
@@ -118,11 +120,13 @@ OptionGroups: {
 	}
 
 	NPCFilters: {
+		Name: NPC Categories
 		IsBoss: Bosses
 		IsTownNPC: Town NPCs
 	}
 
 	NPCSorts: {
+		Name: NPC Sort Orders
 		ByBestiary: Sort in Bestiary Order
 		ByID: "{$ItemSorts.ByID}"
 		ByName: "{$ItemSorts.ByName}"
