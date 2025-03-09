@@ -125,11 +125,13 @@ public class UIQERState : UIState
 			var mousePos = Main.MouseScreen - dims.Position();
 			var popupSize = GetOuterDimensions().ToRectangle().Size();
 
-			var pos = mousePos - new Vector2(popupSize.X - 10, 10);
+			float xOffset = 15;
+			float yOffset = 30;
+			var pos = mousePos - new Vector2(popupSize.X - xOffset, yOffset);
 
 			if (pos.X < 0)
 			{
-				pos.X = mousePos.X - 10;
+				pos.X = mousePos.X - xOffset;
 			}
 			if (pos.Y + popupSize.Y > dims.Height)
 			{
