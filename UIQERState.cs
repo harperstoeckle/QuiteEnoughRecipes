@@ -96,9 +96,7 @@ public class UIQERState : UIState
 			_entries.Clear();
 			_entries.AddRange(
 				recipes.Select(r => new RecipeEntry(r, r.Element, r.GetIngredients().ToList())));
-
-			// Hack.
-			SetSearchText("");
+			UpdateDisplayedRecipes();
 		}
 
 		private void UpdateDisplayedRecipes()

@@ -160,7 +160,6 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 			};
 
 			foreach (var f in filters) { _filterPanel.AddGroup(f); }
-			_filterPanel.ResetWithEvent();
 
 			filterToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_filterPanel);
 			filterToggleButton.OnRightClick += (b, e) => _filterPanel.ResetWithEvent();
@@ -185,7 +184,6 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 			};
 
 			foreach (var s in sorts) { _sortPanel.AddGroup(s); }
-			_sortPanel.ResetWithEvent();
 
 			sortToggleButton.Left.Pixels = offset;
 			sortToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_sortPanel);
@@ -204,6 +202,8 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 		_searchBar.OnContentsChanged += s => {
 			_queryable.SetSearchText(s ?? "");
 		};
+
+		ApplyDefaults();
 
 		/*
 		 * There aren't generic constructors, so there's no way to require that `queryElement` be
@@ -231,5 +231,6 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 	{
 		_filterPanel.ResetWithEvent();
 		_sortPanel.ResetWithEvent();
+		_searchBar.Clear();
 	}
 }
