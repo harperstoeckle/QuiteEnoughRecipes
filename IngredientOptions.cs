@@ -64,38 +64,6 @@ static class IngredientOptions
 		return groups.Any(g => result.Group == g);
 	}
 
-	/*
-	 * Make an option group for mods that are present in a master list of ingredients.
-	 *
-	 * TODO: Fit this into the reflection-based system.
-	 */
-	public static UIOptionGroup<Predicate<T>> MakeModFilterGroup<T>(IEnumerable<T> ingredients)
-		where T : IIngredient
-	{
-		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups.Mods";
-		var group = new UIOptionGroup<Predicate<T>>(Language.GetText($"{keyParent}.Name"));
-
-		var mods = ingredients
-			.Select(i => i.Mod)
-			.Where(m => m != null)
-			.Select(m => m!)
-			.Distinct()
-			.OrderBy(m => m.DisplayNameClean);
-
-		foreach (var mod in mods)
-		{
-			var name = Language.GetText($"{keyParent}.ModName").WithFormatArgs(mod.DisplayNameClean);
-			var icon = mod.ModSourceBestiaryInfoElement.GetFilterImage();
-			var button = new UIOptionToggleButton<Predicate<T>>(i => i.Mod == mod, icon){
-				HoverText = name
-			};
-
-			group.AddOption(button);
-		}
-
-		return group;
-	}
-
 	public static bool IsWeaponInDamageClass(ItemIngredient i, DamageClass dc) =>
 		i.Item.CountsAsClass(dc) && IsWeapon(i);
 	public static bool IsWeapon(ItemIngredient i) => !IsTool(i) && i.Item.damage > 0

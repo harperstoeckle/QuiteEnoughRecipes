@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using System.Linq;
 using System;
 using Terraria.GameContent.UI.Elements;
 using Terraria.Localization;
-using Terraria.UI;
-using System.Linq;
 using Terraria.ModLoader;
+using Terraria.UI;
+using Terraria;
 
 namespace QuiteEnoughRecipes;
 
@@ -90,6 +91,18 @@ public class IngredientRegistry : ModSystem
 		_filters.Clear();
 		_sorts.Clear();
 		_ingredients.Clear();
+
+		var allItems = Enumerable.Range(0, ItemLoader.ItemCount)
+			.Select(i => new Item(i))
+			.Where(i => i.type != 0)
+			.Select(i => new ItemIngredient(i));
+		AddIngredients(allItems);
+
+		var allNPCs = Enumerable.Range(0, NPCLoader.NPCCount)
+			.Where(n => Main.BestiaryDB.FindEntryByNPCID(n).Icon != null)
+			.Select(n => new NPCIngredient(n))
+			.ToList();
+		AddIngredients(allNPCs);
 
 		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups";
 
@@ -187,6 +200,38 @@ public class IngredientRegistry : ModSystem
 		var opts = _filters.OfType<IngredientFilter<T>>();
 		return MakeOptionGroup<Predicate<T>, IngredientFilter<T>, Predicate<IIngredient>>(opts,
 			f => f.Predicate);
+	}
+
+	/*
+	 * Make a filter group for filtering by mod. Only mods included in the list of ingredients of
+	 * type `T` will be used.
+	 */
+	public UIOptionGroup<Predicate<T>> MakeModFilterGroup<T>()
+		where T : IIngredient
+	{
+		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups.Mods";
+		var group = new UIOptionGroup<Predicate<T>>(Language.GetText($"{keyParent}.Name"));
+
+		_ingredients.TryGetValue(typeof(T), out var list);
+		var mods = (list?.Value ?? [])
+			.Select(i => i.Mod)
+			.Where(m => m is not null)
+			.Select(m => m!)
+			.Distinct()
+			.OrderBy(m => m.DisplayNameClean);
+
+		foreach (var mod in mods)
+		{
+			var name = Language.GetText($"{keyParent}.ModName")
+				.WithFormatArgs(mod.DisplayNameClean);
+			var icon = mod.ModSourceBestiaryInfoElement.GetFilterImage();
+			var button = new UIOptionToggleButton<Predicate<T>>(i => i.Mod == mod, icon){
+				HoverText = name
+			};
+			group.AddOption(button);
+		}
+
+		return group;
 	}
 
 	// Make a sort group element with the sort comparisons for type `T`.

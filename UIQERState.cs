@@ -207,7 +207,7 @@ public class UIQERState : UIState
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
 
 		itemSearchPage.AddFilterGroup(IngredientRegistry.Instance.MakeFilterGroup<ItemIngredient>());
-		itemSearchPage.AddFilterGroup(IngredientOptions.MakeModFilterGroup(allItems));
+		itemSearchPage.AddFilterGroup(IngredientRegistry.Instance.MakeModFilterGroup<ItemIngredient>());
 		itemSearchPage.AddSortGroup(IngredientRegistry.Instance.MakeSortGroup<ItemIngredient>());
 
 		itemSearchPage.ApplyDefaults();
@@ -222,7 +222,7 @@ public class UIQERState : UIState
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.NPCSearchHelp"));
 
 		npcSearchPage.AddFilterGroup(IngredientRegistry.Instance.MakeFilterGroup<NPCIngredient>());
-		npcSearchPage.AddFilterGroup(IngredientOptions.MakeModFilterGroup(allNPCs));
+		npcSearchPage.AddFilterGroup(IngredientRegistry.Instance.MakeModFilterGroup<NPCIngredient>());
 		npcSearchPage.AddSortGroup(IngredientRegistry.Instance.MakeSortGroup<NPCIngredient>());
 
 		npcSearchPage.ApplyDefaults();
