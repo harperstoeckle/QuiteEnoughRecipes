@@ -155,7 +155,7 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 			_filterPanel.Height.Percent = 1;
 
 			// We want to update the queryable with all filters every time any filter changes.
-			var updateFilters = (IEnumerable<Predicate<T>> e) => {
+			var updateFilters = () => {
 				_queryable.SetFilters(filters.SelectMany(f => f.GetActiveFilters()).ToList());
 				filterToggleButton.OptionSelected = !_filterPanel.IsDefaulted;
 			};
@@ -183,8 +183,8 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 			_sortPanel.Width.Percent = 1;
 			_sortPanel.Height.Percent = 1;
 
-			var updateSorts = (Comparison<T> c) => {
-				_queryable.SetSortComparison(c);
+			var updateSorts = () => {
+				_queryable.SetSortComparison(sorts[0].GetActiveSort());
 				sortToggleButton.OptionSelected = !_sortPanel.IsDefaulted;
 			};
 

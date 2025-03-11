@@ -122,7 +122,7 @@ public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 	public UIElement Element => this;
 
 	// Activated when any filters are changed.
-	public event Action<IEnumerable<Predicate<T>>>? OnFiltersChanged;
+	public event Action? OnFiltersChanged;
 
 	public UIFilterGroup()
 	{
@@ -145,7 +145,7 @@ public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 		{
 			SetButtonState(button, FilterState.Unselected);
 		}
-		OnFiltersChanged?.Invoke(GetActiveFilters());
+		OnFiltersChanged?.Invoke();
 	}
 
 	public override void LeftClick(UIMouseEvent e)
@@ -171,7 +171,7 @@ public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 			}
 
 			SetButtonState(b, newValue);
-			OnFiltersChanged?.Invoke(GetActiveFilters());
+			OnFiltersChanged?.Invoke();
 		}
 	}
 
@@ -187,7 +187,7 @@ public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 			};
 
 			SetButtonState(b, newValue);
-			OnFiltersChanged?.Invoke(GetActiveFilters());
+			OnFiltersChanged?.Invoke();
 		}
 	}
 
@@ -217,7 +217,7 @@ public class UISortGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 	public bool IsDefaulted => _activeSortIndex == 0;
 	public UIElement Element => this;
 
-	public event Action<Comparison<T>>? OnSortChanged;
+	public event Action? OnSortChanged;
 
 	/*
 	 * Unlike `UIFilterGroup`, exactly one sort option must be active at a time. This means that
@@ -243,7 +243,7 @@ public class UISortGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 	public void Reset()
 	{
 		SetIndex(0);
-		OnSortChanged?.Invoke(GetActiveSort());
+		OnSortChanged?.Invoke();
 	}
 
 	public override void LeftClick(UIMouseEvent e)
@@ -254,7 +254,7 @@ public class UISortGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 		{
 			int index = _sortButtons.FindIndex(button => button == b);
 			if (index != -1) { SetIndex(index); }
-			OnSortChanged?.Invoke(GetActiveSort());
+			OnSortChanged?.Invoke();
 		}
 	}
 
