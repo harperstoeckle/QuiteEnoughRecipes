@@ -23,7 +23,7 @@ public class UIQERState : UIState
 
 		private string _searchText = "";
 		private List<UIFilterGroup<IIngredient>> _filterGroups = [];
-		private UISortGroup<IIngredient> _sortGroup = null;
+		private UISortGroup<IIngredient> _sortGroup;
 
 		private UIList _recipeList = new(){
 			Width = new(-ScrollBarWidth, 1),
@@ -73,12 +73,12 @@ public class UIQERState : UIState
 			UpdateDisplayedRecipes();
 		}
 
-		public IEnumerable<UIFilterGroup<IIngredient>> GetFilterGroups()
+		public IEnumerable<IOptionGroup> GetFilterGroups()
 		{
 			return _filterGroups;
 		}
 
-		public IEnumerable<UISortGroup<IIngredient>> GetSortGroups()
+		public IEnumerable<IOptionGroup> GetSortGroups()
 		{
 			return [_sortGroup];
 		}
