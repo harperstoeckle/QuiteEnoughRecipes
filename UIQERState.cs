@@ -86,8 +86,7 @@ public class UIQERState : UIState
 
 		public IEnumerable<UISortGroup<IIngredient>> GetSortGroups()
 		{
-			return Handler.GetIngredientTypes()
-				.Select(t => IngredientRegistry.Instance.MakeSortGroup(t));
+			return [IngredientRegistry.Instance.MakeSortGroup(Handler.GetIngredientTypes())];
 		}
 
 		public void SetRecipes(IEnumerable<IRecipe> recipes)

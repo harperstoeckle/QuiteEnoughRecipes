@@ -276,9 +276,14 @@ public class IngredientRegistry : ModSystem
 		return DoMakeSortGroup<T, IngredientSort<T>>(opts, s => s.Comparison);
 	}
 
-	public UISortGroup<IIngredient> MakeSortGroup(Type t)
+	/*
+	 * Create a single sort group for all types in `types`. Unlike filters, it really only makes
+	 * sense to have one sort active at a time, so they should all be packed into one group.
+	 */
+	public UISortGroup<IIngredient> MakeSortGroup(IEnumerable<Type> types)
 	{
-		var opts =  _sorts.Where(f => f.IngredientType == t);
+		var typesList = types.ToList();
+		var opts = _sorts.Where(f => typesList.Any(t => f.IngredientType == t));
 		return DoMakeSortGroup<
 			IIngredient,
 			AbstractGenericOption<Comparison<IIngredient>>>(opts, s => s.Value);
