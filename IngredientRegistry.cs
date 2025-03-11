@@ -6,6 +6,7 @@ using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria;
+using Terraria.ID;
 
 namespace QuiteEnoughRecipes;
 
@@ -30,7 +31,6 @@ public class IngredientRegistry : ModSystem
 
 		public required LocalizedText Name;
 		public required Func<UIElement> ElementFunc;
-		public required OptionRules Rules;
 
 		/*
 		 * Localization key for the header above this option. Options with the same key will be
@@ -154,7 +154,6 @@ public class IngredientRegistry : ModSystem
 			Name = name,
 			ElementFunc = () => new UIItemIcon(new(iconItemID), false),
 			SectionNameKey = sectionNameKey,
-			Rules = OptionRules.AllowDisable | OptionRules.AllowEnable
 		});
 	}
 
@@ -169,8 +168,6 @@ public class IngredientRegistry : ModSystem
 			Name = name,
 			ElementFunc = () => new UIItemIcon(new(iconItemID), false),
 			SectionNameKey = sectionNameKey,
-			Rules = OptionRules.AllowEnable
-				| (shouldBeDefault ? OptionRules.EnabledByDefault : 0)
 		});
 	}
 
@@ -200,29 +197,35 @@ public class IngredientRegistry : ModSystem
 	}
 
 	// Make a filter group element with the filters for type `T`.
-	public UIOptionGroup<Predicate<T>> MakeFilterGroup<T>()
+	public UIFilterGroup<T> MakeFilterGroup<T>()
 		where T : IIngredient
 	{
-		var opts = _filters.OfType<IngredientFilter<T>>();
-		return MakeOptionGroup<Predicate<T>, IngredientFilter<T>, Predicate<IIngredient>>(opts,
-			f => f.Predicate);
+		var group = new UIFilterGroup<T>();
+		foreach (var opt in _filters.OfType<IngredientFilter<T>>())
+		{
+			group.AddFilter(opt.Predicate, opt.Name, opt.ElementFunc(), opt.SectionNameKey);
+		}
+
+		return group;
 	}
 
 	// Get the generic filter group for ingredient type `t`.
-	public UIOptionGroup<Predicate<IIngredient>> MakeFilterGroup(Type t)
+	public UIFilterGroup<IIngredient> MakeFilterGroup(Type t)
 	{
-		var opts =  _filters.Where(f => f.IngredientType == t);
-		return MakeOptionGroup<
-			Predicate<IIngredient>,
-			AbstractGenericOption<Predicate<IIngredient>>,
-			Predicate<IIngredient>>(opts, f => f.Value);
+		var group = new UIFilterGroup<IIngredient>();
+		foreach (var opt in _filters.Where(f => f.IngredientType == t))
+		{
+			group.AddFilter(opt.Value, opt.Name, opt.ElementFunc(), opt.SectionNameKey);
+		}
+
+		return group;
 	}
 
 	/*
 	 * Make a filter group for filtering by mod. Only mods included in the list of ingredients of
 	 * type `T` will be used.
 	 */
-	public UIOptionGroup<Predicate<T>> MakeModFilterGroup<T>()
+	public UIFilterGroup<T> MakeModFilterGroup<T>()
 		where T : IIngredient
 	{
 		_ingredients.TryGetValue(typeof(T), out var list);
@@ -233,7 +236,7 @@ public class IngredientRegistry : ModSystem
 	}
 
 	// Make a generic mod filter group for ingredients of any type in `ingredientTypes`.
-	public UIOptionGroup<Predicate<IIngredient>> MakeModFilterGroup(
+	public UIFilterGroup<IIngredient> MakeModFilterGroup(
 		IEnumerable<Type> ingredientTypes)
 	{
 		var mods = ingredientTypes
@@ -248,11 +251,11 @@ public class IngredientRegistry : ModSystem
 	 * Make a filter group containing each mod in `mods`. Only one filter will be added for each
 	 * different mod in `mods`, and they will be in alphabetical order.
 	 */
-	public UIOptionGroup<Predicate<T>> MakeModFilterGroup<T>(IEnumerable<Mod> mods)
+	public UIFilterGroup<T> MakeModFilterGroup<T>(IEnumerable<Mod> mods)
 		where T : IIngredient
 	{
 		var keyParent = "Mods.QuiteEnoughRecipes.OptionGroups.Mods";
-		var group = new UIOptionGroup<Predicate<T>>(Language.GetText($"{keyParent}.Name"));
+		var group = new UIFilterGroup<T>();
 
 		var sortedMods = mods.Distinct().OrderBy(m => m.DisplayNameClean);
 		foreach (var mod in sortedMods)
@@ -260,58 +263,50 @@ public class IngredientRegistry : ModSystem
 			var name = Language.GetText($"{keyParent}.ModName")
 				.WithFormatArgs(mod.DisplayNameClean);
 			var icon = mod.ModSourceBestiaryInfoElement.GetFilterImage();
-			var button = new UIOptionToggleButton<Predicate<T>>(i => i.Mod == mod, icon){
-				HoverText = name
-			};
-			group.AddOption(button);
+			group.AddFilter(i => i.Mod == mod, name, icon, $"{keyParent}.Name");
 		}
 
 		return group;
 	}
 
 	// Make a sort group element with the sort comparisons for type `T`.
-	public UIOptionGroup<Comparison<T>> MakeSortGroup<T>()
-		where T : IIngredient
+	public UISortGroup<T> MakeSortGroup<T>() where T : IIngredient
 	{
 		var opts = _sorts.OfType<IngredientSort<T>>();
-		return MakeOptionGroup<Comparison<T>, IngredientSort<T>, Comparison<IIngredient>>(opts,
-			f => f.Comparison);
+		return DoMakeSortGroup<T, IngredientSort<T>>(opts, s => s.Comparison);
 	}
 
-	public UIOptionGroup<Comparison<IIngredient>> MakeSortGroup(Type t)
+	public UISortGroup<IIngredient> MakeSortGroup(Type t)
 	{
 		var opts =  _sorts.Where(f => f.IngredientType == t);
-		return MakeOptionGroup<
-			Comparison<IIngredient>,
-			AbstractGenericOption<Comparison<IIngredient>>,
-			Comparison<IIngredient>>(opts, f => f.Value);
+		return DoMakeSortGroup<
+			IIngredient,
+			AbstractGenericOption<Comparison<IIngredient>>>(opts, s => s.Value);
 	}
 
-	private static UIOptionGroup<T> MakeOptionGroup<T, U, V>(IEnumerable<U> opts, Func<U, T> getValue)
-		where U : AbstractGenericOption<V>
+	private static UISortGroup<T> DoMakeSortGroup<T, U>(IEnumerable<U> opts,
+		Func<U, Comparison<T>> getValue) where U : AbstractGenericOption<Comparison<IIngredient>>
 	{
-		var group = new UIOptionGroup<T>();
-		var filterSections = opts
-			.GroupBy(f => f.SectionNameKey)
-			.Select(g => g.ToList())
-			.ToList();
+		var optEnum = opts.GetEnumerator();
 
-		foreach (var section in filterSections)
+		// If there are no options, then we have to resort to a fake sort that does nothing.
+		UISortGroup<T> group;
+		if (!optEnum.MoveNext())
 		{
-			var heading = Language.Exists(section[0].SectionNameKey)
-				? Language.GetText(section[0].SectionNameKey)
-				: null;
-			var subgroup = new UIOptionGroup<T>(heading);
+			group = new UISortGroup<T>((x, y) => 0, Language.GetText(""),
+				new UIItemIcon(new(ItemID.AngelStatue), false), "");
+		}
+		else
+		{
+			var opt = optEnum.Current;
+			group = new UISortGroup<T>(getValue(opt), opt.Name, opt.ElementFunc(),
+				opt.SectionNameKey);
+		}
 
-			foreach (var opt in section)
-			{
-				subgroup.AddOption(
-					new UIOptionToggleButton<T>(getValue(opt), opt.ElementFunc(), opt.Rules){
-						HoverText = opt.Name
-					});
-			}
-
-			group.AddSubgroup(subgroup);
+		while (optEnum.MoveNext())
+		{
+			var opt = optEnum.Current;
+			group.AddSort(getValue(opt), opt.Name, opt.ElementFunc(), opt.SectionNameKey);
 		}
 
 		return group;

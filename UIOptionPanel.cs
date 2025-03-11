@@ -11,164 +11,226 @@ using Terraria;
 
 namespace QuiteEnoughRecipes;
 
-public interface IOptionElement<T>
+/*
+ * An group of options that can put in a `UIOptionPanel`. An `IOptionGroup` keeps track of whether
+ * the option is in its default state, and can be reset back to the default state.
+ */
+public interface IOptionGroup
 {
-	// If `IsEnabled` is false, then the value won't be used.
-	public bool IsEnabled { get; }
 	public bool IsDefaulted { get; }
 
-	public T Value { get; }
+	// Get the element to be displayed in the panel.
 	public UIElement Element { get; }
 
 	/*
-	 * Reset to the default state. This should not actiate `OnValueChanged`. After calling this,
-	 * `IsDefaulted` should be true.
+	 * Reset to the default state. If this element has any events that trigger when the value
+	 * changes, they should be triggered by this.
 	 */
 	public void Reset();
-
-	// Disable this element. After calling this, `IsEnabled` should be set to false.
-	public void Disable();
-
-	/*
-	 * This should be activated whenever the value or enabled status of this element is changed by
-	 * some external source. I.e., this should be activated when a button is clicked, but it
-	 * should not be activated when `Reset` is called.
-	 */
-	public event Action<IOptionElement<T>>? OnValueChanged;
 }
 
-// Option element that applies a function to its value.
-public class MappedOptionElement<T, U> : IOptionElement<U>
+/*
+ * Auto-extending grid that allows groups of elements to be given section headers. Sections are
+ * addressed by their localization keys. If they key doesn't exist, the header will not display any
+ * text.
+ */
+public class UIAutoExtendSectionGrid : UIAutoExtendGrid
 {
-	private IOptionElement<T> _inner;
-	private Func<T, U> _func;
-
-	public bool IsEnabled => _inner.IsEnabled;
-	public bool IsDefaulted => _inner.IsDefaulted;
-	public UIElement Element => _inner.Element;
-	public U Value => _func(_inner.Value);
-
-	public event Action<IOptionElement<U>>? OnValueChanged;
-
-	public MappedOptionElement(IOptionElement<T> inner, Func<T, U> func)
+	private class Section
 	{
-		_inner = inner;
-		_func = func;
-
-		_inner.OnValueChanged += e => OnValueChanged?.Invoke(this);
+		public required string Key;
+		public List<UIElement> Elems = [];
+		public required UIText HeaderElem;
 	}
 
-	public void Reset() => _inner.Reset();
-	public void Disable() => _inner.Disable();
+	private bool _hasChanged = false;
+	private List<Section> _sections = [];
+
+	public void AddToSection(UIElement e, string sectionNameKey)
+	{
+		var section = _sections.FirstOrDefault(s => s.Key == sectionNameKey);
+
+		if (section is null)
+		{
+			var text = Language.Exists(sectionNameKey)
+				? Language.GetText(sectionNameKey)
+				: Language.GetText("");
+
+			section = new(){
+				Key = sectionNameKey,
+				HeaderElem = new(text){
+					Width = new(0, 1),
+
+					// Sections after the first one have extra space at the top.
+					PaddingTop = _sections.Count == 0 ? 0 : 20,
+					TextOriginX = 0,
+					TextOriginY = 1
+				}
+			};
+			_sections.Add(section);
+		}
+
+		section.Elems.Add(e);
+		_hasChanged = true;
+	}
+
+	public override void Recalculate()
+	{
+		if (_hasChanged)
+		{
+			RemoveAllChildren();
+			foreach (var s in _sections)
+			{
+				Append(s.HeaderElem);
+				foreach (var elem in s.Elems) { Append(elem); }
+			}
+
+			_hasChanged = false;
+		}
+
+		base.Recalculate();
+	}
 }
 
-public static class OptionElementExtensions
+public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 {
-	// Used to convert one type of `OptionElement` to another by a function.
-	public static IOptionElement<U> Map<T, U>(this IOptionElement<T> e, Func<T, U> f)
+	private class FilterState
 	{
-		return new MappedOptionElement<T, U>(e, f);
+		public required Predicate<T> Pred;
+		public bool IsEnabled = false;
+	}
+
+	private List<UIOptionButton<FilterState>> _optionButtons = [];
+
+	public bool IsDefaulted => _optionButtons.All(b => !b.Value.IsEnabled);
+	public UIElement Element => this;
+
+	// Activated when any filters are changed.
+	public event Action<IEnumerable<Predicate<T>>>? OnFiltersChanged;
+
+	public UIFilterGroup()
+	{
+		Width.Percent = 1;
+	}
+
+	public void AddFilter(Predicate<T> pred, LocalizedText name, UIElement icon, string sectionNameKey)
+	{
+		_optionButtons.Add(new(icon){
+			Value = new(){ Pred = pred },
+			HoverText = name,
+		});
+
+		AddToSection(_optionButtons[_optionButtons.Count - 1], sectionNameKey);
+	}
+
+	public void Reset()
+	{
+		foreach (var button in _optionButtons) { SetButtonState(button, false); }
+		OnFiltersChanged?.Invoke(GetActiveFilters());
+	}
+
+	public override void LeftClick(UIMouseEvent e)
+	{
+		base.LeftClick(e);
+
+		if (e.Target is UIOptionButton<FilterState> b)
+		{
+			bool newValue = !b.Value.IsEnabled;
+			foreach (var button in _optionButtons) { SetButtonState(button, false); }
+			SetButtonState(b, newValue);
+
+			OnFiltersChanged?.Invoke(GetActiveFilters());
+		}
+	}
+
+	public IEnumerable<Predicate<T>> GetActiveFilters()
+	{
+		return _optionButtons.Where(b => b.Value.IsEnabled).Select(b => b.Value.Pred);
+	}
+
+	private static void SetButtonState(UIOptionButton<FilterState> button, bool isEnabled)
+	{
+		button.Value.IsEnabled = isEnabled;
+		button.PanelOverrideColor = isEnabled ? Color.White : null;
+	}
+}
+
+public class UISortGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
+{
+	private int _activeSortIndex = 0;
+	private List<UIOptionButton<Comparison<T>>> _sortButtons = [];
+
+	public bool IsDefaulted => _activeSortIndex == 0;
+	public UIElement Element => this;
+
+	public event Action<Comparison<T>>? OnSortChanged;
+
+	/*
+	 * Unlike `UIFilterGroup`, exactly one sort option must be active at a time. This means that
+	 * there must be at least one sort option already available at the start.
+	 */
+	public UISortGroup(Comparison<T> defaultComp, LocalizedText defaultName, UIElement defaultIcon,
+		string defaultSectionNameKey)
+	{
+		Width.Percent = 1;
+		AddSort(defaultComp, defaultName, defaultIcon, defaultSectionNameKey);
+	}
+
+	public void AddSort(Comparison<T> comp, LocalizedText name, UIElement icon, string sectionNameKey)
+	{
+		_sortButtons.Add(new(icon){
+			Value = comp,
+			HoverText = name
+		});
+
+		AddToSection(_sortButtons[_sortButtons.Count - 1], sectionNameKey);
+	}
+
+	public void Reset()
+	{
+		SetIndex(0);
+		OnSortChanged?.Invoke(GetActiveSort());
+	}
+
+	public override void LeftClick(UIMouseEvent e)
+	{
+		base.LeftClick(e);
+
+		if (e.Target is UIOptionButton<Comparison<T>> b)
+		{
+			int index = _sortButtons.FindIndex(button => button == b);
+			if (index != -1) { SetIndex(index); }
+			OnSortChanged?.Invoke(GetActiveSort());
+		}
+	}
+
+	public Comparison<T> GetActiveSort() => _sortButtons[_activeSortIndex].Value;
+
+	private void SetIndex(int i)
+	{
+		if (i >= _sortButtons.Count) { return; }
+
+		foreach (var button in _sortButtons) { button.PanelOverrideColor = null; }
+		_sortButtons[i].PanelOverrideColor = Color.White;
+		_activeSortIndex = i;
 	}
 }
 
 /*
- * Group of options, placed in a grid, with an optional header. It will attempt to ensure that
- * only at most one option can be enabled at once.
+ * A simple button with an icon. A lot like `GroupOptionButton`, but it allows for any arbitrary
+ * element as the icon.
  */
-public class UIOptionGroup<T> : UIAutoExtendGrid, IOptionElement<IEnumerable<T>>
+public class UIOptionButton<T> : UIElement
 {
-	private List<IOptionElement<IEnumerable<T>>> _subgroups = [];
-
-	public bool IsEnabled => _subgroups.Any(o => o.IsEnabled);
-	public bool IsDefaulted => _subgroups.All(o => o.IsDefaulted);
-	public IEnumerable<T> Value => _subgroups.Where(o => o.IsEnabled).SelectMany(o => o.Value);
-	public UIElement Element => this;
-
-	public event Action<IOptionElement<IEnumerable<T>>>? OnValueChanged;
-
-	public UIOptionGroup(LocalizedText? header = null)
-	{
-		Width.Percent = 1;
-
-		if (header != null)
-		{
-			Append(new UIText(header){
-				Width = new(0, 1),
-				Height = new(20, 0),
-				TextOriginX = 0,
-				TextOriginY = 0
-			});
-		}
-	}
-
-	public void Reset() { foreach (var o in _subgroups) { o.Reset(); } }
-	public void Disable() { foreach (var o in _subgroups) { o.Disable(); } }
-
-	public void AddSubgroup(IOptionElement<IEnumerable<T>> group)
-	{
-		/*
-		 * A bit of a hack. We assume that any group with proper subgroups will *only* have
-		 * proper subgroups, so we give them more space.
-		 */
-		Padding = 20;
-		DoAddSubgroup(group);
-	}
-
-	public void AddOption(IOptionElement<T> option)
-	{
-		// TODO: Does this add any meaningful overhead?
-		DoAddSubgroup(option.Map<T, IEnumerable<T>>(v => [v]));
-	}
-
-	private void DoAddSubgroup(IOptionElement<IEnumerable<T>> group)
-	{
-		Append(group.Element);
-		_subgroups.Add(group);
-
-		group.OnValueChanged += g => {
-			// New option selected; deselect everything else.
-			if (g.IsEnabled)
-			{
-				foreach (var opt in _subgroups)
-				{
-					if (g != opt) { opt.Disable(); }
-				}
-			}
-
-			OnValueChanged?.Invoke(this);
-		};
-	}
-}
-
-[Flags]
-public enum OptionRules
-{
-	AllowDisable = 1 << 0,
-	AllowEnable = 1 << 1,
-	EnabledByDefault = 1 << 2,
-}
-
-// A button that can be toggled on or off.
-public class UIOptionToggleButton<T> : UIElement, IOptionElement<T>
-{
-	private OptionRules _rules;
-
 	public required LocalizedText HoverText;
-	public bool IsDefaulted => IsEnabled == ((_rules & OptionRules.EnabledByDefault) != 0);
-	public bool IsEnabled { get; private set; } = false;
-	public T Value { get; set; }
+	public required T Value;
 	public UIElement Element => this;
 
-	public event Action<IOptionElement<T>>? OnValueChanged;
+	// Override the color of the panel in the back.
+	public Color? PanelOverrideColor = null;
 
-	public UIOptionToggleButton(T value, UIElement icon,
-		OptionRules rules = OptionRules.AllowDisable | OptionRules.AllowEnable)
+	public UIOptionButton(UIElement icon)
 	{
-		Value = value;
-		_rules = rules;
-
-		Reset();
-
 		Width.Pixels = 40;
 		Height.Pixels = 40;
 
@@ -178,31 +240,16 @@ public class UIOptionToggleButton<T> : UIElement, IOptionElement<T>
 		Append(icon);
 	}
 
-	public void Reset() => IsEnabled = (_rules & OptionRules.EnabledByDefault) != 0;
-	public void Disable() => IsEnabled = false;
-
-	public override void LeftClick(UIMouseEvent e)
-	{
-		base.LeftClick(e);
-
-		if ((_rules & OptionRules.AllowEnable) != 0 && !IsEnabled
-			|| (_rules & OptionRules.AllowDisable) != 0 && IsEnabled)
-		{
-			IsEnabled = !IsEnabled;
-			OnValueChanged?.Invoke(this);
-		}
-	}
-
 	protected override void DrawSelf(SpriteBatch sb)
 	{
 		// TODO: Maybe this should just be done with the greyscale panel and a mask.
-		var texture = IsEnabled
-			? Main.Assets.Request<Texture2D>("Images/UI/CharCreation/PanelGrayscale").Value
-			: Main.Assets.Request<Texture2D>("Images/UI/CharCreation/CategoryPanel").Value;
+		var texture = PanelOverrideColor is null
+			? Main.Assets.Request<Texture2D>("Images/UI/CharCreation/CategoryPanel").Value
+			: Main.Assets.Request<Texture2D>("Images/UI/CharCreation/PanelGrayscale").Value;
 
 		var dims = GetDimensions();
 		Utils.DrawSplicedPanel(sb, texture, (int) dims.X, (int) dims.Y, (int) dims.Width,
-			(int) dims.Height, 10, 10, 10, 10, Color.White);
+			(int) dims.Height, 10, 10, 10, 10, PanelOverrideColor ?? Color.White);
 
 		if (IsMouseHovering)
 		{
@@ -211,25 +258,14 @@ public class UIOptionToggleButton<T> : UIElement, IOptionElement<T>
 	}
 }
 
-/*
- * Contains a scrollable list of option groups, each separated by a horizontal line. Unlike
- * `UIOptionGroup`, this will *not* disable other options when an option is enabled.
- */
-public class UIOptionPanel<T> : UIPanel, IOptionElement<IEnumerable<T>>
+// Contains a scrollable list of option groups, each separated by a horizontal line.
+public class UIOptionPanel<T> : UIPanel, IOptionGroup
 {
-	private List<IOptionElement<IEnumerable<T>>> _groups = [];
+	private List<IOptionGroup> _groups = [];
 	private UIList _list = new(){ ListPadding = 20 };
 
-	public bool IsEnabled => _groups.Any(g => g.IsEnabled);
 	public bool IsDefaulted => _groups.All(g => g.IsDefaulted);
-	public IEnumerable<T> Value => _groups.Where(o => o.IsEnabled).SelectMany(o => o.Value);
 	public UIElement Element => this;
-
-	/*
-	 * This will be activated when the option selection changes. This will be called with a list of
-	 * all enabled options.
-	 */
-	public event Action<IOptionElement<IEnumerable<T>>>? OnValueChanged;
 
 	public UIOptionPanel()
 	{
@@ -253,7 +289,7 @@ public class UIOptionPanel<T> : UIPanel, IOptionElement<IEnumerable<T>>
 		Append(scroll);
 	}
 
-	public void AddGroup(IOptionElement<IEnumerable<T>> group)
+	public void AddGroup(IOptionGroup group)
 	{
 		_groups.Add(group);
 
@@ -265,17 +301,7 @@ public class UIOptionPanel<T> : UIPanel, IOptionElement<IEnumerable<T>>
 			});
 		}
 		_list.Add(group.Element);
-
-		group.OnValueChanged += o => OnValueChanged?.Invoke(this);
 	}
 
 	public void Reset() { foreach (var g in _groups) { g.Reset(); } }
-	public void Disable() { foreach (var o in _groups) { o.Disable(); } }
-
-	// This will reset the options in this panel, but also activate the `OnValueChanged` event.
-	public void ResetWithEvent()
-	{
-		Reset();
-		OnValueChanged?.Invoke(this);
-	}
 }

@@ -23,8 +23,8 @@ public interface IQueryable<T>
 	public void SetSortComparison(Comparison<T>? comparison);
 
 	// These will be added to the filter and sort panels.
-	public IEnumerable<UIOptionGroup<Predicate<T>>> GetFilterGroups();
-	public IEnumerable<UIOptionGroup<Comparison<T>>> GetSortGroups();
+	public IEnumerable<UIFilterGroup<T>> GetFilterGroups();
+	public IEnumerable<UISortGroup<T>> GetSortGroups();
 }
 
 // A page containing a search bar that can automatically be focused.
@@ -153,16 +153,21 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 
 			_filterPanel.Width.Percent = 1;
 			_filterPanel.Height.Percent = 1;
-			_filterPanel.OnValueChanged += f => {
-				var preds = f.Value.ToList();
-				filterToggleButton.OptionSelected = !f.IsDefaulted;
-				_queryable.SetFilters(preds);
+
+			// We want to update the queryable with all filters every time any filter changes.
+			var updateFilters = (IEnumerable<Predicate<T>> e) => {
+				_queryable.SetFilters(filters.SelectMany(f => f.GetActiveFilters()).ToList());
+				filterToggleButton.OptionSelected = !_filterPanel.IsDefaulted;
 			};
 
-			foreach (var f in filters) { _filterPanel.AddGroup(f); }
+			foreach (var f in filters)
+			{
+				_filterPanel.AddGroup(f);
+				f.OnFiltersChanged += updateFilters;
+			}
 
 			filterToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_filterPanel);
-			filterToggleButton.OnRightClick += (b, e) => _filterPanel.ResetWithEvent();
+			filterToggleButton.OnRightClick += (b, e) => _filterPanel.Reset();
 
 			offset += filterToggleButton.Width.Pixels + 10;
 			Append(filterToggleButton);
@@ -177,17 +182,21 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 
 			_sortPanel.Width.Percent = 1;
 			_sortPanel.Height.Percent = 1;
-			_sortPanel.OnValueChanged += f => {
-				var comp = f.Value.FirstOrDefault();
-				sortToggleButton.OptionSelected = !f.IsDefaulted;
-				_queryable.SetSortComparison(comp);
+
+			var updateSorts = (Comparison<T> c) => {
+				_queryable.SetSortComparison(c);
+				sortToggleButton.OptionSelected = !_sortPanel.IsDefaulted;
 			};
 
-			foreach (var s in sorts) { _sortPanel.AddGroup(s); }
+			foreach (var s in sorts)
+			{
+				_sortPanel.AddGroup(s);
+				s.OnSortChanged += updateSorts;
+			}
 
 			sortToggleButton.Left.Pixels = offset;
 			sortToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_sortPanel);
-			sortToggleButton.OnRightClick += (b, e) => _sortPanel.ResetWithEvent();
+			sortToggleButton.OnRightClick += (b, e) => _sortPanel.Reset();
 
 			offset += sortToggleButton.Width.Pixels + 10;
 			Append(sortToggleButton);
@@ -229,8 +238,8 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 
 	public void ApplyDefaults()
 	{
-		_filterPanel.ResetWithEvent();
-		_sortPanel.ResetWithEvent();
+		_filterPanel.Reset();
+		_sortPanel.Reset();
 		_searchBar.Clear();
 	}
 }

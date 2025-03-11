@@ -61,7 +61,7 @@ public class UIQueryableIngredientGrid<T, E> : UIElement, IQueryable<T>
 		UpdateDisplayedIngredients();
 	}
 
-	public IEnumerable<UIOptionGroup<Predicate<T>>> GetFilterGroups()
+	public IEnumerable<UIFilterGroup<T>> GetFilterGroups()
 	{
 		return [
 			IngredientRegistry.Instance.MakeFilterGroup<T>(),
@@ -69,7 +69,7 @@ public class UIQueryableIngredientGrid<T, E> : UIElement, IQueryable<T>
 		];
 	}
 
-	public IEnumerable<UIOptionGroup<Comparison<T>>> GetSortGroups()
+	public IEnumerable<UISortGroup<T>> GetSortGroups()
 	{
 		return [IngredientRegistry.Instance.MakeSortGroup<T>()];
 	}

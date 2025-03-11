@@ -75,7 +75,7 @@ public class UIQERState : UIState
 			UpdateDisplayedRecipes();
 		}
 
-		public IEnumerable<UIOptionGroup<Predicate<IIngredient>>> GetFilterGroups()
+		public IEnumerable<UIFilterGroup<IIngredient>> GetFilterGroups()
 		{
 			return Handler.GetIngredientTypes()
 				.Select(t => IngredientRegistry.Instance.MakeFilterGroup(t))
@@ -84,7 +84,7 @@ public class UIQERState : UIState
 				]);
 		}
 
-		public IEnumerable<UIOptionGroup<Comparison<IIngredient>>> GetSortGroups()
+		public IEnumerable<UISortGroup<IIngredient>> GetSortGroups()
 		{
 			return Handler.GetIngredientTypes()
 				.Select(t => IngredientRegistry.Instance.MakeSortGroup(t));

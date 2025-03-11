@@ -47,8 +47,6 @@ static class IngredientOptions
 		var heading = Language.Exists($"{KeyParent}.{groupName}.Name")
 			? Language.GetText($"{KeyParent}.{groupName}.Name")
 			: null;
-		var group = new UIOptionGroup<T>(heading);
-
 		return typeof(IngredientOptions).GetMethods(BindingFlags.Public | BindingFlags.Static)
 			.SelectMany(m => GetOptionsFromMethod<T>(m, groupName));
 	}
