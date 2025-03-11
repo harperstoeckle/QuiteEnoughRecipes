@@ -19,12 +19,14 @@ namespace QuiteEnoughRecipes;
 public interface IQueryable<T>
 {
 	public void SetSearchText(string text);
-	public void SetFilters(List<Predicate<T>> filters);
-	public void SetSortComparison(Comparison<T>? comparison);
 
-	// These will be added to the filter and sort panels.
-	public IEnumerable<UIFilterGroup<T>> GetFilterGroups();
-	public IEnumerable<UISortGroup<T>> GetSortGroups();
+	/*
+	 * These will be added to the filter and sort panels. Actually detecting changes in them and
+	 * doing the sorting/filtering has to be handled entirely by the class implementing
+	 * `IQueryable`.
+	 */
+	public IEnumerable<IOptionGroup> GetFilterGroups();
+	public IEnumerable<IOptionGroup> GetSortGroups();
 }
 
 // A page containing a search bar that can automatically be focused.
@@ -33,31 +35,37 @@ public interface IFocusableSearchPage
 	public void FocusSearchBar();
 }
 
-/*
- * TODO: This is only public so that `UIQERState` can avoid closing the option popup when one of
- * these buttons is pressed by checking the type. There should be a better way of checking whether
- * clicking an element should close the popup.
- */
 public class OptionPanelToggleButton : UIElement
 {
-	private string _iconPath;
-	private string _name;
 
 	/*
-	 * Should be set to true to indicate that an option is currently enabled; this will show a
-	 * little red dot and add some text to the tooltip.
+	 * This will be displayed as a popup when the button is pressed. If it is not in its default
+	 * state, then this button will show a small red dot indicator. If this button is right clicked,
+	 * then this option group will be set to its default state.
 	 */
-	public bool OptionSelected = false;
+	public required IOptionGroup OptionGroup;
+	public required string IconPath;
+	public required string Name;
 
 	/*
 	 * `image` is supposed to be either the bestiary filtering or sorting button, since the icon
 	 * can be easily cut out of them from a specific location.
 	 */
-	public OptionPanelToggleButton(string texturePath, string name)
+	public OptionPanelToggleButton()
 	{
-		_iconPath = texturePath;
-		_name = name;
 		Width.Pixels = Height.Pixels = 22;
+	}
+
+	public override void LeftClick(UIMouseEvent e)
+	{
+		base.LeftClick(e);
+		UISystem.UI?.OpenPopup(OptionGroup.Element);
+	}
+
+	public override void RightClick(UIMouseEvent e)
+	{
+		base.RightClick(e);
+		OptionGroup.Reset();
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
@@ -65,16 +73,18 @@ public class OptionPanelToggleButton : UIElement
 		base.DrawSelf(sb);
 
 		var pos = GetDimensions().Position();
-		var filterIcon = Main.Assets.Request<Texture2D>(_iconPath).Value;
+		var filterIcon = Main.Assets.Request<Texture2D>(IconPath).Value;
 
 		// We only want the icon part of the texture without the part that usually has the text.
 		sb.Draw(filterIcon, pos, new Rectangle(4, 4, 22, 22), Color.White);
+
+		bool isSelected = !OptionGroup.IsDefaulted;
 
 		/*
 		 * This is the same indicator used for trapped chests. It's about the right shape and
 		 * size, so it's good enough.
 		 */
-		if (OptionSelected)
+		if (isSelected)
 		{
 			sb.Draw(TextureAssets.Wire.Value, pos + new Vector2(4),
 				new Rectangle(4, 58, 8, 8), Color.White, 0f, new Vector2(4), 1, 0, 0);
@@ -83,7 +93,7 @@ public class OptionPanelToggleButton : UIElement
 		if (IsMouseHovering)
 		{
 			var c = Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.RightClickToClear");
-			Main.instance.MouseText(_name + (OptionSelected ? '\n' + c : ""));
+			Main.instance.MouseText(Name + (isSelected ? '\n' + c : ""));
 		}
 	}
 }
@@ -125,8 +135,8 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 	private IQueryable<T> _queryable;
 
 
-	private UIOptionPanel<Predicate<T>> _filterPanel = new();
-	private UIOptionPanel<Comparison<T>> _sortPanel = new();
+	private UIOptionPanel _filterPanel = new();
+	private UIOptionPanel _sortPanel = new();
 	private UIQERSearchBar _searchBar = new();
 
 	/*
@@ -147,27 +157,16 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 		var filters = queryElement.GetFilterGroups().ToList();
 		if (filters.Count > 0)
 		{
-			var filterToggleButton = new OptionPanelToggleButton(
-				"Images/UI/Bestiary/Button_Filtering",
-				Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"));
-
 			_filterPanel.Width.Percent = 1;
 			_filterPanel.Height.Percent = 1;
+			foreach (var f in filters) { _filterPanel.AddGroup(f); }
 
-			// We want to update the queryable with all filters every time any filter changes.
-			var updateFilters = () => {
-				_queryable.SetFilters(filters.SelectMany(f => f.GetActiveFilters()).ToList());
-				filterToggleButton.OptionSelected = !_filterPanel.IsDefaulted;
+			var filterToggleButton = new OptionPanelToggleButton{
+				IconPath = "Images/UI/Bestiary/Button_Filtering",
+				Name = Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"),
+				OptionGroup = _filterPanel,
+				Left = new(offset, 0)
 			};
-
-			foreach (var f in filters)
-			{
-				_filterPanel.AddGroup(f);
-				f.OnFiltersChanged += updateFilters;
-			}
-
-			filterToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_filterPanel);
-			filterToggleButton.OnRightClick += (b, e) => _filterPanel.Reset();
 
 			offset += filterToggleButton.Width.Pixels + 10;
 			Append(filterToggleButton);
@@ -176,27 +175,16 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 		var sorts = queryElement.GetSortGroups().ToList();
 		if (sorts.Count > 0)
 		{
-			var sortToggleButton = new OptionPanelToggleButton(
-				"Images/UI/Bestiary/Button_Sorting",
-				Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SortHover"));
-
 			_sortPanel.Width.Percent = 1;
 			_sortPanel.Height.Percent = 1;
+			foreach (var s in sorts) { _sortPanel.AddGroup(s); }
 
-			var updateSorts = () => {
-				_queryable.SetSortComparison(sorts[0].GetActiveSort());
-				sortToggleButton.OptionSelected = !_sortPanel.IsDefaulted;
+			var sortToggleButton = new OptionPanelToggleButton{
+				IconPath = "Images/UI/Bestiary/Button_Sorting",
+				Name = Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SortHover"),
+				OptionGroup = _sortPanel,
+				Left = new(offset, 0)
 			};
-
-			foreach (var s in sorts)
-			{
-				_sortPanel.AddGroup(s);
-				s.OnSortChanged += updateSorts;
-			}
-
-			sortToggleButton.Left.Pixels = offset;
-			sortToggleButton.OnLeftClick += (b, e) => UISystem.UI?.OpenPopup(_sortPanel);
-			sortToggleButton.OnRightClick += (b, e) => _sortPanel.Reset();
 
 			offset += sortToggleButton.Width.Pixels + 10;
 			Append(sortToggleButton);

@@ -22,8 +22,8 @@ public class UIQERState : UIState
 		private List<RecipeEntry> _entries = [];
 
 		private string _searchText = "";
-		private List<Predicate<IIngredient>> _filters = [];
-		private Comparison<IIngredient>? _comparison = null;
+		private List<UIFilterGroup<IIngredient>> _filterGroups = [];
+		private UISortGroup<IIngredient> _sortGroup = null;
 
 		private UIList _recipeList = new(){
 			Width = new(-ScrollBarWidth, 1),
@@ -41,6 +41,16 @@ public class UIQERState : UIState
 		public UIRecipeList(IRecipeHandler handler)
 		{
 			Handler = handler;
+			_filterGroups = Handler.GetIngredientTypes()
+				.Select(t => IngredientRegistry.Instance.MakeFilterGroup(t))
+				.Concat([
+					IngredientRegistry.Instance.MakeModFilterGroup(Handler.GetIngredientTypes())
+				])
+				.ToList();
+			_sortGroup = IngredientRegistry.Instance.MakeSortGroup(Handler.GetIngredientTypes());
+
+			foreach (var f in _filterGroups) { f.OnFiltersChanged += UpdateDisplayedRecipes; }
+			_sortGroup.OnSortChanged += UpdateDisplayedRecipes;
 
 			_recipeList.SetScrollbar(Scrollbar);
 			_recipeList.ManualSortMethod = l => {};
@@ -63,30 +73,14 @@ public class UIQERState : UIState
 			UpdateDisplayedRecipes();
 		}
 
-		public void SetFilters(List<Predicate<IIngredient>> filters)
-		{
-			_filters = filters;
-			UpdateDisplayedRecipes();
-		}
-
-		public void SetSortComparison(Comparison<IIngredient>? comparison)
-		{
-			_comparison = comparison;
-			UpdateDisplayedRecipes();
-		}
-
 		public IEnumerable<UIFilterGroup<IIngredient>> GetFilterGroups()
 		{
-			return Handler.GetIngredientTypes()
-				.Select(t => IngredientRegistry.Instance.MakeFilterGroup(t))
-				.Concat([
-					IngredientRegistry.Instance.MakeModFilterGroup(Handler.GetIngredientTypes())
-				]);
+			return _filterGroups;
 		}
 
 		public IEnumerable<UISortGroup<IIngredient>> GetSortGroups()
 		{
-			return [IngredientRegistry.Instance.MakeSortGroup(Handler.GetIngredientTypes())];
+			return [_sortGroup];
 		}
 
 		public void SetRecipes(IEnumerable<IRecipe> recipes)
@@ -100,16 +94,14 @@ public class UIQERState : UIState
 		private void UpdateDisplayedRecipes()
 		{
 			var query = SearchQuery.FromSearchText(_searchText);
+			var filters = _filterGroups.SelectMany(f => f.GetActiveFilters()).ToList();
 
-			if (_comparison != null)
-			{
-				_entries.Sort((x, y) =>
-					LexicographicalCompare(x.Ingredients, y.Ingredients, _comparison));
-			}
+			_entries.Sort((x, y) =>
+				LexicographicalCompare(x.Ingredients, y.Ingredients, _sortGroup.GetActiveSort()));
 
 			var recipesToView = _entries
 				.Where(e => e.Ingredients.Any(i => query.Matches(i))
-					&& _filters.All(f => e.Ingredients.Any(i => f(i))))
+					&& filters.All(f => e.Ingredients.Any(i => f(i))))
 				.Select(e => e.Elem);
 
 			_recipeList.Clear();

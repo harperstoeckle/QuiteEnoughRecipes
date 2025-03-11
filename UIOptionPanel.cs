@@ -313,7 +313,7 @@ public class UIOptionButton<T> : UIElement, IDoNotClearTag
 }
 
 // Contains a scrollable list of option groups, each separated by a horizontal line.
-public class UIOptionPanel<T> : UIPanel, IOptionGroup
+public class UIOptionPanel : UIPanel, IOptionGroup
 {
 	private List<IOptionGroup> _groups = [];
 	private UIList _list = new(){ ListPadding = 20 };

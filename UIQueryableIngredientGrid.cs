@@ -16,8 +16,11 @@ public class UIQueryableIngredientGrid<T, E> : UIElement, IQueryable<T>
 	private List<T> _filteredIngredients;
 
 	private string _searchText = "";
-	private List<Predicate<T>> _filters = [];
-	private Comparison<T>? _comparison = null;
+	private List<UIFilterGroup<T>> _filterGroups = [
+		IngredientRegistry.Instance.MakeFilterGroup<T>(),
+		IngredientRegistry.Instance.MakeModFilterGroup<T>()
+	];
+	private UISortGroup<T> _sortGroup = IngredientRegistry.Instance.MakeSortGroup<T>();
 
 	private UIScrollableGrid<T, E> _grid = new();
 
@@ -27,6 +30,9 @@ public class UIQueryableIngredientGrid<T, E> : UIElement, IQueryable<T>
 
 		_allIngredients = IngredientRegistry.Instance.GetIngredients<T>();
 		_filteredIngredients = new(_allIngredients);
+
+		foreach (var f in _filterGroups) { f.OnFiltersChanged += UpdateDisplayedIngredients; }
+		_sortGroup.OnSortChanged += UpdateDisplayedIngredients;
 
 		var scroll = new UIScrollbar();
 		scroll.Height.Percent = 1;
@@ -49,44 +55,27 @@ public class UIQueryableIngredientGrid<T, E> : UIElement, IQueryable<T>
 		UpdateDisplayedIngredients();
 	}
 
-	public void SetFilters(List<Predicate<T>> filters)
+	public IEnumerable<IOptionGroup> GetFilterGroups()
 	{
-		_filters = filters;
-		UpdateDisplayedIngredients();
+		return _filterGroups;
 	}
 
-	public void SetSortComparison(Comparison<T>? comparison)
+	public IEnumerable<IOptionGroup> GetSortGroups()
 	{
-		_comparison = comparison;
-		UpdateDisplayedIngredients();
-	}
-
-	public IEnumerable<UIFilterGroup<T>> GetFilterGroups()
-	{
-		return [
-			IngredientRegistry.Instance.MakeFilterGroup<T>(),
-			IngredientRegistry.Instance.MakeModFilterGroup<T>()
-		];
-	}
-
-	public IEnumerable<UISortGroup<T>> GetSortGroups()
-	{
-		return [IngredientRegistry.Instance.MakeSortGroup<T>()];
+		return [_sortGroup];
 	}
 
 	// Update what ingredients are being displayed based on the search bar and filters.
 	private void UpdateDisplayedIngredients()
 	{
 		var query = SearchQuery.FromSearchText(_searchText ?? "");
+		var filters = _filterGroups.SelectMany(f => f.GetActiveFilters()).ToList();
 
 		_filteredIngredients.Clear();
 		_filteredIngredients.AddRange(
-			_allIngredients.Where(i => query.Matches(i) && (_filters.All(f => f(i)))));
+			_allIngredients.Where(i => query.Matches(i) && (filters.All(f => f(i)))));
 
-		if (_comparison != null)
-		{
-			_filteredIngredients.Sort(_comparison);
-		}
+		_filteredIngredients.Sort(_sortGroup.GetActiveSort());
 
 		_grid.Values = _filteredIngredients;
 	}
