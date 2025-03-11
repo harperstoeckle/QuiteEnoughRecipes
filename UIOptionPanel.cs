@@ -30,6 +30,13 @@ public interface IOptionGroup
 }
 
 /*
+ * When `UIOptionPanel` detects a right click in its bounds, it will first check that the target
+ * does not implement this interface. It will then reset all of the option groups in the panel only
+ * if the target doesn't implement `IDoNotClearTag`.
+ */
+public interface IDoNotClearTag {}
+
+/*
  * Auto-extending grid that allows groups of elements to be given section headers. Sections are
  * addressed by their localization keys. If they key doesn't exist, the header will not display any
  * text.
@@ -94,15 +101,24 @@ public class UIAutoExtendSectionGrid : UIAutoExtendGrid
 
 public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 {
-	private class FilterState
+	private enum FilterState
 	{
-		public required Predicate<T> Pred;
-		public bool IsEnabled = false;
+		Unselected,
+		Yes,
+		No
 	}
 
-	private List<UIOptionButton<FilterState>> _optionButtons = [];
+	private class FilterData
+	{
+		public required Predicate<T> Pred;
+		public FilterState State = FilterState.Unselected;
 
-	public bool IsDefaulted => _optionButtons.All(b => !b.Value.IsEnabled);
+		public Predicate<T> AdjustedPredicate => State == FilterState.No ? t => !Pred(t) : Pred;
+	}
+
+	private List<UIOptionButton<FilterData>> _optionButtons = [];
+
+	public bool IsDefaulted => _optionButtons.All(b => b.Value.State == FilterState.Unselected);
 	public UIElement Element => this;
 
 	// Activated when any filters are changed.
@@ -125,7 +141,10 @@ public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 
 	public void Reset()
 	{
-		foreach (var button in _optionButtons) { SetButtonState(button, false); }
+		foreach (var button in _optionButtons)
+		{
+			SetButtonState(button, FilterState.Unselected);
+		}
 		OnFiltersChanged?.Invoke(GetActiveFilters());
 	}
 
@@ -133,25 +152,60 @@ public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 	{
 		base.LeftClick(e);
 
-		if (e.Target is UIOptionButton<FilterState> b)
+		if (e.Target is UIOptionButton<FilterData> b)
 		{
-			bool newValue = !b.Value.IsEnabled;
-			foreach (var button in _optionButtons) { SetButtonState(button, false); }
-			SetButtonState(b, newValue);
+			var newValue = b.Value.State switch {
+				FilterState.Unselected => FilterState.Yes,
+				_ => FilterState.Unselected
+			};
 
+			if (newValue == FilterState.Yes && !Main.keyState.PressingShift())
+			{
+				foreach (var button in _optionButtons)
+				{
+					if (button.Value.State == FilterState.Yes)
+					{
+						SetButtonState(button, FilterState.Unselected);
+					}
+				}
+			}
+
+			SetButtonState(b, newValue);
+			OnFiltersChanged?.Invoke(GetActiveFilters());
+		}
+	}
+
+	public override void RightClick(UIMouseEvent e)
+	{
+		base.RightClick(e);
+
+		if (e.Target is UIOptionButton<FilterData> b)
+		{
+			var newValue = b.Value.State switch {
+				FilterState.No => FilterState.Unselected,
+				_ => FilterState.No
+			};
+
+			SetButtonState(b, newValue);
 			OnFiltersChanged?.Invoke(GetActiveFilters());
 		}
 	}
 
 	public IEnumerable<Predicate<T>> GetActiveFilters()
 	{
-		return _optionButtons.Where(b => b.Value.IsEnabled).Select(b => b.Value.Pred);
+		return _optionButtons
+			.Where(b => b.Value.State != FilterState.Unselected)
+			.Select(b => b.Value.AdjustedPredicate);
 	}
 
-	private static void SetButtonState(UIOptionButton<FilterState> button, bool isEnabled)
+	private static void SetButtonState(UIOptionButton<FilterData> button, FilterState newState)
 	{
-		button.Value.IsEnabled = isEnabled;
-		button.PanelOverrideColor = isEnabled ? Color.White : null;
+		button.Value.State = newState;
+		button.PanelOverrideColor = newState switch {
+			FilterState.No => Colors.RarityDarkRed,
+			FilterState.Yes => Color.White,
+			_ => null
+		};
 	}
 }
 
@@ -220,7 +274,7 @@ public class UISortGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
  * A simple button with an icon. A lot like `GroupOptionButton`, but it allows for any arbitrary
  * element as the icon.
  */
-public class UIOptionButton<T> : UIElement
+public class UIOptionButton<T> : UIElement, IDoNotClearTag
 {
 	public required LocalizedText HoverText;
 	public required T Value;
@@ -301,6 +355,12 @@ public class UIOptionPanel<T> : UIPanel, IOptionGroup
 			});
 		}
 		_list.Add(group.Element);
+	}
+
+	public override void RightClick(UIMouseEvent e)
+	{
+		base.RightClick(e);
+		if (e.Target is not IDoNotClearTag) { Reset(); }
 	}
 
 	public void Reset() { foreach (var g in _groups) { g.Reset(); } }
