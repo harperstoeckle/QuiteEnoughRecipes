@@ -187,7 +187,7 @@ public class UIQERState : UIState
 			var popupSize = GetOuterDimensions().ToRectangle().Size();
 
 			float xOffset = 15;
-			float yOffset = 30;
+			float yOffset = 50;
 			var pos = mousePos - new Vector2(popupSize.X - xOffset, yOffset);
 
 			if (pos.X < 0)
@@ -301,7 +301,7 @@ public class UIQERState : UIState
 		 * has to be appended directly to the main element.
 		 */
 		_popupContainer.Width.Percent = 0.25f;
-		_popupContainer.Height.Percent = 0.5f;
+		_popupContainer.Height.Percent = 0.6f;
 
 		var ingredientListPanel = new UIPanel();
 		ingredientListPanel.Left.Percent = 0.51f;
