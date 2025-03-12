@@ -11,6 +11,7 @@ UI: {
 	SortHover: Sort Options
 	RightClickToClear: Right click to restore defaults
 	ShiftRightClickToClearLocks: Shift + Right click to clear locks and restore defaults
+	ResultCount: "{0}/{1} ({2} filtered out)"
 	ItemSearchHelp:
 		'''
 		[c/32FF82:Search Syntax]

@@ -24,6 +24,9 @@ public class UIQueryableIngredientGrid<T, E> : UIElement, IQueryable<T>
 
 	private UIScrollableGrid<T, E> _grid = new();
 
+	public int TotalResultCount => _allIngredients.Count;
+	public int DisplayedResultCount => _filteredIngredients.Count;
+
 	public UIQueryableIngredientGrid()
 	{
 		const float ScrollBarWidth = 30;

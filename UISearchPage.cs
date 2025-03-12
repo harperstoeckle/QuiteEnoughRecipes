@@ -20,6 +20,9 @@ public interface IQueryable<T>
 {
 	public void SetSearchText(string text);
 
+	public int TotalResultCount { get; }
+	public int DisplayedResultCount { get; }
+
 	/*
 	 * These will be added to the filter and sort panels. Actually detecting changes in them and
 	 * doing the sorting/filtering has to be handled entirely by the class implementing
@@ -149,6 +152,14 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 	private UIOptionPanel _sortPanel = new();
 	private UIQERSearchBar _searchBar = new();
 
+	// Displays the current number of entries.
+	private UIText _resultCountText = new("", 0.7f){
+		TextColor = new Color(0.7f, 0.7f, 0.7f),
+		VAlign = 1
+	};
+	private int _previousTotal = 0;
+	private int _previousDisplayed = 0;
+
 	/*
 	 * `squareSideLength` is the side length of the grid squares, and `padding` is the amount of
 	 * padding between grid squares.
@@ -156,6 +167,7 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 	public UISearchPage(IQueryable<T> queryElement, LocalizedText? helpText = null)
 	{
 		const float BarHeight = 50;
+		const float BottomHeight = 20;
 
 		_queryable = queryElement;
 
@@ -227,13 +239,30 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 		if (queryElement is UIElement e)
 		{
 			e.Width.Percent = 1;
-			e.Height = new StyleDimension(-BarHeight, 1);
-			e.VAlign = 1;
+			e.Height = new StyleDimension(-BarHeight - BottomHeight, 1);
+			e.Top.Pixels = BarHeight;
 
 			Append(e);
 		}
 
 		Append(_searchBar);
+		Append(_resultCountText);
+	}
+
+	public override void Update(GameTime t)
+	{
+		var tot = _queryable.TotalResultCount;
+		var disp = _queryable.DisplayedResultCount;
+
+		if (tot != _previousTotal || disp != _previousDisplayed)
+		{
+			_resultCountText.SetText(
+				Language.GetText("Mods.QuiteEnoughRecipes.UI.ResultCount")
+				.WithFormatArgs(disp, tot, tot - disp));
+			Recalculate();
+			_previousTotal = tot;
+			_previousDisplayed = disp;
+		}
 	}
 
 	public void FocusSearchBar()

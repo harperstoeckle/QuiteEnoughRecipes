@@ -11,6 +11,7 @@ UI: {
 	SortHover: 排序
 	RightClickToClear: 右键清除
 	// ShiftRightClickToClearLocks: Shift + Right click to clear locks and restore defaults
+	// ResultCount: "{0}/{1} ({2} filtered out)"
 	ItemSearchHelp:
 		'''
 		[c/32FF82:搜索语法]

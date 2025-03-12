@@ -38,6 +38,9 @@ public class UIQERState : UIState
 			HAlign = 1
 		};
 
+		public int TotalResultCount => _entries.Count;
+		public int DisplayedResultCount => _recipeList.Count;
+
 		public UIRecipeList(IRecipeHandler handler)
 		{
 			Handler = handler;
