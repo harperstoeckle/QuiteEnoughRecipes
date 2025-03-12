@@ -1,9 +1,11 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using ReLogic.Content;
 using System.Collections.Generic;
 using System.Linq;
 using System;
 using Terraria.GameContent.UI.Elements;
+using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.UI;
@@ -17,7 +19,9 @@ namespace QuiteEnoughRecipes;
  */
 public interface IOptionGroup
 {
+	// `IsDefaulted` is true if all non-locked options are in their default states.
 	public bool IsDefaulted { get; }
+	public bool HasLocks { get; }
 
 	// Get the element to be displayed in the panel.
 	public UIElement Element { get; }
@@ -27,6 +31,7 @@ public interface IOptionGroup
 	 * changes, they should be triggered by this.
 	 */
 	public void Reset();
+	public void ClearLocks();
 }
 
 /*
@@ -112,13 +117,16 @@ public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 	{
 		public required Predicate<T> Pred;
 		public FilterState State = FilterState.Unselected;
+		public bool Locked = false;
 
 		public Predicate<T> AdjustedPredicate => State == FilterState.No ? t => !Pred(t) : Pred;
 	}
 
 	private List<UIOptionButton<FilterData>> _optionButtons = [];
 
-	public bool IsDefaulted => _optionButtons.All(b => b.Value.State == FilterState.Unselected);
+	public bool IsDefaulted =>
+		_optionButtons.All(b => b.Value.State == FilterState.Unselected || b.IsLocked);
+	public bool HasLocks => _optionButtons.Any(b => b.IsLocked);
 	public UIElement Element => this;
 
 	// Activated when any filters are changed.
@@ -143,9 +151,20 @@ public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 	{
 		foreach (var button in _optionButtons)
 		{
-			SetButtonState(button, FilterState.Unselected);
+			if (!button.IsLocked)
+			{
+				SetButtonState(button, FilterState.Unselected);
+			}
 		}
 		OnFiltersChanged?.Invoke();
+	}
+
+	public void ClearLocks()
+	{
+		foreach (var button in _optionButtons)
+		{
+			button.IsLocked = false;
+		}
 	}
 
 	public override void LeftClick(UIMouseEvent e)
@@ -154,23 +173,23 @@ public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 
 		if (e.Target is UIOptionButton<FilterData> b)
 		{
-			var newValue = b.Value.State switch {
-				FilterState.Unselected => FilterState.Yes,
-				_ => FilterState.Unselected
-			};
+			bool isLocking = Main.keyState.IsKeyDown(Main.FavoriteKey);
+			var (newState, newLock) = ApplyButtonStateTransition(b.Value.State, b.IsLocked,
+				isLocking, false);
 
-			if (newValue == FilterState.Yes && !Main.keyState.PressingShift())
+			if (newState == FilterState.Yes && !newLock && !Main.keyState.PressingShift())
 			{
 				foreach (var button in _optionButtons)
 				{
-					if (button.Value.State == FilterState.Yes)
+					if (button.Value.State == FilterState.Yes && !button.IsLocked)
 					{
 						SetButtonState(button, FilterState.Unselected);
 					}
 				}
 			}
 
-			SetButtonState(b, newValue);
+			SetButtonState(b, newState);
+			b.IsLocked = newLock;
 			OnFiltersChanged?.Invoke();
 		}
 	}
@@ -181,12 +200,12 @@ public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 
 		if (e.Target is UIOptionButton<FilterData> b)
 		{
-			var newValue = b.Value.State switch {
-				FilterState.No => FilterState.Unselected,
-				_ => FilterState.No
-			};
+			bool isLocking = Main.keyState.IsKeyDown(Main.FavoriteKey);
+			var (newState, newLock) = ApplyButtonStateTransition(b.Value.State, b.IsLocked,
+				isLocking, true);
 
-			SetButtonState(b, newValue);
+			SetButtonState(b, newState);
+			b.IsLocked = newLock;
 			OnFiltersChanged?.Invoke();
 		}
 	}
@@ -207,6 +226,19 @@ public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 			_ => null
 		};
 	}
+
+	private static (FilterState, bool) ApplyButtonStateTransition(FilterState s, bool isLocked,
+		bool isLocking, bool isRightClick)
+	{
+		var destState = isRightClick ? FilterState.No : FilterState.Yes;
+
+		return (s, isLocked, isLocking) switch {
+			(_, true, _) => (FilterState.Unselected, false),
+			(_, _, true) => (destState, true),
+			(FilterState.Unselected, _, _) => (destState, isLocking),
+			_ => (FilterState.Unselected, false),
+		};
+	}
 }
 
 public class UISortGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
@@ -215,6 +247,7 @@ public class UISortGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 	private List<UIOptionButton<Comparison<T>>> _sortButtons = [];
 
 	public bool IsDefaulted => _activeSortIndex == 0;
+	public bool HasLocks => false;
 	public UIElement Element => this;
 
 	public event Action? OnSortChanged;
@@ -246,6 +279,8 @@ public class UISortGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 		OnSortChanged?.Invoke();
 	}
 
+	public void ClearLocks() {}
+
 	public override void LeftClick(UIMouseEvent e)
 	{
 		base.LeftClick(e);
@@ -276,6 +311,9 @@ public class UISortGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
  */
 public class UIOptionButton<T> : UIElement, IDoNotClearTag
 {
+	private UIImageFramed _lockIcon;
+	private bool _isLocked;
+
 	public required LocalizedText HoverText;
 	public required T Value;
 	public UIElement Element => this;
@@ -283,8 +321,27 @@ public class UIOptionButton<T> : UIElement, IDoNotClearTag
 	// Override the color of the panel in the back.
 	public Color? PanelOverrideColor = null;
 
+	// When true, displays a lock icon at the top left of the button.
+	public bool IsLocked
+	{
+		get => _isLocked;
+		set
+		{
+			_isLocked = value;
+			var tex = _isLocked ? TextureAssets.HbLock[0] : TextureAssets.MagicPixel;
+			var frame = _isLocked ? tex.Frame(2) : Rectangle.Empty;
+			_lockIcon.SetImage(tex, frame);
+		}
+	}
+
 	public UIOptionButton(UIElement icon)
 	{
+		_lockIcon = new(TextureAssets.MagicPixel, Rectangle.Empty){
+			Left = new(-5, 0),
+			Top = new(-5, 0),
+			IgnoresMouseInteraction = true
+		};
+
 		Width.Pixels = 40;
 		Height.Pixels = 40;
 
@@ -292,6 +349,7 @@ public class UIOptionButton<T> : UIElement, IDoNotClearTag
 		icon.IgnoresMouseInteraction = true;
 
 		Append(icon);
+		Append(_lockIcon);
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
@@ -319,6 +377,7 @@ public class UIOptionPanel : UIPanel, IOptionGroup
 	private UIList _list = new(){ ListPadding = 20 };
 
 	public bool IsDefaulted => _groups.All(g => g.IsDefaulted);
+	public bool HasLocks => _groups.Any(g => g.HasLocks);
 	public UIElement Element => this;
 
 	public UIOptionPanel()
@@ -360,8 +419,16 @@ public class UIOptionPanel : UIPanel, IOptionGroup
 	public override void RightClick(UIMouseEvent e)
 	{
 		base.RightClick(e);
-		if (e.Target is not IDoNotClearTag) { Reset(); }
+		if (e.Target is not IDoNotClearTag)
+		{
+			if (Main.keyState.PressingShift())
+			{
+				ClearLocks();
+			}
+			Reset();
+		}
 	}
 
 	public void Reset() { foreach (var g in _groups) { g.Reset(); } }
+	public void ClearLocks() { foreach (var g in _groups) { g.ClearLocks(); } }
 }

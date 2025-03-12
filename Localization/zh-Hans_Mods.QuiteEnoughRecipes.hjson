@@ -10,6 +10,7 @@ UI: {
 	FilterHover: 筛选
 	SortHover: 排序
 	RightClickToClear: 右键清除
+	// ShiftRightClickToClearLocks: Shift + Right click to clear locks and restore defaults
 	ItemSearchHelp:
 		'''
 		[c/32FF82:搜索语法]

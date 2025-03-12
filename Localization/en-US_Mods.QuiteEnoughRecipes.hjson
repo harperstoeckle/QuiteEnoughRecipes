@@ -9,7 +9,8 @@ UI: {
 	SearchBarDefault: Search
 	FilterHover: Filters
 	SortHover: Sort Options
-	RightClickToClear: Right click to clear
+	RightClickToClear: Right click to restore defaults
+	ShiftRightClickToClearLocks: Shift + Right click to clear locks and restore defaults
 	ItemSearchHelp:
 		'''
 		[c/32FF82:Search Syntax]

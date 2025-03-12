@@ -65,6 +65,7 @@ public class OptionPanelToggleButton : UIElement
 	public override void RightClick(UIMouseEvent e)
 	{
 		base.RightClick(e);
+		if (Main.keyState.PressingShift()) { OptionGroup.ClearLocks(); }
 		OptionGroup.Reset();
 	}
 
@@ -79,6 +80,7 @@ public class OptionPanelToggleButton : UIElement
 		sb.Draw(filterIcon, pos, new Rectangle(4, 4, 22, 22), Color.White);
 
 		bool isSelected = !OptionGroup.IsDefaulted;
+		bool hasLock = OptionGroup.HasLocks;
 
 		/*
 		 * This is the same indicator used for trapped chests. It's about the right shape and
@@ -86,14 +88,21 @@ public class OptionPanelToggleButton : UIElement
 		 */
 		if (isSelected)
 		{
-			sb.Draw(TextureAssets.Wire.Value, pos + new Vector2(4),
+			sb.Draw(TextureAssets.Wire.Value, pos + new Vector2(0, 4),
+				new Rectangle(4, 58, 8, 8), Color.White, 0f, new Vector2(4), 1, 0, 0);
+		}
+
+		if (hasLock)
+		{
+			sb.Draw(TextureAssets.Wire2.Value, pos + new Vector2(6, 4),
 				new Rectangle(4, 58, 8, 8), Color.White, 0f, new Vector2(4), 1, 0, 0);
 		}
 
 		if (IsMouseHovering)
 		{
 			var c = Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.RightClickToClear");
-			Main.instance.MouseText(Name + (isSelected ? '\n' + c : ""));
+			var l = Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.ShiftRightClickToClearLocks");
+			Main.instance.MouseText(Name + (isSelected ? $"\n{c}" : "") + (hasLock ? $"\n{l}" : ""));
 		}
 	}
 }
