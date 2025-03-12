@@ -387,21 +387,30 @@ public class UIOptionPanel : UIPanel, IOptionGroup
 	public bool HasLocks => _groups.Any(g => g.HasLocks);
 	public UIElement Element => this;
 
-	public UIOptionPanel()
+	public UIOptionPanel(LocalizedText? helpText = null)
 	{
 		BackgroundColor = new Color(33, 43, 79) * 0.8f;
 
+		float topOffset = 0;
+		if (helpText is not null)
+		{
+			var helpIcon = new UIHelpIcon(helpText);
+			topOffset += helpIcon.Height.Pixels + 5;
+			Append(helpIcon);
+		}
+
 		var scroll = new UIScrollbar();
-		scroll.Height.Percent = 1;
-		scroll.HAlign = 1;
+		scroll.Height = new(-topOffset, 1);
+		scroll.VAlign = scroll.HAlign = 1;
 
 		/*
 		 * Instead of using `UIList` or `UIGrid` directly, we wrap a `UIAutoExtendGrid` in a
 		 * `UIList`. `UIList` and `UIGrid` try to reorder their elements, which is a pain, so we can
 		 * instead just borrow the scrolling capabilities of `UIList` and use our own grid.
 		 */
-		_list.Height.Percent = 1;
+		_list.Height = new(-topOffset, 1);
 		_list.Width = new StyleDimension(-30, 1);
+		_list.VAlign = 1;
 		_list.SetScrollbar(scroll);
 		_list.ManualSortMethod = l => {};
 

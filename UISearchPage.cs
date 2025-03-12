@@ -107,44 +107,45 @@ public class OptionPanelToggleButton : UIElement
 	}
 }
 
+// Icon that provides help when hovered.
+public class UIHelpIcon : UIElement
+{
+	private LocalizedText _text;
+	public UIHelpIcon(LocalizedText text)
+	{
+		_text = text;
+
+		Width.Pixels = Height.Pixels = 22;
+		Append(new UIText("?", 0.8f){
+			HAlign = 0.5f,
+			VAlign = 0.5f,
+			TextColor = new Color(0.7f, 0.7f, 0.7f)
+		});
+	}
+
+	protected override void DrawSelf(SpriteBatch sb)
+	{
+		// Kind of a silly way to draw the text on top.
+		base.DrawSelf(sb);
+
+		if (IsMouseHovering)
+		{
+			UICommon.TooltipMouseText(_text.Value);
+		}
+	}
+}
+
 /*
  * A page with a search bar, filters, and sorting options. It maintains an `IQueryable` element,
  * updating it whenever the search options change.
  */
 public class UISearchPage<T> : UIElement, IFocusableSearchPage
 {
-	// Icon that provides help when hovered.
-	private class HelpIcon : UIElement
-	{
-		private LocalizedText _text;
-		public HelpIcon(LocalizedText text)
-		{
-			_text = text;
-
-			Width.Pixels = Height.Pixels = 22;
-			Append(new UIText("?", 0.8f){
-				HAlign = 0.5f,
-				VAlign = 0.5f,
-				TextColor = new Color(0.7f, 0.7f, 0.7f)
-			});
-		}
-
-		protected override void DrawSelf(SpriteBatch sb)
-		{
-			// Kind of a silly way to draw the text on top.
-			base.DrawSelf(sb);
-
-			if (IsMouseHovering)
-			{
-				UICommon.TooltipMouseText(_text.Value);
-			}
-		}
-	}
-
 	private IQueryable<T> _queryable;
 
-
-	private UIOptionPanel _filterPanel = new();
+	private UIOptionPanel _filterPanel = new(
+		Language.GetText("Mods.QuiteEnoughRecipes.UI.FilterHelp")
+		.WithFormatArgs(Main.FavoriteKey.ToString()));
 	private UIOptionPanel _sortPanel = new();
 	private UIQERSearchBar _searchBar = new();
 
@@ -152,7 +153,7 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 	 * `squareSideLength` is the side length of the grid squares, and `padding` is the amount of
 	 * padding between grid squares.
 	 */
-	public UISearchPage(IQueryable<T> queryElement, LocalizedText helpText)
+	public UISearchPage(IQueryable<T> queryElement, LocalizedText? helpText = null)
 	{
 		const float BarHeight = 50;
 
@@ -199,11 +200,19 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 			Append(sortToggleButton);
 		}
 
-		var helpIcon = new HelpIcon(helpText);
-		helpIcon.HAlign = 1;
+		float rightOffset = 0;
+
+		if (helpText is not null)
+		{
+			var helpIcon = new UIHelpIcon(helpText);
+			helpIcon.HAlign = 1;
+
+			rightOffset += helpIcon.Width.Pixels + 10;
+			Append(helpIcon);
+		}
 
 		// Make room for the filters on the left and the help icon on the right.
-		_searchBar.Width = new StyleDimension(-offset - helpIcon.Width.Pixels - 10, 1);
+		_searchBar.Width = new StyleDimension(-offset - rightOffset, 1);
 		_searchBar.Left.Pixels = offset;
 		_searchBar.OnContentsChanged += s => {
 			_queryable.SetSearchText(s ?? "");
@@ -225,7 +234,6 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 		}
 
 		Append(_searchBar);
-		Append(helpIcon);
 	}
 
 	public void FocusSearchBar()

@@ -152,7 +152,7 @@ public class UIQERState : UIState
 		public LocalizedText HoverName => _list.Handler.HoverName;
 		public Item TabItem => _list.Handler.TabItem;
 
-		private UIRecipePage(UIRecipeList list) : base(list, Language.GetText(""))
+		private UIRecipePage(UIRecipeList list) : base(list)
 		{
 			_list = list;
 

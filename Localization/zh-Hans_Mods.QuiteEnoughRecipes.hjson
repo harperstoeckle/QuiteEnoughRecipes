@@ -28,6 +28,23 @@ UI: {
 		To search by mod, include [c/3B95DA:@ModName] in your search, where
 		[c/3B95DA:ModName] is in the name of the mod with any spaces removed.
 		''' */
+	/* FilterHelp:
+		'''
+		[c/32FF82:Usage]
+		[c/3B95DA:Left click] a filter to enable it. You can enable multiple
+		filters at once by holding [c/3B95DA:shift] while clicking them. Only
+		results matching all of the enabled filters will be shown.
+
+		[c/3B95DA:Right click] a filter to invert it. Results matching any of
+		the inverted filters will not be shown.
+
+		Hold [c/3B95DA:{0}] while enabling or inverting a filter to lock it.
+		Locked filters will not be reset automatically.
+
+		[c/3B95DA:Right click] anywhere in this panel to reset all non-locked
+		filters. [c/3B95DA:Shift + right click] in this panel to also reset
+		locked filters.
+		''' */
 }
 
 Configs: {
