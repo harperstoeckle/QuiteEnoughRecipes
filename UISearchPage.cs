@@ -251,6 +251,8 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 
 	public override void Update(GameTime t)
 	{
+		base.Update(t);
+
 		var tot = _queryable.TotalResultCount;
 		var disp = _queryable.DisplayedResultCount;
 
