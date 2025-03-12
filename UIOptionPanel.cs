@@ -118,8 +118,6 @@ public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 		public required Predicate<T> Pred;
 		public FilterState State = FilterState.Unselected;
 		public bool Locked = false;
-
-		public Predicate<T> AdjustedPredicate => State == FilterState.No ? t => !Pred(t) : Pred;
 	}
 
 	private List<UIOptionButton<FilterData>> _optionButtons = [];
@@ -210,11 +208,20 @@ public class UIFilterGroup<T> : UIAutoExtendSectionGrid, IOptionGroup
 		}
 	}
 
-	public IEnumerable<Predicate<T>> GetActiveFilters()
+	// Get all filters that are enabled and not negated.
+	public IEnumerable<Predicate<T>> GetPositiveFilters()
 	{
 		return _optionButtons
-			.Where(b => b.Value.State != FilterState.Unselected)
-			.Select(b => b.Value.AdjustedPredicate);
+			.Where(b => b.Value.State == FilterState.Yes)
+			.Select(b => b.Value.Pred);
+	}
+
+	// Get all filters that are negated (the predicates themselves are not negated.
+	public IEnumerable<Predicate<T>> GetNegativeFilters()
+	{
+		return _optionButtons
+			.Where(b => b.Value.State == FilterState.No)
+			.Select(b => b.Value.Pred);
 	}
 
 	private static void SetButtonState(UIOptionButton<FilterData> button, FilterState newState)

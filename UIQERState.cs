@@ -94,14 +94,22 @@ public class UIQERState : UIState
 		private void UpdateDisplayedRecipes()
 		{
 			var query = SearchQuery.FromSearchText(_searchText);
-			var filters = _filterGroups.SelectMany(f => f.GetActiveFilters()).ToList();
+			var positiveFilters = _filterGroups.SelectMany(f => f.GetPositiveFilters()).ToList();
+			var negativeFilters = _filterGroups.SelectMany(f => f.GetNegativeFilters()).ToList();
 
 			_entries.Sort((x, y) =>
 				LexicographicalCompare(x.Ingredients, y.Ingredients, _sortGroup.GetActiveSort()));
 
+			/*
+			 * We include recipes where
+			 * - At least one ingredient matches the search query.
+			 * - At least one ingredient matches each positive filter.
+			 * - None of the ingredients match any of the negative filters.
+			 */
 			var recipesToView = _entries
 				.Where(e => e.Ingredients.Any(i => query.Matches(i))
-					&& filters.All(f => e.Ingredients.Any(i => f(i))))
+					&& positiveFilters.All(f => e.Ingredients.Any(i => f(i)))
+					&& !negativeFilters.Any(f => e.Ingredients.Any(i => f(i))))
 				.Select(e => e.Elem);
 
 			_recipeList.Clear();

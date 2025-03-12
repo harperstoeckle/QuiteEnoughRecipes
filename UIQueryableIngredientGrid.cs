@@ -69,11 +69,16 @@ public class UIQueryableIngredientGrid<T, E> : UIElement, IQueryable<T>
 	private void UpdateDisplayedIngredients()
 	{
 		var query = SearchQuery.FromSearchText(_searchText ?? "");
-		var filters = _filterGroups.SelectMany(f => f.GetActiveFilters()).ToList();
+		var positiveFilters = _filterGroups.SelectMany(f => f.GetPositiveFilters()).ToList();
+		var negativeFilters = _filterGroups.SelectMany(f => f.GetNegativeFilters()).ToList();
+
+		var filteredIngredients = _allIngredients
+			.Where(i => query.Matches(i)
+				&& positiveFilters.All(f => f(i))
+				&& !negativeFilters.Any(f => f(i)));
 
 		_filteredIngredients.Clear();
-		_filteredIngredients.AddRange(
-			_allIngredients.Where(i => query.Matches(i) && (filters.All(f => f(i)))));
+		_filteredIngredients.AddRange(filteredIngredients);
 
 		_filteredIngredients.Sort(_sortGroup.GetActiveSort());
 
