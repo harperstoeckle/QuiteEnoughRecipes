@@ -158,5 +158,9 @@ OptionGroups: {
 	}
 }
 
-// Tooltips.DropChance: "{0} drop chance"
+Tooltips: {
+	// DropChance: "{0} drop chance"
+	// RecipeAddedBy: Recipe added by {0}
+}
+
 Conditions.BannerDrop: 每击杀{0}次掉落一个
