@@ -33,6 +33,7 @@ public class BasicRecipe : IRecipe
 	public List<int> AcceptedGroups = [];
 	public List<int> RequiredTiles = [];
 	public List<Condition> Conditions = [];
+	public Mod? SourceMod;
 
 	public BasicRecipe() {}
 
@@ -44,10 +45,11 @@ public class BasicRecipe : IRecipe
 		AcceptedGroups = recipe.acceptedGroups;
 		RequiredTiles = recipe.requiredTile;
 		Conditions = recipe.Conditions;
+		SourceMod = recipe.Mod;
 	}
 
 	public UIElement Element => new UIRecipePanel(Result, RequiredItems, AcceptedGroups,
-		RequiredTiles, Conditions);
+		RequiredTiles, Conditions, SourceMod);
 
 	public IEnumerable<IIngredient> GetIngredients()
 	{

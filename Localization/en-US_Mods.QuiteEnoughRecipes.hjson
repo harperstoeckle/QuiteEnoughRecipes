@@ -158,5 +158,9 @@ OptionGroups: {
 	}
 }
 
-Tooltips.DropChance: "{0} drop chance"
+Tooltips: {
+	DropChance: "{0} drop chance"
+	RecipeAddedBy: Recipe added by {0}
+}
+
 Conditions.BannerDrop: Drops once for every {0} kills

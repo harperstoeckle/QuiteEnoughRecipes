@@ -5,6 +5,8 @@ using Terraria.ID;
 using Terraria.Map;
 using Terraria.UI;
 using Terraria;
+using Terraria.ModLoader;
+using Terraria.Localization;
 
 namespace QuiteEnoughRecipes;
 
@@ -18,7 +20,7 @@ public class UIRecipePanel : UIAutoExtend
 	 */
 	public UIRecipePanel(Item createItem, List<Item>? requiredItems = null,
 		List<int>? acceptedGroups = null, List<int>? requiredTiles = null,
-		List<Condition>? conditions = null)
+		List<Condition>? conditions = null, Mod? sourceMod = null)
 	{
 		requiredItems ??= new();
 		acceptedGroups ??= new();
@@ -36,7 +38,7 @@ public class UIRecipePanel : UIAutoExtend
 			offset += width + 10;
 		};
 
-		appendElement(new UIItemPanel(createItem, 50), 50);
+		appendElement(new UIRecipeResultPanel(createItem, 50, sourceMod), 50);
 
 		var conditionStrings =
 			requiredTiles.Select(CraftingStationName)
@@ -75,7 +77,7 @@ public class UIRecipePanel : UIAutoExtend
 
 	public UIRecipePanel(Recipe recipe) :
 		this(recipe.createItem, recipe.requiredItem, recipe.acceptedGroups, recipe.requiredTile,
-			recipe.Conditions)
+			recipe.Conditions, recipe.Mod)
 	{
 	}
 
@@ -84,5 +86,29 @@ public class UIRecipePanel : UIAutoExtend
 		return tileID == -1
 			? "?"
 			: Lang.GetMapObjectName(MapHelper.TileToLookup(tileID, Recipe.GetRequiredTileStyle(tileID)));
+	}
+}
+
+public class UIRecipeResultPanel : UIItemPanel
+{
+	public Mod? AddByMod;
+
+	public UIRecipeResultPanel(Item? displayedItem, float width = 52, Mod? addByMod = null) : base(displayedItem, width)
+	{
+		AddByMod = addByMod;
+	}
+
+	public override void ModifyTooltips(Mod mod, List<TooltipLine> tooltips)
+	{
+		base.ModifyTooltips(mod, tooltips);
+
+		if (AddByMod is not null)
+		{
+			var line = Language.GetText("Mods.QuiteEnoughRecipes.Tooltips.RecipeAddedBy").Format(AddByMod.DisplayNameClean);
+			tooltips.Add(new TooltipLine(mod, "QER: recipe added", line)
+			{
+				OverrideColor = Main.OurFavoriteColor
+			});
+		}
 	}
 }
