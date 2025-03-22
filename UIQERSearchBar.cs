@@ -55,23 +55,12 @@ public class UIQERSearchBar : UIPanel
 		// Needed to ensure the search bar starts with the faded text.
 		Clear();
 
-		/*
-		 * TODO: Is there a better way to do this?
-		 *
-		 * For some reason, `UISearchBar` will sometimes fail to block input if
-		 * the game is running too slowly while typing, i.e., if it takes too
-		 * long to filter the results when the search changes (I'm not sure if
-		 * this is an 100% accurate characterization of the bug, admittedly).
-		 * Setting `blockInput` like this prevents that from happening.
-		 */
 		_search.OnStartTakingInput += () => {
 			_activeInstance?.SetTakingInput(false);
-			Main.blockInput = true;
 			_activeInstance = this;
 		};
 		_search.OnEndTakingInput += () => {
 			_activeInstance = null;
-			Main.blockInput = false;
 		};
 
 		Width.Percent = 1;
@@ -82,16 +71,6 @@ public class UIQERSearchBar : UIPanel
 		BorderColor = _backgroundColor;
 
 		Append(_search);
-	}
-
-	public override void OnDeactivate()
-	{
-		/*
-		 * This ensures that if, for some reason, the UI is closed without
-		 * unfocusing the search bar, input will stop being blocked. Otherwise,
-		 * the player can be stuck unable to do any inputs.
-		 */
-		Main.blockInput = false;
 	}
 
 	public override void LeftClick(UIMouseEvent e)
