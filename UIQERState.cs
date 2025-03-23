@@ -15,7 +15,7 @@ namespace QuiteEnoughRecipes;
 public class UIQERState : UIState
 {
 	// Inner part of recipe page; can be searched.
-	private class UIRecipeList : UIElement, IQueryable<IIngredient>
+	private class UIRecipeList : UIElement, IQueryable
 	{
 		private record RecipeEntry(IRecipe Recipe, UIElement Elem, List<IIngredient> Ingredients) {}
 
@@ -142,7 +142,7 @@ public class UIQERState : UIState
 		}
 	}
 
-	private class UIRecipePage : UISearchPage<IIngredient>
+	private class UIRecipePage : UISearchPage
 	{
 		public float ScrollViewPosition
 		{
@@ -258,11 +258,11 @@ public class UIQERState : UIState
 	public UIQERState()
 	{
 		var itemGrid = new UIQueryableIngredientGrid<ItemIngredient, UIItemPanel>();
-		var itemSearchPage = new UISearchPage<ItemIngredient>(itemGrid,
+		var itemSearchPage = new UISearchPage(itemGrid,
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
 
 		var npcGrid = new UIQueryableIngredientGrid<NPCIngredient, UINPCPanel>();
-		var npcSearchPage = new UISearchPage<NPCIngredient>(npcGrid,
+		var npcSearchPage = new UISearchPage(npcGrid,
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.NPCSearchHelp"));
 
 		AddHandler(new RecipeHandlers.Basic());

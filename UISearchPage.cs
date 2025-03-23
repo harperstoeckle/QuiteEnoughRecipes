@@ -16,7 +16,7 @@ using Terraria;
 
 namespace QuiteEnoughRecipes;
 
-public interface IQueryable<T>
+public interface IQueryable
 {
 	public void SetSearchText(string text);
 
@@ -142,9 +142,9 @@ public class UIHelpIcon : UIElement
  * A page with a search bar, filters, and sorting options. It maintains an `IQueryable` element,
  * updating it whenever the search options change.
  */
-public class UISearchPage<T> : UIElement, IFocusableSearchPage
+public class UISearchPage : UIElement, IFocusableSearchPage
 {
-	private IQueryable<T> _queryable;
+	private IQueryable _queryable;
 
 	private UIOptionPanel _filterPanel = new(
 		Language.GetText("Mods.QuiteEnoughRecipes.UI.FilterHelp")
@@ -164,7 +164,7 @@ public class UISearchPage<T> : UIElement, IFocusableSearchPage
 	 * `squareSideLength` is the side length of the grid squares, and `padding` is the amount of
 	 * padding between grid squares.
 	 */
-	public UISearchPage(IQueryable<T> queryElement, LocalizedText? helpText = null)
+	public UISearchPage(IQueryable queryElement, LocalizedText? helpText = null)
 	{
 		const float BarHeight = 50;
 		const float BottomHeight = 20;

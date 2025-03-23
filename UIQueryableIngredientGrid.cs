@@ -7,7 +7,7 @@ using Terraria.GameContent.UI.Elements;
 namespace QuiteEnoughRecipes;
 
 // A wrapper around `UIScrollableGrid` that can be queried.
-public class UIQueryableIngredientGrid<T, E> : UIElement, IQueryable<T>
+public class UIQueryableIngredientGrid<T, E> : UIElement, IQueryable
 	where T : IIngredient
 	where E : UIElement, IScrollableGridElement<T>, new()
 {
