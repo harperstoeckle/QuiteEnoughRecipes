@@ -5,6 +5,7 @@ Version {ModVersion}
 - Added the ability to move forward in history by holding shift while pressing the "go to previous recipe page" button.
 - Very low drop chances will now be displayed as "<0.001%" instead of being rounded to zero.
 - Added a config option to display drop chances in the item tooltip instead of inside the icon.
+- Added a config option to automatically focus the search bar when opening the UI.
 - Prices with custom currencies (like defender medals) are now properly shown in the NPC Shops tab. (credit: Jadams505)
 - You can now right click on a currency item to see NPC shops accepting that currency. (credit: Jadams505)
 - Added dedicated mod filters.
