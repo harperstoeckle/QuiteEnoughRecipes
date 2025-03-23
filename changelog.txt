@@ -1,4 +1,16 @@
 Version {ModVersion}
-- Fixed lag while scrolling due to texture loading (credit: Jadams505).
-- Banners are now listed as drops in the NPC loot tab (credit: Jadams505).
-- Slightly adjusted the order of drops in the NPC loot tab.
+- Added an NPCs tab on the righthand panel.
+- NPCs icons can now be right clicked to see dropped or sold items.
+- Hovering an NPC icon will show its mod of origin and bestiary flavor text.
+- Added the ability to move forward in history by holding shift while pressing the "go to previous recipe page" button.
+- Very low drop chances will now be displayed as "<0.001%" instead of being rounded to zero.
+- Added a config option to display drop chances in the item tooltip instead of inside the icon.
+- Prices with custom currencies (like defender medals) are now properly shown in the NPC Shops tab. (credit: Jadams505)
+- You can now right click on a currency item to see NPC shops accepting that currency. (credit: Jadams505)
+- Added dedicated mod filters.
+- Added the ability to search and filter in the recipe panel.
+- Filters have been organized into sections.
+- You can now negate filters by right clicking them.
+- Filters can now be locked by holding alt while clicking them; this will prevent them from being reset when clicking on a new item.
+- The tooltip for the output item of a recipe now shows what mod added that recipe. (credit: Jadams505)
+- Fixed a few cases where keybinds would be triggered when they should not be.
