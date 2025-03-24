@@ -57,12 +57,17 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 				OwnerEntry = Entry,
 				UnlockState = BestiaryEntryUnlockState.CanShowPortraitOnly_1
 			};
-			Entry.Icon.Update(collectionInfo, rect,
-				new EntryIconDrawSettings(){
+
+			if (QuiteEnoughRecipes.LoadNPCAsync(NPCID).IsLoaded)
+			{
+				Entry.Icon.Update(collectionInfo, rect,
+				new EntryIconDrawSettings()
+				{
 					iconbox = rect,
 					IsHovered = _isHovering,
 					IsPortrait = false
 				});
+			}	
 		}
 
 		protected override void DrawSelf(SpriteBatch sb)
@@ -74,13 +79,16 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 				UnlockState = BestiaryEntryUnlockState.CanShowPortraitOnly_1
 			};
 
-			QuiteEnoughRecipes.LoadNPCAsync(NPCID);
-			Entry.Icon.Draw(collectionInfo, sb,
-				new EntryIconDrawSettings(){
+			if (QuiteEnoughRecipes.LoadNPCAsync(NPCID).IsLoaded)
+			{
+				Entry.Icon.Draw(collectionInfo, sb,
+				new EntryIconDrawSettings()
+				{
 					iconbox = GetDimensions().ToRectangle(),
 					IsHovered = _isHovering,
 					IsPortrait = false
 				});
+			}
 		}
 	}
 
