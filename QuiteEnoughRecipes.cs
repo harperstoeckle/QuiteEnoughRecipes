@@ -20,25 +20,26 @@ public class QuiteEnoughRecipes : Mod
 	public static void DrawItemIcon(Item item, int context, SpriteBatch spriteBatch,
 		Vector2 screenPositionForItemCenter, float scale, float sizeLimit, Color environmentColor)
 	{
-		LoadItemAsync(item.type);
-		ItemSlot.DrawItemIcon(item, context, spriteBatch, screenPositionForItemCenter, scale, sizeLimit, environmentColor);
-	}
-
-	public static void LoadItemAsync(int i)
-	{
-		if (TextureAssets.Item[i].State == AssetState.NotLoaded)
+		if (LoadItemAsync(item.type).IsLoaded)
 		{
-			Main.Assets.Request<Texture2D>(TextureAssets.Item[i].Name, AssetRequestMode.AsyncLoad);
+			ItemSlot.DrawItemIcon(item, context, spriteBatch, screenPositionForItemCenter, scale, sizeLimit, environmentColor);
 		}
 	}
 
-	public static void LoadNPCAsync(int i)
+	public static Asset<Texture2D> LoadTextureAsync(Asset<Texture2D> asset)
 	{
-		if (TextureAssets.Npc[i].State == AssetState.NotLoaded)
+		if (asset.State == AssetState.NotLoaded)
 		{
-			Main.Assets.Request<Texture2D>(TextureAssets.Npc[i].Name, AssetRequestMode.AsyncLoad);
+			return Main.Assets.Request<Texture2D>(asset.Name, AssetRequestMode.AsyncLoad);
 		}
+		return asset;
 	}
+
+	public static Asset<Texture2D> LoadItemAsync(int i) => 
+		LoadTextureAsync(TextureAssets.Item[i]);
+
+	public static Asset<Texture2D> LoadNPCAsync(int i) =>
+		LoadTextureAsync(TextureAssets.Npc[i]);
 
 	/*
 	 * When displaying the name of an ingredient that comes from a mod, this should be appended
