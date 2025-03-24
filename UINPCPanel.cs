@@ -67,7 +67,7 @@ public class UINPCPanel : UIElement, IIngredientElement, IScrollableGridElement<
 					IsHovered = _isHovering,
 					IsPortrait = false
 				});
-			}	
+			}
 		}
 
 		protected override void DrawSelf(SpriteBatch sb)

@@ -35,7 +35,7 @@ public class QuiteEnoughRecipes : Mod
 		return asset;
 	}
 
-	public static Asset<Texture2D> LoadItemAsync(int i) => 
+	public static Asset<Texture2D> LoadItemAsync(int i) =>
 		LoadTextureAsync(TextureAssets.Item[i]);
 
 	public static Asset<Texture2D> LoadNPCAsync(int i) =>
