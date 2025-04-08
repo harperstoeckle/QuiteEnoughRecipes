@@ -1,2 +1,2 @@
 Version {ModVersion}
-- Fix error caused by improper NPC texture loading. (credit: Jadams505)
+- Fixed incorrect input item being shown in the shimmer tab when right clicking. (credit: Jadams505)
