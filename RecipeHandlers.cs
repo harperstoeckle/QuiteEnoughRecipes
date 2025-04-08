@@ -96,7 +96,7 @@ public static class RecipeHandlers
 				if (id == -1) { yield break; }
 				yield return new BasicRecipe{
 					Result = new(id),
-					RequiredItems = [new(id)]
+					RequiredItems = [new(i.Item.type)]
 				};
 			}
 		}
