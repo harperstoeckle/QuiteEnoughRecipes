@@ -1,6 +1,10 @@
 Quite Enough Recipes allows you to explore items and recipes with an intuitive UI reminiscent of
 Minecraft recipe viewers like NEI and JEI.
 
+## Links
+- [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3419141018)
+- [Discord](https://discord.gg/FFTVuAnxsM)
+
 ## Usage
 Press the `Toggle QER Browser` hotkey to open the browser. The panel on the right side allows you
 to look through all of the items in the game. You can also search, apply filters, and change the
@@ -26,6 +30,3 @@ You can see sources and uses for any item you're hovering at any point in the ga
 `Show sources for hovered item` and `Show uses for hovered item` hotkeys, respectively.
 
 ![Show info for hovered item](/readme_images/hovered.gif)
-
-## Links
-[Discord](https://discord.gg/FFTVuAnxsM)
