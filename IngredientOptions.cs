@@ -190,6 +190,16 @@ static class IngredientOptions
 			yield return new(pred, icon.type, name);
 		}
 	}
+
+	[IngredientOption("ItemFilters.Journey", ItemID.Cog)]
+	public static bool IsResearched(ItemIngredient i)
+	{
+		Main.LocalPlayerCreativeTracker.ItemSacrifices.TryGetSacrificeNumbers(i.Item.type,
+				out int sacrificed, out int needed);
+
+		return needed > 0 && sacrificed >= needed;
+	}
+
 	#endregion
 
 	#region Item Sorts

@@ -127,6 +127,11 @@ OptionGroups: {
 			# Used to format other damage types.
 			IsOtherWeapon: "{0} Weapons"
 		}
+
+		Journey: {
+			Name: Journey Mode
+			IsResearched: Researched
+		}
 	}
 
 	ItemSorts: {
