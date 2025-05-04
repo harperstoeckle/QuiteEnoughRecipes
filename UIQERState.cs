@@ -344,6 +344,8 @@ public class UIQERState : UIState
 		Append(recipePanel);
 		Append(_recipeTabBar);
 		Append(_popupContainer);
+
+		Append(new UIWindow{ Width = new(100, 0), Height = new(100, 0) });
 	}
 
 	public override void Update(GameTime t)
