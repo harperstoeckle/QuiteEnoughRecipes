@@ -345,7 +345,12 @@ public class UIQERState : UIState
 		Append(_recipeTabBar);
 		Append(_popupContainer);
 
-		Append(new UIWindow{ Width = new(100, 0), Height = new(100, 0) });
+		ingredientListPanel.Append(new UIWindow{
+				MinWidth = new(100, 0),
+				MinHeight = new(100, 0),
+				Width = new(100, 0),
+				Height = new(100, 0),
+			});
 	}
 
 	public override void Update(GameTime t)
