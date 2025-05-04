@@ -24,10 +24,6 @@ public class UIWindow : UIPanel
 	private bool _resizeTop = false;
 	private bool _resizeBottom = false;
 
-	public UIWindow()
-	{
-	}
-
 	public override void LeftMouseDown(UIMouseEvent e)
 	{
 		if (e.Target == this)
@@ -63,21 +59,38 @@ public class UIWindow : UIPanel
 		{
 			var offset = Main.MouseScreen - s.OriginalMouse;
 
-			bool inMiddle = !_resizeLeft && !_resizeRight && !_resizeTop && !_resizeBottom;
-
-			float leftOffset = _resizeLeft || inMiddle ? offset.X : 0;
-			float widthOffset = (_resizeRight || inMiddle ? offset.X : 0) - leftOffset;
-			float topOffset = _resizeTop || inMiddle ? offset.Y : 0;
-			float heightOffset = (_resizeBottom || inMiddle ? offset.Y : 0) - topOffset;
+			bool dragging = !_resizeLeft && !_resizeRight && !_resizeTop && !_resizeBottom;
 
 			var parentBounds = Parent?.GetInnerDimensions() ?? new();
 			var parentSize = new Vector2(parentBounds.Width, parentBounds.Height);
-			var size = new Vector2(Width.Pixels, Height.Pixels);
 
-			Left.Pixels = s.OriginalPos.X + leftOffset;
-			Width.Pixels = s.OriginalSize.X + widthOffset;
-			Top.Pixels = s.OriginalPos.Y + topOffset;
-			Height.Pixels = s.OriginalSize.Y + heightOffset;
+			if (dragging)
+			{
+				Left.Pixels = Math.Clamp(s.OriginalPos.X + offset.X, 0, parentSize.X - Width.Pixels);
+				Top.Pixels = Math.Clamp(s.OriginalPos.Y + offset.Y, 0, parentSize.Y - Height.Pixels);
+			}
+			else
+			{
+				if (_resizeLeft)
+				{
+					Left.Pixels = Math.Clamp(s.OriginalPos.X + offset.X, 0, s.OriginalPos.X + s.OriginalSize.X - MinWidth.Pixels);
+					Width.Pixels = s.OriginalSize.X + s.OriginalPos.X - Left.Pixels;
+				}
+				else if (_resizeRight)
+				{
+					Width.Pixels = Math.Clamp(s.OriginalSize.X + offset.X, MinWidth.Pixels, parentSize.X - Left.Pixels);
+				}
+
+				if (_resizeTop)
+				{
+					Top.Pixels = Math.Clamp(s.OriginalPos.Y + offset.Y, 0, s.OriginalPos.Y + s.OriginalSize.Y - MinHeight.Pixels);
+					Height.Pixels = s.OriginalSize.Y + s.OriginalPos.Y - Top.Pixels;
+				}
+				else if (_resizeBottom)
+				{
+					Height.Pixels = Math.Clamp(s.OriginalSize.Y + offset.Y, MinHeight.Pixels, parentSize.Y - Top.Pixels);
+				}
+			}
 
 			Recalculate();
 		}
