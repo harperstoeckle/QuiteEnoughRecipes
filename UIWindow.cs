@@ -19,7 +19,7 @@ public class UIWindow : UIPanel
 	{
 		if (e.Target == this)
 		{
-			_dragOffset =  GetOuterDimensions().Position() - Main.MouseScreen;
+			_dragOffset =  new Vector2(Left.Pixels, Top.Pixels) - Main.MouseScreen;
 		}
 	}
 
@@ -34,14 +34,14 @@ public class UIWindow : UIPanel
 
 		if (_dragOffset is Vector2 offset)
 		{
-			var dims = GetOuterDimensions();
-			var size = new Vector2(dims.Width, dims.Height);
-			var screenSize = Main.ScreenSize.ToVector2();
-
 			var newPos = Main.MouseScreen + offset;
 
+			var parentBounds = Parent?.GetInnerDimensions() ?? new();
+			var parentSize = new Vector2(parentBounds.Width, parentBounds.Height);
+			var size = new Vector2(Width.Pixels, Height.Pixels);
+
 			// Keep the windows inside the screen, and adjust the mouse offset to match.
-			newPos = Vector2.Clamp(newPos, Vector2.Zero, screenSize - size);
+			newPos = Vector2.Clamp(newPos, Vector2.Zero, parentSize - size);
 
 			Left.Pixels = newPos.X;
 			Top.Pixels = newPos.Y;
