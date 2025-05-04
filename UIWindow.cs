@@ -42,7 +42,6 @@ public class UIWindow : UIPanel
 
 			// Keep the windows inside the screen, and adjust the mouse offset to match.
 			newPos = Vector2.Clamp(newPos, Vector2.Zero, screenSize - size);
-			_dragOffset = newPos - Main.MouseScreen;
 
 			Left.Pixels = newPos.X;
 			Top.Pixels = newPos.Y;
