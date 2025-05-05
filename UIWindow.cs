@@ -28,13 +28,32 @@ public class UIWindow : UIPanel
 	{
 		if (e.Target == this)
 		{
+			var dims = GetOuterDimensions();
+			var parentBounds = GetParentDimensions();
+			var relativePos = dims.Position() - parentBounds.Position();
+
+			/*
+			 * There is, in my opinion, no clear way to make percentages work with dragging in a
+			 * well-behaved way, so we simply convert the dimensions exclusively into pixels once we
+			 * start dragging.
+			 */
+			Left.Pixels = relativePos.X;
+			Top.Pixels = relativePos.Y;
+			Width.Pixels = dims.Width;
+			Height.Pixels = dims.Height;
+
+			Left.Percent = 0;
+			Top.Percent = 0;
+			Width.Percent = 0;
+			Height.Percent = 0;
+			HAlign = 0;
+			VAlign = 0;
+
 			_dragState = new(){
 				OriginalSize = new Vector2(Width.Pixels, Height.Pixels),
 				OriginalPos = new Vector2(Left.Pixels, Top.Pixels),
 				OriginalMouse = Main.MouseScreen,
 			};
-
-			var dims = GetOuterDimensions();
 
 			float right = dims.X + dims.Width;
 			float bottom = dims.Y + dims.Height;
@@ -61,7 +80,7 @@ public class UIWindow : UIPanel
 
 			bool dragging = !_resizeLeft && !_resizeRight && !_resizeTop && !_resizeBottom;
 
-			var parentBounds = Parent?.GetInnerDimensions() ?? new();
+			var parentBounds = GetParentDimensions();
 			var parentSize = new Vector2(parentBounds.Width, parentBounds.Height);
 
 			if (dragging)
@@ -94,5 +113,10 @@ public class UIWindow : UIPanel
 
 			Recalculate();
 		}
+	}
+
+	private CalculatedStyle GetParentDimensions()
+	{
+		return Parent?.GetInnerDimensions() ?? UserInterface.ActiveInstance.GetDimensions();
 	}
 }
