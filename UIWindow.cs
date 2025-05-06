@@ -6,23 +6,40 @@ using Terraria;
 
 public class UIWindow : UIPanel
 {
-	private const float BarHeight = 20;
-	private const float ResizeWidth = 10;
+	private const float BarHeight = 30;
+	private const float ResizeWidth = 5;
 
 	private struct DragState
 	{
 		public required Vector2 OriginalSize;
 		public required Vector2 OriginalPos;
 		public required Vector2 OriginalMouse;
+
+		public bool ResizeLeft = false;
+		public bool ResizeRight = false;
+		public bool ResizeTop = false;
+		public bool ResizeBottom = false;
+
+		public DragState() {}
+
+		public bool IsResizing => ResizeLeft || ResizeRight || ResizeTop || ResizeBottom;
 	}
+
+	private UIPanel _topBar = new(){
+		Width = StyleDimension.Fill,
+		Height = new(BarHeight, 0),
+		BackgroundColor = Color.LightGray,
+		IgnoresMouseInteraction = true,
+	};
 
 	// When not null, we assume this window is being dragged.
 	private DragState? _dragState = null;
 
-	private bool _resizeLeft = false;
-	private bool _resizeRight = false;
-	private bool _resizeTop = false;
-	private bool _resizeBottom = false;
+	public UIWindow()
+	{
+		SetPadding(0);
+		Append(_topBar);
+	}
 
 	public override void LeftMouseDown(UIMouseEvent e)
 	{
@@ -49,19 +66,28 @@ public class UIWindow : UIPanel
 			HAlign = 0;
 			VAlign = 0;
 
-			_dragState = new(){
+			float right = dims.X + dims.Width;
+			float bottom = dims.Y + dims.Height;
+
+			var dragState = new DragState{
 				OriginalSize = new Vector2(Width.Pixels, Height.Pixels),
 				OriginalPos = new Vector2(Left.Pixels, Top.Pixels),
 				OriginalMouse = Main.MouseScreen,
 			};
 
-			float right = dims.X + dims.Width;
-			float bottom = dims.Y + dims.Height;
+			dragState.ResizeLeft = dims.X <= Main.mouseX && Main.mouseX <= dims.X + ResizeWidth;
+			dragState.ResizeRight = right - ResizeWidth <= Main.mouseX && Main.mouseX <= right;
+			dragState.ResizeTop = dims.Y <= Main.mouseY && Main.mouseY <= dims.Y + ResizeWidth;
+			dragState.ResizeBottom = bottom - ResizeWidth <= Main.mouseY && Main.mouseY <= bottom;
 
-			_resizeLeft = dims.X <= Main.mouseX && Main.mouseX <= dims.X + ResizeWidth;
-			_resizeRight = right - ResizeWidth <= Main.mouseX && Main.mouseX <= right;
-			_resizeTop = dims.Y <= Main.mouseY && Main.mouseY <= dims.Y + ResizeWidth;
-			_resizeBottom = bottom - ResizeWidth <= Main.mouseY && Main.mouseY <= bottom;
+			/*
+			 * If we're not resizing, then we only want to drag the window if we grabbed it by the
+			 * top bar.
+			 */
+			if (dragState.IsResizing || _topBar.ContainsPoint(Main.MouseScreen))
+			{
+				_dragState = dragState;
+			}
 		}
 	}
 
@@ -78,34 +104,33 @@ public class UIWindow : UIPanel
 		{
 			var offset = Main.MouseScreen - s.OriginalMouse;
 
-			bool dragging = !_resizeLeft && !_resizeRight && !_resizeTop && !_resizeBottom;
-
 			var parentBounds = GetParentDimensions();
 			var parentSize = new Vector2(parentBounds.Width, parentBounds.Height);
 
-			if (dragging)
+			// We're not resizing, so we're dragging the window.
+			if (!s.IsResizing)
 			{
 				Left.Pixels = Math.Clamp(s.OriginalPos.X + offset.X, 0, parentSize.X - Width.Pixels);
 				Top.Pixels = Math.Clamp(s.OriginalPos.Y + offset.Y, 0, parentSize.Y - Height.Pixels);
 			}
 			else
 			{
-				if (_resizeLeft)
+				if (s.ResizeLeft)
 				{
 					Left.Pixels = Math.Clamp(s.OriginalPos.X + offset.X, 0, s.OriginalPos.X + s.OriginalSize.X - MinWidth.Pixels);
 					Width.Pixels = s.OriginalSize.X + s.OriginalPos.X - Left.Pixels;
 				}
-				else if (_resizeRight)
+				else if (s.ResizeRight)
 				{
 					Width.Pixels = Math.Clamp(s.OriginalSize.X + offset.X, MinWidth.Pixels, parentSize.X - Left.Pixels);
 				}
 
-				if (_resizeTop)
+				if (s.ResizeTop)
 				{
 					Top.Pixels = Math.Clamp(s.OriginalPos.Y + offset.Y, 0, s.OriginalPos.Y + s.OriginalSize.Y - MinHeight.Pixels);
 					Height.Pixels = s.OriginalSize.Y + s.OriginalPos.Y - Top.Pixels;
 				}
-				else if (_resizeBottom)
+				else if (s.ResizeBottom)
 				{
 					Height.Pixels = Math.Clamp(s.OriginalSize.Y + offset.Y, MinHeight.Pixels, parentSize.Y - Top.Pixels);
 				}
