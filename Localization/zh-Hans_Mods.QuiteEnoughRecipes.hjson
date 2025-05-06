@@ -3,6 +3,7 @@ Keybinds: {
 	HoverSources.DisplayName: 显示合成途径
 	HoverUses.DisplayName: 显示使用途径
 	Back.DisplayName: 回到上一个合成页面
+	// ToggleFullscreen.DisplayName: Toggle Fullscreen
 }
 
 UI: {

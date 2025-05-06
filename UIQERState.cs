@@ -330,7 +330,7 @@ public class UIQERState : UIState
 
 			if (QERConfig.Instance.AutoFocusSearchBars && page is IFocusableSearchPage s)
 			{
-				if (IsOpen()) { s.FocusSearchBar(); }
+				if (UISystem.IsOpen()) { s.FocusSearchBar(); }
 				_pageToFocusOnOpen = s;
 			}
 
@@ -371,16 +371,8 @@ public class UIQERState : UIState
 		}
 	}
 
-	public bool IsOpen() => Main.InGameUI.CurrentState == this;
-
-	/*
-	 * `Open` and `Close` are the preferred ways to open and close the browser, since they handle
-	 * things like auto-focusing the search bar.
-	 */
 	public void Open()
 	{
-		IngameFancyUI.OpenUIState(this);
-
 		if (QERConfig.Instance.AutoFocusSearchBars)
 		{
 			_pageToFocusOnOpen?.FocusSearchBar();
@@ -389,7 +381,6 @@ public class UIQERState : UIState
 	public void Close()
 	{
 		UIQERSearchBar.UnfocusAll();
-		IngameFancyUI.Close();
 	}
 
 	public void AddHandler(IRecipeHandler handler) => _allTabs.Add(new(handler));

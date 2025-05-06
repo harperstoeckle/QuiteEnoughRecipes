@@ -1,6 +1,5 @@
 using Microsoft.Xna.Framework;
-using System.Linq;
-using Terraria.ID;
+using System.Collections.Generic;
 using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria;
@@ -9,12 +8,16 @@ namespace QuiteEnoughRecipes;
 
 public class UISystem : ModSystem
 {
+	private static UserInterface _userInterface;
+	private static bool _isFullscreen = true;
+
 	public static UIQERState? UI { get; private set; }
 
 	public static ModKeybind? OpenUIKey { get; private set; }
 	public static ModKeybind? HoverSourcesKey { get; private set; }
 	public static ModKeybind? HoverUsesKey { get; private set; }
 	public static ModKeybind? BackKey { get; private set; }
+	public static ModKeybind? ToggleFullscreenKey { get; private set; }
 
 	public static bool ShouldGoBackInHistory { get; private set; } = false;
 	public static bool ShouldGoForwardInHistory { get; private set; } = false;
@@ -25,16 +28,21 @@ public class UISystem : ModSystem
 		HoverSourcesKey = KeybindLoader.RegisterKeybind(Mod, "HoverSources", "OemOpenBrackets");
 		HoverUsesKey = KeybindLoader.RegisterKeybind(Mod, "HoverUses", "OemCloseBrackets");
 		BackKey = KeybindLoader.RegisterKeybind(Mod, "Back", "Back");
+		ToggleFullscreenKey = KeybindLoader.RegisterKeybind(Mod, "ToggleFullscreen", "OemBackslash");
 	}
 
 	public override void OnWorldLoad()
 	{
+		_userInterface = new();
+
 		/*
 		 * We want to reset the UI every time the world loads so it's not carrying over weird state
 		 * across worlds. There's also potentially world-specific data that needs to be handled
 		 * differently in each world.
 		 */
 		UI = new();
+
+		_isFullscreen = false;
 
 		// Loading items beforehand ensures that they *aren't* being loaded while scrolling.
 		if (QERConfig.Instance.ShouldPreloadItems)
@@ -61,6 +69,85 @@ public class UISystem : ModSystem
 		{
 			HandleInput();
 		}
+
+		if (Main.playerInventory)
+		{
+			_userInterface.Update(t);
+		}
+	}
+
+	public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers)
+	{
+		int inventoryLayer = layers.FindIndex(l => l.Name == "Vanilla: Inventory");
+		if (inventoryLayer == -1) { return; }
+
+		layers.Insert(
+			inventoryLayer + 1,
+			new LegacyGameInterfaceLayer(
+				"QuiteEnoughRecipes: Interface",
+				() => {
+					if (Main.playerInventory)
+					{
+						_userInterface.Draw(Main.spriteBatch, new GameTime());
+					}
+					return true;
+				},
+				InterfaceScaleType.UI));
+	}
+
+	/*
+	 * `Open` and `Close` are the preferred ways to open and close the browser, since they handle
+	 * things like auto-focusing the search bar.
+	 */
+	public static void Open()
+	{
+		if (_isFullscreen)
+		{
+			IngameFancyUI.OpenUIState(UI);
+		}
+		else
+		{
+			Main.playerInventory = true;
+			_userInterface.SetState(UI);
+		}
+
+		UI?.Open();
+		UI?.Recalculate();
+	}
+
+	public static void Close()
+	{
+		_userInterface.SetState(null);
+		IngameFancyUI.Close();
+
+		UI?.Close();
+	}
+
+	public static void ToggleOpen()
+	{
+		if (IsOpen())
+		{
+			Close();
+		}
+		else
+		{
+			Open();
+		}
+	}
+
+	public static void ToggleFullscreen()
+	{
+		Close();
+		_isFullscreen = !_isFullscreen;
+		Open();
+	}
+
+	public static void ShowSources(IIngredient i) => UI?.ShowSources(i);
+	public static void ShowUses(IIngredient i) => UI?.ShowUses(i);
+
+	public static bool IsOpen()
+	{
+		return UI != null && (Main.InGameUI.CurrentState == UI || _userInterface.CurrentState == UI && Main.playerInventory);
 	}
 
 	private void HandleInput()
@@ -68,36 +155,27 @@ public class UISystem : ModSystem
 		ShouldGoBackInHistory = false;
 		ShouldGoForwardInHistory = false;
 
-		if (UISystem.BackKey?.JustPressed ?? false)
+		if (BackKey?.JustPressed ?? false)
 		{
 			ShouldGoForwardInHistory = Main.keyState.PressingShift();
 			ShouldGoBackInHistory = !ShouldGoForwardInHistory;
 		}
 
-		if (UISystem.UI == null) { return; }
-
-		if (UISystem.OpenUIKey?.JustPressed ?? false)
+		if (OpenUIKey?.JustPressed ?? false)
 		{
-			if (UISystem.UI.IsOpen())
-			{
-				UISystem.UI.Close();
-			}
-			else
-			{
-				UISystem.UI.Open();
-			}
+			ToggleOpen();
 		}
 
-		if ((UISystem.HoverSourcesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)
+		if ((HoverSourcesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)
 		{
-			UISystem.UI.ShowSources(new ItemIngredient(Main.HoverItem));
-			UISystem.UI.Open();
+			ShowSources(new ItemIngredient(Main.HoverItem));
+			Open();
 		}
 
-		if ((UISystem.HoverUsesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)
+		if ((HoverUsesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)
 		{
-			UISystem.UI.ShowUses(new ItemIngredient(Main.HoverItem));
-			UISystem.UI.Open();
+			ShowUses(new ItemIngredient(Main.HoverItem));
+			Open();
 		}
 	}
 }
