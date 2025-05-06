@@ -19,30 +19,26 @@ public class QERPlayer : ModPlayer
 			ShouldGoBackInHistory = !ShouldGoForwardInHistory;
 		}
 
-		if (UISystem.UI == null) { return; }
-
 		if (UISystem.OpenUIKey?.JustPressed ?? false)
 		{
-			if (UISystem.UI.IsOpen())
-			{
-				UISystem.UI.Close();
-			}
-			else
-			{
-				UISystem.UI.Open();
-			}
+			UISystem.ToggleOpen();
 		}
 
 		if ((UISystem.HoverSourcesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)
 		{
-			UISystem.UI.ShowSources(new ItemIngredient(Main.HoverItem));
-			UISystem.UI.Open();
+			UISystem.ShowSources(new ItemIngredient(Main.HoverItem));
+			UISystem.Open();
 		}
 
 		if ((UISystem.HoverUsesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)
 		{
-			UISystem.UI.ShowUses(new ItemIngredient(Main.HoverItem));
-			UISystem.UI.Open();
+			UISystem.ShowUses(new ItemIngredient(Main.HoverItem));
+			UISystem.Open();
+		}
+
+		if (UISystem.ToggleFullscreenKey?.JustPressed ?? false)
+		{
+			UISystem.ToggleFullscreen();
 		}
 	}
 }

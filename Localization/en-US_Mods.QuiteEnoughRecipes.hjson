@@ -3,6 +3,7 @@ Keybinds: {
 	HoverSources.DisplayName: Show sources for hovered item
 	HoverUses.DisplayName: Show uses for hovered item
 	Back.DisplayName: Go to previous recipe page
+	ToggleFullscreen.DisplayName: Toggle Fullscreen
 }
 
 UI: {
