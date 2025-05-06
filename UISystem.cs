@@ -39,7 +39,7 @@ public class UISystem : ModSystem
 		 */
 		UI = new();
 
-		_isFullscreen = false;
+		_isFullscreen = true;
 
 		// Loading items beforehand ensures that they *aren't* being loaded while scrolling.
 		if (QERConfig.Instance.ShouldPreloadItems)
