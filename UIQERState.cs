@@ -273,11 +273,11 @@ public class UIQERState : UIState
 		AddHandler(new RecipeHandlers.NPCDrops());
 		AddHandler(new RecipeHandlers.GlobalDrops());
 
-		var recipePanel = new UIPanel();
-		recipePanel.Left.Percent = 0.04f;
-		recipePanel.Width.Percent = 0.45f;
-		recipePanel.Height.Percent = 0.8f;
-		recipePanel.VAlign = 0.5f;
+		var recipePanel = new UIPanel{
+			Width = new(0, 0.49f),
+			Height = new(-TabHeight, 1),
+			VAlign = 1,
+		};
 
 		var recipeContainer = new UIContainer();
 		recipeContainer.Width.Percent = 1;
@@ -285,10 +285,8 @@ public class UIQERState : UIState
 
 		recipePanel.Append(recipeContainer);
 
-		_recipeTabBar.Width = new StyleDimension(-10, 0.45f);
+		_recipeTabBar.Width = new(0, 0.49f);
 		_recipeTabBar.Height.Pixels = TabHeight;
-		_recipeTabBar.Left = new StyleDimension(5, 0.04f);
-		_recipeTabBar.Top = new StyleDimension(-TabHeight, 0.1f);
 
 		_recipeTabBar.OnTabSelected += page => {
 			recipeContainer.Open(page);
@@ -303,11 +301,12 @@ public class UIQERState : UIState
 		_popupContainer.Width.Percent = 0.25f;
 		_popupContainer.Height.Percent = 0.6f;
 
-		var ingredientListPanel = new UIPanel();
-		ingredientListPanel.Left.Percent = 0.51f;
-		ingredientListPanel.Width.Percent = 0.45f;
-		ingredientListPanel.Height.Percent = 0.8f;
-		ingredientListPanel.VAlign = 0.5f;
+		var ingredientListPanel = new UIPanel{
+			Width = new(0, 0.49f),
+			Height = new(-TabHeight, 1),
+			HAlign = 1,
+			VAlign = 1,
+		};
 
 		var ingredientListContainer = new UIContainer();
 		ingredientListContainer.Width.Percent = 1;
@@ -316,10 +315,9 @@ public class UIQERState : UIState
 		ingredientListPanel.Append(ingredientListContainer);
 
 		var ingredientTabBar = new UITabBar<UIElement>();
-		ingredientTabBar.Width = new StyleDimension(-10, 0.45f);
+		ingredientTabBar.Width = new(0, 0.49f);
 		ingredientTabBar.Height.Pixels = TabHeight;
-		ingredientTabBar.Left = new StyleDimension(5, 0.51f);
-		ingredientTabBar.Top = new StyleDimension(-TabHeight, 0.1f);
+		ingredientTabBar.HAlign = 1;
 		ingredientTabBar.AddTab(Language.GetText("Mods.QuiteEnoughRecipes.Tabs.ItemList"),
 			new Item(ItemID.IronBar), itemSearchPage);
 		ingredientTabBar.AddTab(Language.GetText("Mods.QuiteEnoughRecipes.Tabs.NPCList"),
@@ -339,18 +337,22 @@ public class UIQERState : UIState
 
 		ingredientTabBar.OpenTabFor(itemSearchPage);
 
-		Append(ingredientListPanel);
-		Append(ingredientTabBar);
-		Append(recipePanel);
-		Append(_recipeTabBar);
-		Append(_popupContainer);
+		var window = new UIWindow{
+			MinWidth = new(400, 0),
+			MinHeight = new(400, 0),
+			Width = new(0, 0.95f),
+			Height = new(0, 0.8f),
+			HAlign = 0.5f,
+			VAlign = 0.5f,
+		};
 
-		ingredientListPanel.Append(new UIWindow{
-				MinWidth = new(100, 0),
-				MinHeight = new(100, 0),
-				Width = new(100, 0),
-				Height = new(100, 0),
-			});
+		window.Contents.Append(ingredientListPanel);
+		window.Contents.Append(ingredientTabBar);
+		window.Contents.Append(recipePanel);
+		window.Contents.Append(_recipeTabBar);
+		window.Contents.Append(_popupContainer);
+
+		Append(window);
 	}
 
 	public override void Update(GameTime t)

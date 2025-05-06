@@ -35,15 +35,24 @@ public class UIWindow : UIPanel
 	// When not null, we assume this window is being dragged.
 	private DragState? _dragState = null;
 
+	// Stuff should just be directly appended to this instead of the window itself.
+	public UIElement Contents { get; private set; } = new(){
+		Width = StyleDimension.Fill,
+		Height = new(-BarHeight, 1),
+		VAlign = 1,
+	};
+
 	public UIWindow()
 	{
 		SetPadding(0);
+		Contents.SetPadding(ResizeWidth);
 		Append(_topBar);
+		Append(Contents);
 	}
 
 	public override void LeftMouseDown(UIMouseEvent e)
 	{
-		if (e.Target == this)
+		if (e.Target == this || e.Target == Contents)
 		{
 			var dims = GetOuterDimensions();
 			var parentBounds = GetParentDimensions();
