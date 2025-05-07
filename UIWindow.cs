@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using System;
 using Terraria.GameContent.UI.Elements;
+using Terraria.GameInput;
 using Terraria.UI;
 using Terraria;
 
@@ -108,6 +109,11 @@ public class UIWindow : UIPanel
 	public override void Update(GameTime t)
 	{
 		base.Update(t);
+
+		if (IsMouseHovering)
+		{
+			PlayerInput.LockVanillaMouseScroll("QuiteEnoughRecipes/UIWindow");
+		}
 
 		if (_dragState is DragState s)
 		{
