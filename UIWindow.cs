@@ -28,7 +28,6 @@ public class UIWindow : UIPanel
 	private UIPanel _topBar = new(){
 		Width = StyleDimension.Fill,
 		Height = new(BarHeight, 0),
-		BackgroundColor = Color.LightGray,
 		IgnoresMouseInteraction = true,
 	};
 
@@ -44,6 +43,7 @@ public class UIWindow : UIPanel
 
 	public UIWindow()
 	{
+		BackgroundColor = Color.Transparent;
 		SetPadding(0);
 		Contents.SetPadding(ResizeWidth);
 		Append(_topBar);
