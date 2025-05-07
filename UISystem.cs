@@ -78,11 +78,11 @@ public class UISystem : ModSystem
 
 	public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers)
 	{
-		int inventoryLayer = layers.FindIndex(l => l.Name == "Vanilla: Inventory");
-		if (inventoryLayer == -1) { return; }
+		int layer = layers.FindIndex(l => l.Name == "Vanilla: Mouse Text");
+		if (layer == -1) { return; }
 
 		layers.Insert(
-			inventoryLayer + 1,
+			layer,
 			new LegacyGameInterfaceLayer(
 				"QuiteEnoughRecipes: Interface",
 				() => {
