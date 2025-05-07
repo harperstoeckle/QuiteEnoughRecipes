@@ -355,12 +355,6 @@ public class UIQERState : UIState
 		Append(window);
 	}
 
-	public override void Update(GameTime t)
-	{
-		base.Update(t);
-		Main.LocalPlayer.mouseInterface = true;
-	}
-
 	protected override void DrawSelf(SpriteBatch sb)
 	{
 		if (UISystem.ShouldGoForwardInHistory)

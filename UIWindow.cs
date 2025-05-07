@@ -113,6 +113,7 @@ public class UIWindow : UIPanel
 		if (IsMouseHovering)
 		{
 			PlayerInput.LockVanillaMouseScroll("QuiteEnoughRecipes/UIWindow");
+			Main.LocalPlayer.mouseInterface = true;
 		}
 
 		if (_dragState is DragState s)
