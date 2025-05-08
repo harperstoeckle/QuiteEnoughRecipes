@@ -17,6 +17,8 @@ namespace QuiteEnoughRecipes;
 
 public class QuiteEnoughRecipes : Mod
 {
+	public static QuiteEnoughRecipes Instance => ModContent.GetInstance<QuiteEnoughRecipes>();
+
 	public static void DrawItemIcon(Item item, int context, SpriteBatch spriteBatch,
 		Vector2 screenPositionForItemCenter, float scale, float sizeLimit, Color environmentColor)
 	{

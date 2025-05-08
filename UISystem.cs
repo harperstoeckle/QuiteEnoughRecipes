@@ -27,6 +27,9 @@ public class UISystem : ModSystem
 	// When this is set, this will be drawn instead of the normal cursor.
 	public static Asset<Texture2D>? CustomCursorTexture;
 
+	// Offset of the center of the custom cursor texture.
+	public static Vector2 CustomCursorOffset = Vector2.Zero;
+
 	public override void Load()
 	{
 		OpenUIKey = KeybindLoader.RegisterKeybind(Mod, "OpenUI", "OemTilde");
@@ -197,10 +200,12 @@ public class UISystem : ModSystem
 	{
 		if (CustomCursorTexture is not null)
 		{
-			Main.spriteBatch.Draw(CustomCursorTexture.Value, Main.MouseScreen, null, Color.White,
-					0, Vector2.Zero, new Vector2(Main.cursorScale), 0, 0);
+			Main.spriteBatch.Draw(CustomCursorTexture.Value, Main.MouseScreen, null,
+					Main.cursorColor, 0, CustomCursorOffset * Main.cursorScale,
+					new Vector2(Main.cursorScale), 0, 0);
 
 			CustomCursorTexture = null;
+			CustomCursorOffset = Vector2.Zero;
 		}
 		else
 		{

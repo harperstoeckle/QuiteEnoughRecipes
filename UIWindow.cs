@@ -6,6 +6,8 @@ using Terraria.GameContent;
 using Terraria.GameInput;
 using Terraria.UI;
 using Terraria;
+using ReLogic.Content;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace QuiteEnoughRecipes;
 
@@ -41,6 +43,11 @@ public class UIWindow : UIPanel
 		BackgroundColor = BarColor,
 		BorderColor = BarColor,
 	};
+
+	private Asset<Texture2D> _cursorCornerRight = QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/cursor_corner_right");
+	private Asset<Texture2D> _cursorCornerLeft = QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/cursor_corner_left");
+	private Asset<Texture2D> _cursorEdgeH = QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/cursor_edge_horizontal");
+	private Asset<Texture2D> _cursorEdgeV = QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/cursor_edge_vertical");
 
 	// When not null, we assume this window is being dragged.
 	private DragState? _dragState = null;
@@ -198,11 +205,29 @@ public class UIWindow : UIPanel
 
 		if (numResizeDirs == 2)
 		{
-			UISystem.CustomCursorTexture = TextureAssets.Camera[2];
+			if (_resizeLeft && _resizeTop || _resizeBottom && _resizeRight)
+			{
+				UISystem.CustomCursorTexture = _cursorCornerLeft;
+			}
+			else
+			{
+				UISystem.CustomCursorTexture = _cursorCornerRight;
+			}
+
+			UISystem.CustomCursorOffset = new Vector2(10);
 		}
 		else if (numResizeDirs == 1)
 		{
-			UISystem.CustomCursorTexture = TextureAssets.Camera[3];
+			if (_resizeLeft || _resizeRight)
+			{
+				UISystem.CustomCursorTexture = _cursorEdgeH;
+				UISystem.CustomCursorOffset = new Vector2(10, 5);
+			}
+			else
+			{
+				UISystem.CustomCursorTexture = _cursorEdgeV;
+				UISystem.CustomCursorOffset = new Vector2(5, 10);
+			}
 		}
 	}
 
