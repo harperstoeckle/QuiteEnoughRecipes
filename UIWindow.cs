@@ -198,11 +198,11 @@ public class UIWindow : UIPanel
 
 		if (numResizeDirs == 2)
 		{
-			UISystem.CursorOverlay = TextureAssets.Camera[2];
+			UISystem.CustomCursorTexture = TextureAssets.Camera[2];
 		}
 		else if (numResizeDirs == 1)
 		{
-			UISystem.CursorOverlay = TextureAssets.Camera[3];
+			UISystem.CustomCursorTexture = TextureAssets.Camera[3];
 		}
 	}
 
