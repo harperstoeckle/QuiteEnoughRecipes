@@ -12,7 +12,18 @@ namespace QuiteEnoughRecipes;
 public class UIWindow : UIPanel
 {
 	private const float BarHeight = 30;
-	private const float ResizeWidth = 5;
+
+	/*
+	 * Window resizing considers two different regions. First, the cursor is checked against each
+	 * edge of the window. If it is at most `ResizeCornerWidth` from the edge, then that side is
+	 * eligible to be resized. E.g., if the cursor is in the `ResizeCornerWidth × ResizeCornerWidth`
+	 * region in the top-left of the window, then both the top and left side could be resized.
+	 *
+	 * However, the cursor must also be within the border of width `ResizeBorderWidth` around the
+	 * edge of the window to actually start resizing when clicked.
+	 */
+	private const float ResizeCornerWidth = 30;
+	private const float ResizeBorderWidth = 5;
 
 	private struct DragState
 	{
@@ -53,7 +64,7 @@ public class UIWindow : UIPanel
 	{
 		BackgroundColor = Color.Transparent;
 		SetPadding(0);
-		Contents.SetPadding(ResizeWidth);
+		Contents.SetPadding(ResizeBorderWidth);
 		Append(_topBar);
 		Append(Contents);
 	}
@@ -160,11 +171,20 @@ public class UIWindow : UIPanel
 			float right = dims.X + dims.Width;
 			float bottom = dims.Y + dims.Height;
 
-			_resizeLeft = dims.X <= Main.mouseX && Main.mouseX <= dims.X + ResizeWidth;
-			_resizeRight = right - ResizeWidth <= Main.mouseX && Main.mouseX <= right;
-			_resizeTop = dims.Y <= Main.mouseY && Main.mouseY <= dims.Y + ResizeWidth;
-			_resizeBottom = bottom - ResizeWidth <= Main.mouseY && Main.mouseY <= bottom;
+			_resizeLeft = dims.X <= Main.mouseX && Main.mouseX <= dims.X + ResizeCornerWidth;
+			_resizeRight = right - ResizeCornerWidth <= Main.mouseX && Main.mouseX <= right;
+			_resizeTop = dims.Y <= Main.mouseY && Main.mouseY <= dims.Y + ResizeCornerWidth;
+			_resizeBottom = bottom - ResizeCornerWidth <= Main.mouseY && Main.mouseY <= bottom;
 
+			// Cursor is outside of the window border, so we shouldn't be resizing.
+			if (dims.X + ResizeBorderWidth < Main.mouseX
+					&& Main.mouseX < right - ResizeBorderWidth
+					&& dims.Y + ResizeBorderWidth < Main.mouseY
+					&& Main.mouseY < bottom - ResizeBorderWidth
+					|| !dims.ToRectangle().Contains(Main.MouseScreen.ToPoint()))
+			{
+				_resizeLeft = _resizeRight = _resizeTop = _resizeBottom = false;
+			}
 		}
 
 		// Two sides being resized at once is a corner. One is an edge.
