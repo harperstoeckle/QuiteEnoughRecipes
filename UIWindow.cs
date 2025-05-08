@@ -214,19 +214,19 @@ public class UIWindow : UIPanel
 				UISystem.CustomCursorTexture = _cursorCornerRight;
 			}
 
-			UISystem.CustomCursorOffset = new Vector2(10);
+			UISystem.CustomCursorOffset = _cursorCornerLeft.Frame().Size() / 2;
 		}
 		else if (numResizeDirs == 1)
 		{
 			if (_resizeLeft || _resizeRight)
 			{
 				UISystem.CustomCursorTexture = _cursorEdgeH;
-				UISystem.CustomCursorOffset = new Vector2(10, 5);
+				UISystem.CustomCursorOffset = _cursorEdgeH.Frame().Size() / 2;
 			}
 			else
 			{
 				UISystem.CustomCursorTexture = _cursorEdgeV;
-				UISystem.CustomCursorOffset = new Vector2(5, 10);
+				UISystem.CustomCursorOffset = _cursorEdgeV.Frame().Size() / 2;
 			}
 		}
 	}
