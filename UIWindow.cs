@@ -23,7 +23,9 @@ public class UIWindow : UIPanel
 	 * edge of the window to actually start resizing when clicked.
 	 */
 	private const float ResizeCornerWidth = 30;
-	private const float ResizeBorderWidth = 5;
+	private const float ResizeBorderWidth = 7;
+
+	private static readonly Color BarColor = new Color(63, 82, 151) * 0.7f;
 
 	private struct DragState
 	{
@@ -36,6 +38,8 @@ public class UIWindow : UIPanel
 		Width = StyleDimension.Fill,
 		Height = new(BarHeight, 0),
 		IgnoresMouseInteraction = true,
+		BackgroundColor = BarColor,
+		BorderColor = BarColor,
 	};
 
 	// When not null, we assume this window is being dragged.
@@ -62,7 +66,8 @@ public class UIWindow : UIPanel
 
 	public UIWindow()
 	{
-		BackgroundColor = Color.Transparent;
+		BackgroundColor = BarColor * 0.7f;
+		BorderColor = BarColor;
 		SetPadding(0);
 		Contents.SetPadding(ResizeBorderWidth);
 		Append(_topBar);
