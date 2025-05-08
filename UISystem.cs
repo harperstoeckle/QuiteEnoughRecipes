@@ -200,9 +200,14 @@ public class UISystem : ModSystem
 	{
 		if (CustomCursorTexture is not null)
 		{
-			Main.spriteBatch.Draw(CustomCursorTexture.Value, Main.MouseScreen, null,
-					Main.cursorColor, 0, CustomCursorOffset, Main.cursorScale,
-					0, 0);
+			var color = Main.cursorColor;
+			if (Main.LocalPlayer.hasRainbowCursor)
+			{
+				color = Main.hslToRgb(Main.GlobalTimeWrappedHourly * 0.25f % 1f, 1f, 0.5f, 255);
+			}
+
+			Main.spriteBatch.Draw(CustomCursorTexture.Value, Main.MouseScreen, null, color, 0,
+					CustomCursorOffset, Main.cursorScale, 0, 0);
 
 			CustomCursorTexture = null;
 			CustomCursorOffset = Vector2.Zero;
