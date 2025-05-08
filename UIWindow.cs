@@ -5,6 +5,8 @@ using Terraria.GameInput;
 using Terraria.UI;
 using Terraria;
 
+namespace QuiteEnoughRecipes;
+
 public class UIWindow : UIPanel
 {
 	private const float BarHeight = 30;
