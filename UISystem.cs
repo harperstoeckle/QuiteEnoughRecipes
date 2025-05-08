@@ -21,15 +21,11 @@ public class UISystem : ModSystem
 	public static ModKeybind? BackKey { get; private set; }
 	public static ModKeybind? ToggleFullscreenKey { get; private set; }
 
-
 	public static bool ShouldGoBackInHistory { get; private set; } = false;
 	public static bool ShouldGoForwardInHistory { get; private set; } = false;
 
-	/*
-	 * When set to a texture, this will be rendered at the bottom right of the mouse cursor. It's
-	 * reset to null every frame, so it must be constantly set whenever it should be different.
-	 */
-	public static Asset<Texture2D>? CursorOverlay;
+	// When this is set, this will be drawn instead of the normal cursor.
+	public static Asset<Texture2D>? CustomCursorTexture;
 
 	public override void Load()
 	{
@@ -38,6 +34,15 @@ public class UISystem : ModSystem
 		HoverUsesKey = KeybindLoader.RegisterKeybind(Mod, "HoverUses", "OemCloseBrackets");
 		BackKey = KeybindLoader.RegisterKeybind(Mod, "Back", "Back");
 		ToggleFullscreenKey = KeybindLoader.RegisterKeybind(Mod, "ToggleFullscreen", "OemBackslash");
+
+		/*
+		 * I tried to do this by using an interface layer, but this doesn't quite work properly
+		 * when in `IngameFancyUI` because `IngameFancyUI` calls `DrawCursor` itself instead of
+		 * using the cursor interface layer. Detouring like this ensures that the custom cursor is
+		 * always drawn.
+		 */
+		On_Main.DrawCursor += DetourDrawCursor;
+		On_Main.DrawThickCursor += DetourDrawThickCursor;
 	}
 
 	public override void OnWorldLoad()
@@ -99,29 +104,6 @@ public class UISystem : ModSystem
 					{
 						_userInterface.Draw(Main.spriteBatch, new GameTime());
 					}
-					return true;
-				},
-				InterfaceScaleType.UI));
-
-		int cursorLayer = layers.FindIndex(l => l.Name == "Vanilla: Cursor");
-		if (cursorLayer == -1) { return; }
-
-		layers.Insert(
-			cursorLayer + 1,
-			new LegacyGameInterfaceLayer(
-				"QuiteEnoughRecipes: Mouse Overlay",
-				() => {
-					if (CursorOverlay is not null)
-					{
-						var overlayOffset = Main.cursorScale * new Vector2(15, 15);
-
-						Main.spriteBatch.Draw(CursorOverlay.Value,
-								Main.MouseScreen + overlayOffset, null, Color.White, 0,
-								Vector2.Zero, new Vector2(Main.cursorScale), 0, 0);
-
-						CursorOverlay = null;
-					}
-
 					return true;
 				},
 				InterfaceScaleType.UI));
@@ -210,4 +192,25 @@ public class UISystem : ModSystem
 			Open();
 		}
 	}
+
+	private static void DetourDrawCursor(On_Main.orig_DrawCursor orig, Vector2 bonus, bool smart)
+	{
+		if (CustomCursorTexture is not null)
+		{
+			Main.spriteBatch.Draw(CustomCursorTexture.Value, Main.MouseScreen, null, Color.White,
+					0, Vector2.Zero, new Vector2(Main.cursorScale), 0, 0);
+
+			CustomCursorTexture = null;
+		}
+		else
+		{
+			orig(bonus, smart);
+		}
+	}
+
+	private static Vector2 DetourDrawThickCursor(On_Main.orig_DrawThickCursor orig, bool smart)
+	{
+		return CustomCursorTexture is null ? orig(smart) : Vector2.Zero;
+	}
+
 }
