@@ -137,6 +137,11 @@ public class UIWindow : UIPanel
 			PlayerInput.LockVanillaMouseScroll("QuiteEnoughRecipes/UIWindow");
 			Main.LocalPlayer.mouseInterface = true;
 		}
+	}
+
+	protected override void DrawSelf(SpriteBatch sb)
+	{
+		base.DrawSelf(sb);
 
 		if (_dragState is DragState s)
 		{
