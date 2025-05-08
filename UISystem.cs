@@ -201,8 +201,8 @@ public class UISystem : ModSystem
 		if (CustomCursorTexture is not null)
 		{
 			Main.spriteBatch.Draw(CustomCursorTexture.Value, Main.MouseScreen, null,
-					Main.cursorColor, 0, CustomCursorOffset * Main.cursorScale,
-					new Vector2(Main.cursorScale), 0, 0);
+					Main.cursorColor, 0, CustomCursorOffset, Main.cursorScale,
+					0, 0);
 
 			CustomCursorTexture = null;
 			CustomCursorOffset = Vector2.Zero;
@@ -215,7 +215,22 @@ public class UISystem : ModSystem
 
 	private static Vector2 DetourDrawThickCursor(On_Main.orig_DrawThickCursor orig, bool smart)
 	{
-		return CustomCursorTexture is null ? orig(smart) : Vector2.Zero;
+		// Copied from `DrawThickCursor`
+		if (CustomCursorTexture is not null)
+		{
+			var offsets = (Vector2[])[new Vector2(0, 1), new Vector2(1, 0), new Vector2(0, -1),
+					new Vector2(-1, 0)];
+			foreach (var offset in offsets)
+			{
+				float scale = Main.cursorScale * 1.1f;
+				Main.spriteBatch.Draw(CustomCursorTexture.Value, Main.MouseScreen + offset, null,
+						Main.MouseBorderColor, 0, CustomCursorOffset, scale, 0, 0);
+			}
+
+			return Vector2.Zero;
+		}
+
+		return orig(smart);
 	}
 
 }
