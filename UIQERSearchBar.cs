@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using ReLogic.Content;
 using System;
 using Terraria.GameContent.UI.Elements;
 using Terraria.Localization;
@@ -18,6 +19,7 @@ public class UIQERSearchBar : UIPanel
 
 	private static UIQERSearchBar? _activeInstance = null;
 
+	private Asset<Texture2D> _cursorIBeam = QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/cursor_i_beam");
 	private UISearchBar _search;
 
 	/*
@@ -85,6 +87,17 @@ public class UIQERSearchBar : UIPanel
 		base.RightClick(e);
 		Clear();
 		SetTakingInput(true);
+	}
+
+	protected override void DrawSelf(SpriteBatch sb)
+	{
+		base.DrawSelf(sb);
+
+		if (IsMouseHovering)
+		{
+			UISystem.CustomCursorTexture = _cursorIBeam;
+			UISystem.CustomCursorOffset = _cursorIBeam.Frame().Size() / 2;
+		}
 	}
 
 	public void SetTakingInput(bool b)
