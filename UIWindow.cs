@@ -1,6 +1,8 @@
 using Microsoft.Xna.Framework;
+using System.Linq;
 using System;
 using Terraria.GameContent.UI.Elements;
+using Terraria.GameContent;
 using Terraria.GameInput;
 using Terraria.UI;
 using Terraria;
@@ -17,15 +19,6 @@ public class UIWindow : UIPanel
 		public required Vector2 OriginalSize;
 		public required Vector2 OriginalPos;
 		public required Vector2 OriginalMouse;
-
-		public bool ResizeLeft = false;
-		public bool ResizeRight = false;
-		public bool ResizeTop = false;
-		public bool ResizeBottom = false;
-
-		public DragState() {}
-
-		public bool IsResizing => ResizeLeft || ResizeRight || ResizeTop || ResizeBottom;
 	}
 
 	private UIPanel _topBar = new(){
@@ -36,6 +29,18 @@ public class UIWindow : UIPanel
 
 	// When not null, we assume this window is being dragged.
 	private DragState? _dragState = null;
+
+	/*
+	 * Each of these is true when the corresponding window resize region is being hovered, or if
+	 * we're currently dragging and the resize region was being hovered when we clicked to start
+	 * dragging.
+	 */
+	private bool _resizeLeft = false;
+	private bool _resizeRight = false;
+	private bool _resizeTop = false;
+	private bool _resizeBottom = false;
+
+	private bool HoveringResize => _resizeLeft || _resizeRight || _resizeTop || _resizeBottom;
 
 	// Stuff should just be directly appended to this instead of the window itself.
 	public UIElement Contents { get; private set; } = new(){
@@ -78,25 +83,17 @@ public class UIWindow : UIPanel
 			HAlign = 0;
 			VAlign = 0;
 
-			float right = dims.X + dims.Width;
-			float bottom = dims.Y + dims.Height;
-
 			var dragState = new DragState{
 				OriginalSize = new Vector2(Width.Pixels, Height.Pixels),
 				OriginalPos = new Vector2(Left.Pixels, Top.Pixels),
 				OriginalMouse = Main.MouseScreen,
 			};
 
-			dragState.ResizeLeft = dims.X <= Main.mouseX && Main.mouseX <= dims.X + ResizeWidth;
-			dragState.ResizeRight = right - ResizeWidth <= Main.mouseX && Main.mouseX <= right;
-			dragState.ResizeTop = dims.Y <= Main.mouseY && Main.mouseY <= dims.Y + ResizeWidth;
-			dragState.ResizeBottom = bottom - ResizeWidth <= Main.mouseY && Main.mouseY <= bottom;
-
 			/*
 			 * If we're not resizing, then we only want to drag the window if we grabbed it by the
 			 * top bar.
 			 */
-			if (dragState.IsResizing || _topBar.ContainsPoint(Main.MouseScreen))
+			if (HoveringResize || _topBar.ContainsPoint(Main.MouseScreen))
 			{
 				_dragState = dragState;
 			}
@@ -126,35 +123,61 @@ public class UIWindow : UIPanel
 			var parentSize = new Vector2(parentBounds.Width, parentBounds.Height);
 
 			// We're not resizing, so we're dragging the window.
-			if (!s.IsResizing)
+			if (!HoveringResize)
 			{
 				Left.Pixels = Math.Clamp(s.OriginalPos.X + offset.X, 0, parentSize.X - Width.Pixels);
 				Top.Pixels = Math.Clamp(s.OriginalPos.Y + offset.Y, 0, parentSize.Y - Height.Pixels);
 			}
 			else
 			{
-				if (s.ResizeLeft)
+				if (_resizeLeft)
 				{
 					Left.Pixels = Math.Clamp(s.OriginalPos.X + offset.X, 0, s.OriginalPos.X + s.OriginalSize.X - MinWidth.Pixels);
 					Width.Pixels = s.OriginalSize.X + s.OriginalPos.X - Left.Pixels;
 				}
-				else if (s.ResizeRight)
+				else if (_resizeRight)
 				{
 					Width.Pixels = Math.Clamp(s.OriginalSize.X + offset.X, MinWidth.Pixels, parentSize.X - Left.Pixels);
 				}
 
-				if (s.ResizeTop)
+				if (_resizeTop)
 				{
 					Top.Pixels = Math.Clamp(s.OriginalPos.Y + offset.Y, 0, s.OriginalPos.Y + s.OriginalSize.Y - MinHeight.Pixels);
 					Height.Pixels = s.OriginalSize.Y + s.OriginalPos.Y - Top.Pixels;
 				}
-				else if (s.ResizeBottom)
+				else if (_resizeBottom)
 				{
 					Height.Pixels = Math.Clamp(s.OriginalSize.Y + offset.Y, MinHeight.Pixels, parentSize.Y - Top.Pixels);
 				}
 			}
 
 			Recalculate();
+		}
+		else
+		{
+			var dims = GetOuterDimensions();
+
+			float right = dims.X + dims.Width;
+			float bottom = dims.Y + dims.Height;
+
+			_resizeLeft = dims.X <= Main.mouseX && Main.mouseX <= dims.X + ResizeWidth;
+			_resizeRight = right - ResizeWidth <= Main.mouseX && Main.mouseX <= right;
+			_resizeTop = dims.Y <= Main.mouseY && Main.mouseY <= dims.Y + ResizeWidth;
+			_resizeBottom = bottom - ResizeWidth <= Main.mouseY && Main.mouseY <= bottom;
+
+		}
+
+		// Two sides being resized at once is a corner. One is an edge.
+		int numResizeDirs = ((bool[])[_resizeLeft, _resizeRight, _resizeTop, _resizeBottom])
+			.Count(b => b);
+
+		if (numResizeDirs == 2)
+		{
+			UISystem.CursorOverlay = TextureAssets.Camera[2];
+		}
+		else if (numResizeDirs == 1)
+		{
+			UISystem.CursorOverlay = TextureAssets.Camera[3];
 		}
 	}
 

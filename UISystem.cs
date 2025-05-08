@@ -1,4 +1,6 @@
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using ReLogic.Content;
 using System.Collections.Generic;
 using Terraria.ModLoader;
 using Terraria.UI;
@@ -19,8 +21,15 @@ public class UISystem : ModSystem
 	public static ModKeybind? BackKey { get; private set; }
 	public static ModKeybind? ToggleFullscreenKey { get; private set; }
 
+
 	public static bool ShouldGoBackInHistory { get; private set; } = false;
 	public static bool ShouldGoForwardInHistory { get; private set; } = false;
+
+	/*
+	 * When set to a texture, this will be rendered at the bottom right of the mouse cursor. It's
+	 * reset to null every frame, so it must be constantly set whenever it should be different.
+	 */
+	public static Asset<Texture2D>? CursorOverlay;
 
 	public override void Load()
 	{
@@ -78,11 +87,11 @@ public class UISystem : ModSystem
 
 	public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers)
 	{
-		int layer = layers.FindIndex(l => l.Name == "Vanilla: Mouse Text");
-		if (layer == -1) { return; }
+		int mouseTextLayer = layers.FindIndex(l => l.Name == "Vanilla: Mouse Text");
+		if (mouseTextLayer == -1) { return; }
 
 		layers.Insert(
-			layer,
+			mouseTextLayer,
 			new LegacyGameInterfaceLayer(
 				"QuiteEnoughRecipes: Interface",
 				() => {
@@ -90,6 +99,29 @@ public class UISystem : ModSystem
 					{
 						_userInterface.Draw(Main.spriteBatch, new GameTime());
 					}
+					return true;
+				},
+				InterfaceScaleType.UI));
+
+		int cursorLayer = layers.FindIndex(l => l.Name == "Vanilla: Cursor");
+		if (cursorLayer == -1) { return; }
+
+		layers.Insert(
+			cursorLayer + 1,
+			new LegacyGameInterfaceLayer(
+				"QuiteEnoughRecipes: Mouse Overlay",
+				() => {
+					if (CursorOverlay is not null)
+					{
+						var overlayOffset = Main.cursorScale * new Vector2(15, 15);
+
+						Main.spriteBatch.Draw(CursorOverlay.Value,
+								Main.MouseScreen + overlayOffset, null, Color.White, 0,
+								Vector2.Zero, new Vector2(Main.cursorScale), 0, 0);
+
+						CursorOverlay = null;
+					}
+
 					return true;
 				},
 				InterfaceScaleType.UI));
