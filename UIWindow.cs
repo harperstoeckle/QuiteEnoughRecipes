@@ -171,17 +171,17 @@ public class UIWindow : UIPanel
 			float right = dims.X + dims.Width;
 			float bottom = dims.Y + dims.Height;
 
-			_resizeLeft = dims.X <= Main.mouseX && Main.mouseX <= dims.X + ResizeCornerWidth;
-			_resizeRight = right - ResizeCornerWidth <= Main.mouseX && Main.mouseX <= right;
-			_resizeTop = dims.Y <= Main.mouseY && Main.mouseY <= dims.Y + ResizeCornerWidth;
-			_resizeBottom = bottom - ResizeCornerWidth <= Main.mouseY && Main.mouseY <= bottom;
+			_resizeLeft = Main.mouseX <= dims.X + ResizeCornerWidth;
+			_resizeRight = Main.mouseX >= right - ResizeCornerWidth;
+			_resizeTop = Main.mouseY <= dims.Y + ResizeCornerWidth;
+			_resizeBottom = Main.mouseY >= bottom - ResizeCornerWidth;
 
 			// Cursor is outside of the window border, so we shouldn't be resizing.
 			if (dims.X + ResizeBorderWidth < Main.mouseX
 					&& Main.mouseX < right - ResizeBorderWidth
 					&& dims.Y + ResizeBorderWidth < Main.mouseY
 					&& Main.mouseY < bottom - ResizeBorderWidth
-					|| !dims.ToRectangle().Contains(Main.MouseScreen.ToPoint()))
+					|| !ContainsPoint(Main.MouseScreen))
 			{
 				_resizeLeft = _resizeRight = _resizeTop = _resizeBottom = false;
 			}
