@@ -46,7 +46,14 @@ public class OptionPanelToggleButton : UIElement
 	 * state, then this button will show a small red dot indicator. If this button is right clicked,
 	 * then this option group will be set to its default state.
 	 */
-	public required IOptionGroup OptionGroup;
+	private IOptionGroup _optionGroup;
+	private UIPopupWindow _popupWindow = new(){
+		MinWidth = new(100, 0),
+		MinHeight = new(100, 0),
+		Width = new(0, 0.25f),
+		Height = new(0, 0.5f),
+	};
+
 	public required string IconPath;
 	public required string Name;
 
@@ -54,22 +61,24 @@ public class OptionPanelToggleButton : UIElement
 	 * `image` is supposed to be either the bestiary filtering or sorting button, since the icon
 	 * can be easily cut out of them from a specific location.
 	 */
-	public OptionPanelToggleButton()
+	public OptionPanelToggleButton(IOptionGroup optionGroup)
 	{
+		_optionGroup = optionGroup;
 		Width.Pixels = Height.Pixels = 22;
+		_popupWindow.Contents.Append(_optionGroup.Element);
 	}
 
 	public override void LeftClick(UIMouseEvent e)
 	{
 		base.LeftClick(e);
-		UISystem.Window?.OpenPopup(OptionGroup.Element);
+		_popupWindow.Open();
 	}
 
 	public override void RightClick(UIMouseEvent e)
 	{
 		base.RightClick(e);
-		if (Main.keyState.PressingShift()) { OptionGroup.ClearLocks(); }
-		OptionGroup.Reset();
+		if (Main.keyState.PressingShift()) { _optionGroup.ClearLocks(); }
+		_optionGroup.Reset();
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
@@ -82,8 +91,8 @@ public class OptionPanelToggleButton : UIElement
 		// We only want the icon part of the texture without the part that usually has the text.
 		sb.Draw(filterIcon, pos, new Rectangle(4, 4, 22, 22), Color.White);
 
-		bool isSelected = !OptionGroup.IsDefaulted;
-		bool hasLock = OptionGroup.HasLocks;
+		bool isSelected = !_optionGroup.IsDefaulted;
+		bool hasLock = _optionGroup.HasLocks;
 
 		/*
 		 * This is the same indicator used for trapped chests. It's about the right shape and
@@ -183,10 +192,9 @@ public class UISearchPage : UIElement, IFocusableSearchPage
 			_filterPanel.Height.Percent = 1;
 			foreach (var f in filters) { _filterPanel.AddGroup(f); }
 
-			var filterToggleButton = new OptionPanelToggleButton{
+			var filterToggleButton = new OptionPanelToggleButton(_filterPanel){
 				IconPath = "Images/UI/Bestiary/Button_Filtering",
 				Name = Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"),
-				OptionGroup = _filterPanel,
 				Left = new(offset, 0)
 			};
 
@@ -201,10 +209,9 @@ public class UISearchPage : UIElement, IFocusableSearchPage
 			_sortPanel.Height.Percent = 1;
 			foreach (var s in sorts) { _sortPanel.AddGroup(s); }
 
-			var sortToggleButton = new OptionPanelToggleButton{
+			var sortToggleButton = new OptionPanelToggleButton(_sortPanel){
 				IconPath = "Images/UI/Bestiary/Button_Sorting",
 				Name = Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SortHover"),
-				OptionGroup = _sortPanel,
 				Left = new(offset, 0)
 			};
 

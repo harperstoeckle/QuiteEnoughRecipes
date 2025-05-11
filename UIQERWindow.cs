@@ -177,41 +177,6 @@ public class UIQERWindow : UIWindow
 		}
 	}
 
-	private class UIPopupContainer : UIContainer
-	{
-		public override void OnOpen()
-		{
-			var dims = Parent?.GetInnerDimensions() ?? new CalculatedStyle();
-
-			var mousePos = Main.MouseScreen - dims.Position();
-			var popupSize = GetOuterDimensions().ToRectangle().Size();
-
-			float xOffset = 15;
-			float yOffset = 50;
-			var pos = mousePos - new Vector2(popupSize.X - xOffset, yOffset);
-
-			if (pos.X < 0)
-			{
-				pos.X = mousePos.X - xOffset;
-			}
-			if (pos.Y + popupSize.Y > dims.Height)
-			{
-				pos.Y = dims.Height - popupSize.Y;
-			}
-
-			Left.Pixels = pos.X;
-			Top.Pixels = pos.Y;
-
-			Recalculate();
-		}
-
-		protected override void DrawSelf(SpriteBatch sb)
-		{
-			base.DrawSelf(sb);
-			if (IsOpen && !ContainsPoint(Main.MouseScreen)) { Close(); }
-		}
-	}
-
 	// Enough to reconstruct (enough of) the recipe panel state.
 	private class HistoryEntry
 	{
@@ -248,9 +213,6 @@ public class UIQERWindow : UIWindow
 	 * have the panel do tooltip modifications.
 	 */
 	private UIItemPanel? _hoveredItemPanel = null;
-
-	// This will contain the current popup. For example, this is used for filters and sorts.
-	private UIPopupContainer _popupContainer = new();
 
 	// This will be re-focused when the browser is opened.
 	private IFocusableSearchPage? _pageToFocusOnOpen = null;
@@ -300,14 +262,6 @@ public class UIQERWindow : UIWindow
 			_history[_historyIndex].RecipePage = page;
 		};
 
-		/*
-		 * This should put the panel just to the left of the item list panel, which will keep it out
-		 * of the way for the most part. Since it's not inside the bounds of the item list panel, it
-		 * has to be appended directly to the main element.
-		 */
-		_popupContainer.Width.Percent = 0.25f;
-		_popupContainer.Height.Percent = 0.6f;
-
 		var ingredientListPanel = new UIPanel{
 			Width = new(0, 0.49f),
 			Height = new(-TabHeight, 1),
@@ -348,7 +302,6 @@ public class UIQERWindow : UIWindow
 		Contents.Append(ingredientTabBar);
 		Contents.Append(recipePanel);
 		Contents.Append(_recipeTabBar);
-		Contents.Append(_popupContainer);
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
@@ -447,9 +400,6 @@ public class UIQERWindow : UIWindow
 		base.MouseOut(e);
 		if (e.Target == _hoveredItemPanel) { _hoveredItemPanel = null; }
 	}
-
-	// Open `e` in a popup at the cursor.
-	public void OpenPopup(UIElement e) => _popupContainer.Open(e);
 
 	public void ModifyTooltips(Mod mod, Item item, List<TooltipLine> tooltips)
 	{

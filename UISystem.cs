@@ -61,7 +61,7 @@ public class UISystem : ModSystem
 		_userInterface = new();
 
 		WindowManager.AddWindow("QuiteEnoughRecipes/Main", Window);
-		WindowManager.MakeVisible(Window);
+		WindowManager.Open(Window);
 
 		_isFullscreen = true;
 
