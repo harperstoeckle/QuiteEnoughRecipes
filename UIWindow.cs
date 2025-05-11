@@ -83,6 +83,8 @@ public class UIWindow : UIPanel
 
 	public override void LeftMouseDown(UIMouseEvent e)
 	{
+		base.LeftMouseDown(e);
+
 		if (e.Target == this || e.Target == Contents)
 		{
 			var dims = GetOuterDimensions();
@@ -125,6 +127,7 @@ public class UIWindow : UIPanel
 
 	public override void LeftMouseUp(UIMouseEvent e)
 	{
+		base.LeftMouseUp(e);
 		_dragState = null;
 	}
 

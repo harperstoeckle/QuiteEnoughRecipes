@@ -62,7 +62,7 @@ public class OptionPanelToggleButton : UIElement
 	public override void LeftClick(UIMouseEvent e)
 	{
 		base.LeftClick(e);
-		UISystem.UI?.OpenPopup(OptionGroup.Element);
+		UISystem.Window?.OpenPopup(OptionGroup.Element);
 	}
 
 	public override void RightClick(UIMouseEvent e)

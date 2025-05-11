@@ -13,7 +13,8 @@ public class UISystem : ModSystem
 	private static UserInterface _userInterface;
 	private static bool _isFullscreen = true;
 
-	public static UIQERState? UI { get; private set; }
+	public static UIQERWindow? Window { get; private set; }
+	public static UIWindowManager? WindowManager { get; private set; }
 
 	public static ModKeybind? OpenUIKey { get; private set; }
 	public static ModKeybind? HoverSourcesKey { get; private set; }
@@ -50,14 +51,17 @@ public class UISystem : ModSystem
 
 	public override void OnWorldLoad()
 	{
-		_userInterface = new();
-
 		/*
 		 * We want to reset the UI every time the world loads so it's not carrying over weird state
 		 * across worlds. There's also potentially world-specific data that needs to be handled
 		 * differently in each world.
 		 */
-		UI = new();
+		WindowManager = new();
+		Window = new();
+		_userInterface = new();
+
+		WindowManager.AddWindow("QuiteEnoughRecipes/Main", Window);
+		WindowManager.MakeVisible(Window);
 
 		_isFullscreen = true;
 
@@ -120,16 +124,16 @@ public class UISystem : ModSystem
 	{
 		if (_isFullscreen)
 		{
-			IngameFancyUI.OpenUIState(UI);
+			IngameFancyUI.OpenUIState(WindowManager);
 		}
 		else
 		{
 			Main.playerInventory = true;
-			_userInterface.SetState(UI);
+			_userInterface.SetState(WindowManager);
 		}
 
-		UI?.Open();
-		UI?.Recalculate();
+		Window?.Open();
+		Window?.Recalculate();
 	}
 
 	public static void Close()
@@ -137,7 +141,7 @@ public class UISystem : ModSystem
 		_userInterface.SetState(null);
 		IngameFancyUI.Close();
 
-		UI?.Close();
+		Window?.Close();
 	}
 
 	public static void ToggleOpen()
@@ -159,12 +163,12 @@ public class UISystem : ModSystem
 		Open();
 	}
 
-	public static void ShowSources(IIngredient i) => UI?.ShowSources(i);
-	public static void ShowUses(IIngredient i) => UI?.ShowUses(i);
+	public static void ShowSources(IIngredient i) => Window?.ShowSources(i);
+	public static void ShowUses(IIngredient i) => Window?.ShowUses(i);
 
 	public static bool IsOpen()
 	{
-		return UI != null && (Main.InGameUI.CurrentState == UI || _userInterface.CurrentState == UI && Main.playerInventory);
+		return WindowManager != null && (Main.InGameUI.CurrentState == WindowManager || _userInterface.CurrentState == WindowManager && Main.playerInventory);
 	}
 
 	private void HandleInput()

@@ -12,7 +12,7 @@ using Terraria;
 
 namespace QuiteEnoughRecipes;
 
-public class UIQERState : UIState
+public class UIQERWindow : UIWindow
 {
 	// Inner part of recipe page; can be searched.
 	private class UIRecipeList : UIElement, IQueryable
@@ -255,8 +255,15 @@ public class UIQERState : UIState
 	// This will be re-focused when the browser is opened.
 	private IFocusableSearchPage? _pageToFocusOnOpen = null;
 
-	public UIQERState()
+	public UIQERWindow()
 	{
+		MinWidth = new(400, 0);
+		MinHeight = new(400, 0);
+		Width = new(0, 0.95f);
+		Height = new(0, 0.8f);
+		HAlign = 0.5f;
+		VAlign = 0.5f;
+
 		var itemGrid = new UIQueryableIngredientGrid<ItemIngredient, UIItemPanel>();
 		var itemSearchPage = new UISearchPage(itemGrid,
 			Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
@@ -337,26 +344,16 @@ public class UIQERState : UIState
 
 		ingredientTabBar.OpenTabFor(itemSearchPage);
 
-		var window = new UIWindow{
-			MinWidth = new(400, 0),
-			MinHeight = new(400, 0),
-			Width = new(0, 0.95f),
-			Height = new(0, 0.8f),
-			HAlign = 0.5f,
-			VAlign = 0.5f,
-		};
-
-		window.Contents.Append(ingredientListPanel);
-		window.Contents.Append(ingredientTabBar);
-		window.Contents.Append(recipePanel);
-		window.Contents.Append(_recipeTabBar);
-		window.Contents.Append(_popupContainer);
-
-		Append(window);
+		Contents.Append(ingredientListPanel);
+		Contents.Append(ingredientTabBar);
+		Contents.Append(recipePanel);
+		Contents.Append(_recipeTabBar);
+		Contents.Append(_popupContainer);
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
 	{
+		base.DrawSelf(sb);
 		if (UISystem.ShouldGoForwardInHistory)
 		{
 			TryMoveInHistory(1);
@@ -411,6 +408,8 @@ public class UIQERState : UIState
 
 	public override void LeftClick(UIMouseEvent e)
 	{
+		base.LeftClick(e);
+
 		if (!(e.Target is UIQERSearchBar))
 		{
 			UIQERSearchBar.UnfocusAll();
@@ -424,6 +423,8 @@ public class UIQERState : UIState
 
 	public override void RightClick(UIMouseEvent e)
 	{
+		base.RightClick(e);
+
 		if (!(e.Target is UIQERSearchBar))
 		{
 			UIQERSearchBar.UnfocusAll();
@@ -437,11 +438,13 @@ public class UIQERState : UIState
 
 	public override void MouseOver(UIMouseEvent e)
 	{
+		base.MouseOver(e);
 		if (e.Target is UIItemPanel p) { _hoveredItemPanel = p; }
 	}
 
 	public override void MouseOut(UIMouseEvent e)
 	{
+		base.MouseOut(e);
 		if (e.Target == _hoveredItemPanel) { _hoveredItemPanel = null; }
 	}
 
