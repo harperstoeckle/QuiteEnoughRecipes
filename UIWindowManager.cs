@@ -14,10 +14,13 @@ public class UIWindowManager : UIState
 
 	public void AddWindow(string name, UIWindow w) => _windows.Add(name, w);
 
-	public void MakeVisible(UIWindow w)
+	public void Open(UIWindow w)
 	{
 		if (!HasChild(w)) { Append(w); }
 	}
+
+	public void Close(UIWindow w) => RemoveChild(w);
+	public bool IsOpen(UIWindow w) => HasChild(w);
 
 	public override void LeftMouseDown(UIMouseEvent e)
 	{

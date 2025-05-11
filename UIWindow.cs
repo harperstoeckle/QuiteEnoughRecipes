@@ -142,6 +142,11 @@ public class UIWindow : UIPanel
 		}
 	}
 
+	public CalculatedStyle GetParentDimensions()
+	{
+		return Parent?.GetInnerDimensions() ?? UserInterface.ActiveInstance.GetDimensions();
+	}
+
 	protected override void DrawSelf(SpriteBatch sb)
 	{
 		base.DrawSelf(sb);
@@ -237,10 +242,5 @@ public class UIWindow : UIPanel
 				UISystem.CustomCursorOffset = _cursorEdgeV.Frame().Size() / 2;
 			}
 		}
-	}
-
-	private CalculatedStyle GetParentDimensions()
-	{
-		return Parent?.GetInnerDimensions() ?? UserInterface.ActiveInstance.GetDimensions();
 	}
 }
