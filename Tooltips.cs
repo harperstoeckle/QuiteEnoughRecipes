@@ -8,9 +8,9 @@ public class Tooltips : GlobalItem
 {
 	public override void ModifyTooltips(Item item, List<TooltipLine> tooltips)
 	{
-		if (Main.InGameUI.CurrentState is UIQERState s)
+		if (UISystem.IsOpen())
 		{
-			s.ModifyTooltips(Mod, item, tooltips);
+			UISystem.Window.ModifyTooltips(Mod, item, tooltips);
 		}
 	}
 }
