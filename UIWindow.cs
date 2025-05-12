@@ -13,7 +13,11 @@ namespace QuiteEnoughRecipes;
 
 public class UIWindow : UIPanel
 {
-	private const float BarHeight = 30;
+	private const float BarInnerPadding = 10;
+	private const float BarOuterPadding = 5;
+	private const float BarItemWidth = 22;
+	private const float BarItemHeight = BarItemWidth;
+	private const float BarHeight = BarItemHeight + 2 * BarOuterPadding;
 
 	/*
 	 * Window resizing considers two different regions. First, the cursor is checked against each
@@ -37,10 +41,15 @@ public class UIWindow : UIPanel
 	private UIPanel _topBar = new(){
 		Width = StyleDimension.Fill,
 		Height = new(BarHeight, 0),
-		IgnoresMouseInteraction = true,
 		BackgroundColor = QERColors.Brown,
 		BorderColor = QERColors.DarkBrown,
 	};
+
+	/*
+	 * Used to determine where to put the next item in the bar. Bar elements are arranged from left
+	 * to right.
+	 */
+	private float _topBarOffset = 0.0f;
 
 	private Asset<Texture2D> _cursorCornerRight = QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/cursor_corner_right");
 	private Asset<Texture2D> _cursorCornerLeft = QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/cursor_corner_left");
@@ -75,15 +84,22 @@ public class UIWindow : UIPanel
 		BorderColor = QERColors.DarkBrown;
 		SetPadding(0);
 		Contents.SetPadding(ResizeBorderWidth);
+		_topBar.SetPadding(BarOuterPadding);
+
 		Append(_topBar);
 		Append(Contents);
+
+		var closeButton = new UIImage(QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/button_close"));
+		closeButton.OnLeftClick += (elem, evt) => UISystem.WindowManager?.Close(this);
+
+		AddElementToBar(closeButton);
 	}
 
 	public override void LeftMouseDown(UIMouseEvent e)
 	{
 		base.LeftMouseDown(e);
 
-		if (e.Target == this || e.Target == Contents)
+		if (e.Target == this || e.Target == Contents || e.Target == _topBar)
 		{
 			var dims = GetOuterDimensions();
 			var parentBounds = GetParentDimensions();
@@ -138,6 +154,16 @@ public class UIWindow : UIPanel
 			PlayerInput.LockVanillaMouseScroll("QuiteEnoughRecipes/UIWindow");
 			Main.LocalPlayer.mouseInterface = true;
 		}
+	}
+
+	// `e` should have a fixed width of `BarItemWidth` and be smaller than `BarHeight`.
+	public void AddElementToBar(UIElement e)
+	{
+		e.Left = new(_topBarOffset, 0);
+		e.Width = new(BarItemWidth, 0);
+		e.Height = new(BarItemHeight, 0);
+		_topBar.Append(e);
+		_topBarOffset += BarItemWidth + BarInnerPadding;
 	}
 
 	public CalculatedStyle GetParentDimensions()
