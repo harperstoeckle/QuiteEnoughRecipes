@@ -49,6 +49,26 @@ public class UISystem : ModSystem
 		On_Main.DrawThickCursor += DetourDrawThickCursor;
 
 		/*
+		 * Disable item slot interaction while a window is being hovered. The choice of functions to
+		 * detour here were taken from magic storage.
+		 */
+		On_ItemSlot.MouseHover_ItemArray_int_int += (orig, inv, ctx, slot) => {
+			if (WindowManager is null || !WindowManager.IsHoveringWindow) { orig(inv, ctx, slot); }
+		};
+		On_ItemSlot.LeftClick_ItemArray_int_int += (orig, inv, ctx, slot) => {
+			if (WindowManager is null || !WindowManager.IsHoveringWindow) { orig(inv, ctx, slot); }
+		};
+		On_ItemSlot.RightClick_ItemArray_int_int += (orig, inv, ctx, slot) => {
+			if (WindowManager is null || !WindowManager.IsHoveringWindow) { orig(inv, ctx, slot); }
+		};
+		On_ItemSlot.OverrideHover_ItemArray_int_int += (orig, inv, ctx, slot) => {
+			if (WindowManager is null || !WindowManager.IsHoveringWindow) { orig(inv, ctx, slot); }
+		};
+		On_ItemSlot.OverrideLeftClick += (orig, inv, ctx, slot) => {
+			return (WindowManager is null || !WindowManager.IsHoveringWindow) && orig(inv, ctx, slot);
+		};
+
+		/*
 		 * In vanilla, a lot of this kind of logic (resetting variables) seems to be handled in
 		 * interface layers like "Vanilla: Interface Logic 4", but that means that they aren't
 		 * always properly called in fancy UI mode. I'm not sure if there's a better place to
