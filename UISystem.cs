@@ -49,23 +49,24 @@ public class UISystem : ModSystem
 		On_Main.DrawThickCursor += DetourDrawThickCursor;
 
 		/*
-		 * Disable item slot interaction while a window is being hovered. The choice of functions to
-		 * detour here were taken from magic storage.
+		 * This general method is taken from Magic Storage. Whenever we're hovering anything in the
+		 * QER UI, we want to avoid any interaction with the inventory, so we trick the game into
+		 * thinking the mouse is off-screen while drawing the inventory.
 		 */
-		On_ItemSlot.MouseHover_ItemArray_int_int += (orig, inv, ctx, slot) => {
-			if (WindowManager is null || !WindowManager.IsHoveringWindow) { orig(inv, ctx, slot); }
-		};
-		On_ItemSlot.LeftClick_ItemArray_int_int += (orig, inv, ctx, slot) => {
-			if (WindowManager is null || !WindowManager.IsHoveringWindow) { orig(inv, ctx, slot); }
-		};
-		On_ItemSlot.RightClick_ItemArray_int_int += (orig, inv, ctx, slot) => {
-			if (WindowManager is null || !WindowManager.IsHoveringWindow) { orig(inv, ctx, slot); }
-		};
-		On_ItemSlot.OverrideHover_ItemArray_int_int += (orig, inv, ctx, slot) => {
-			if (WindowManager is null || !WindowManager.IsHoveringWindow) { orig(inv, ctx, slot); }
-		};
-		On_ItemSlot.OverrideLeftClick += (orig, inv, ctx, slot) => {
-			return (WindowManager is null || !WindowManager.IsHoveringWindow) && orig(inv, ctx, slot);
+		On_Main.DrawInventory += (orig, self) => {
+			int oldMouseX = Main.mouseX;
+			int oldMouseY = Main.mouseY;
+
+			if (IsHoveringWindow)
+			{
+				Main.mouseX = -1;
+				Main.mouseY = -1;
+			}
+
+			orig(self);
+
+			Main.mouseX = oldMouseX;
+			Main.mouseY = oldMouseY;
 		};
 
 		/*
@@ -227,6 +228,11 @@ public class UISystem : ModSystem
 			ToggleOpen();
 		}
 
+		if (ToggleFullscreenKey?.JustPressed ?? false)
+		{
+			ToggleFullscreen();
+		}
+
 		if ((HoverSourcesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)
 		{
 			ShowSources(new ItemIngredient(Main.HoverItem));
@@ -279,4 +285,5 @@ public class UISystem : ModSystem
 		return orig(smart);
 	}
 
+	private static bool IsHoveringWindow => WindowManager is not null && WindowManager.IsHoveringWindow;
 }
