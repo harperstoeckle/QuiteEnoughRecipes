@@ -98,9 +98,15 @@ public class UIWindow : UIPanel
 
 	public override void LeftMouseDown(UIMouseEvent e)
 	{
-		base.LeftMouseDown(e);
+		bool isTargetingThisWindow = e.Target == this || e.Target == Contents || e.Target == _topBar;
 
-		if (e.Target == this || e.Target == Contents || e.Target == _topBar)
+		/*
+		 * Hack so that when this event gets propagated to the parent `WindowManager`, it will be
+		 * able to tell that it's a `UIWindow`.
+		 */
+		base.LeftMouseDown(new(isTargetingThisWindow ? this : e.Target, e.MousePosition));
+
+		if (isTargetingThisWindow)
 		{
 			var dims = GetOuterDimensions();
 			var parentBounds = GetParentDimensions();
