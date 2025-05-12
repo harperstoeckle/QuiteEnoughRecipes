@@ -206,7 +206,7 @@ public class UIWindow : UIPanel
 					&& Main.mouseX < right - ResizeBorderWidth
 					&& dims.Y + ResizeBorderWidth < Main.mouseY
 					&& Main.mouseY < bottom - ResizeBorderWidth
-					|| !ContainsPoint(Main.MouseScreen))
+					|| !IsMouseHovering)
 			{
 				_resizeLeft = _resizeRight = _resizeTop = _resizeBottom = false;
 			}
