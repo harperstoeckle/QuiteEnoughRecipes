@@ -27,8 +27,6 @@ public class UIWindow : UIPanel
 	private const float ResizeCornerWidth = 30;
 	private const float ResizeBorderWidth = 7;
 
-	private static readonly Color BarColor = new Color(63, 82, 151) * 0.7f;
-
 	private struct DragState
 	{
 		public required Vector2 OriginalSize;
@@ -40,8 +38,8 @@ public class UIWindow : UIPanel
 		Width = StyleDimension.Fill,
 		Height = new(BarHeight, 0),
 		IgnoresMouseInteraction = true,
-		BackgroundColor = BarColor,
-		BorderColor = BarColor,
+		BackgroundColor = QERColors.Brown,
+		BorderColor = QERColors.DarkBrown,
 	};
 
 	private Asset<Texture2D> _cursorCornerRight = QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/cursor_corner_right");
@@ -73,8 +71,8 @@ public class UIWindow : UIPanel
 
 	public UIWindow()
 	{
-		BackgroundColor = BarColor * 0.7f;
-		BorderColor = BarColor;
+		BackgroundColor = QERColors.Brown;
+		BorderColor = QERColors.DarkBrown;
 		SetPadding(0);
 		Contents.SetPadding(ResizeBorderWidth);
 		Append(_topBar);
