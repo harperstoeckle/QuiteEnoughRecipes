@@ -44,6 +44,19 @@ public class UISystem : ModSystem
 		 */
 		On_Main.DrawCursor += DetourDrawCursor;
 		On_Main.DrawThickCursor += DetourDrawThickCursor;
+
+		/*
+		 * In vanilla, a lot of this kind of logic (resetting variables) seems to be handled in
+		 * interface layers like "Vanilla: Interface Logic 4", but that means that they aren't
+		 * always properly called in fancy UI mode. I'm not sure if there's a better place to
+		 * handle this stuff.
+		 */
+		Main.OnPostDraw += ResetPerFrameVariables;
+	}
+
+	public override void Unload()
+	{
+		Main.OnPostDraw -= ResetPerFrameVariables;
 	}
 
 	public override void OnWorldLoad()
@@ -101,6 +114,13 @@ public class UISystem : ModSystem
 		{
 			_userInterface.Update(t);
 		}
+	}
+
+	// This needs the parameter to be added to the `Main::OnPostDraw` event.
+	public static void ResetPerFrameVariables(GameTime t)
+	{
+		CustomCursorTexture = null;
+		CustomCursorOffset = Vector2.Zero;
 	}
 
 	/*
@@ -170,9 +190,6 @@ public class UISystem : ModSystem
 
 			Main.spriteBatch.Draw(CustomCursorTexture.Value, Main.MouseScreen, null, color, 0,
 					CustomCursorOffset, Main.cursorScale, 0, 0);
-
-			CustomCursorTexture = null;
-			CustomCursorOffset = Vector2.Zero;
 		}
 		else
 		{
