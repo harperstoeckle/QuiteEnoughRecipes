@@ -2,6 +2,8 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using System;
 using Terraria.UI;
+using System.Linq;
+using Terraria;
 
 namespace QuiteEnoughRecipes;
 
@@ -26,8 +28,8 @@ public class UIWindowManager : UIState
 
 	public void Open(UIWindow w) => _deferredCalls.Add(() => { if (!HasChild(w)) { Append(w); } });
 	public void Close(UIWindow w) => _deferredCalls.Add(() => RemoveChild(w));
-
 	public bool IsOpen(UIWindow w) => HasChild(w);
+	public bool IsHoveringWindow => Children.Any(w => w.IsMouseHovering);
 
 	public override void LeftMouseDown(UIMouseEvent e)
 	{
