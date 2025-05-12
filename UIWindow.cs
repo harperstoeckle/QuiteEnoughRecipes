@@ -173,8 +173,6 @@ public class UIWindow : UIPanel
 
 	protected override void DrawSelf(SpriteBatch sb)
 	{
-		base.DrawSelf(sb);
-
 		if (_dragState is DragState s)
 		{
 			var offset = Main.MouseScreen - s.OriginalMouse;
@@ -266,5 +264,7 @@ public class UIWindow : UIPanel
 				UISystem.CustomCursorOffset = _cursorEdgeV.Frame().Size() / 2;
 			}
 		}
+
+		base.DrawSelf(sb);
 	}
 }
