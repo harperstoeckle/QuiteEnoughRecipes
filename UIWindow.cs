@@ -89,7 +89,8 @@ public class UIWindow : UIPanel
 		Append(_topBar);
 		Append(Contents);
 
-		var closeButton = new UIImage(QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/button_close"));
+		var closeButton = new UIImageButton(QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/button_close"));
+		closeButton.SetVisibility(1.0f, 0.8f);
 		closeButton.OnLeftClick += (elem, evt) => UISystem.WindowManager?.Close(this);
 
 		AddElementToBar(closeButton);
