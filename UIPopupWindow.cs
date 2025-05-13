@@ -1,5 +1,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using ReLogic.Content;
+using Terraria.GameContent.UI.Elements;
 using Terraria;
 
 namespace QuiteEnoughRecipes;
@@ -8,6 +10,24 @@ namespace QuiteEnoughRecipes;
 public class UIPopupWindow : UIWindow
 {
 	private bool _wasJustOpened = false;
+
+	// When true, this window will not disappear when the cursor leaves.
+	private bool _isPinned = false;
+
+	private Asset<Texture2D> PinTexture =>
+		_isPinned ? QERAssets.ButtonPinDown : QERAssets.ButtonPinUp;
+
+	public UIPopupWindow()
+	{
+		var pinButton = new UIImageButton(PinTexture);
+		pinButton.SetVisibility(1.0f, 0.8f);
+		pinButton.OnLeftClick += (elem, evt) => {
+			_isPinned = !_isPinned;
+			pinButton.SetImage(PinTexture);
+		};
+
+		AddElementToBar(pinButton);
+	}
 
 	public void Open()
 	{
@@ -49,7 +69,7 @@ public class UIPopupWindow : UIWindow
 
 			_wasJustOpened = false;
 		}
-		else if (!ContainsPoint(Main.MouseScreen))
+		else if (!_isPinned && !ContainsPoint(Main.MouseScreen))
 		{
 			UISystem.WindowManager?.Close(this);
 		}

@@ -16,6 +16,8 @@ public class QERAssets : ModSystem
 
 	public static Asset<Texture2D> ButtonClose;
 	public static Asset<Texture2D> ButtonHelp;
+	public static Asset<Texture2D> ButtonPinUp;
+	public static Asset<Texture2D> ButtonPinDown;
 #nullable enable
 
 	public override void Load()
@@ -28,6 +30,8 @@ public class QERAssets : ModSystem
 
 		ButtonClose = LoadTexture("Images/button_close");
 		ButtonHelp = LoadTexture("Images/button_help");
+		ButtonPinUp = LoadTexture("Images/button_pin_up");
+		ButtonPinDown = LoadTexture("Images/button_pin_down");
 	}
 
 	private static Asset<Texture2D> LoadTexture(string path)
