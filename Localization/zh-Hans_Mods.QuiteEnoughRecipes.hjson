@@ -49,6 +49,9 @@ UI: {
 		''' */
 	// PinUpHover: Pin popup window
 	// PinDownHover: Unpin popup window
+	// FullscreenHover: Exit fullscreen
+	// WindowedHover: Enter fullscreen
+	// CloseHover: Close
 }
 
 Configs: {

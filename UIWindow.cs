@@ -14,14 +14,13 @@ namespace QuiteEnoughRecipes;
 
 public class UIWindow : UIPanel
 {
-	private class UIHelpIcon : UIImageButton
+	private class UIHelpIcon : UIQERButton
 	{
 		private LocalizedText _text;
 
 		public UIHelpIcon(LocalizedText helpText) : base(QERAssets.ButtonHelp)
 		{
 			_text = helpText;
-			SetVisibility(1.0f, 0.8f);
 		}
 
 		protected override void DrawSelf(SpriteBatch sb)
@@ -111,8 +110,8 @@ public class UIWindow : UIPanel
 		Append(_topBar);
 		Append(Contents);
 
-		var closeButton = new UIImageButton(QERAssets.ButtonClose);
-		closeButton.SetVisibility(1.0f, 0.8f);
+		var closeButton = new UIQERButton(QERAssets.ButtonClose);
+		closeButton.HoverText = Language.GetText("Mods.QuiteEnoughRecipes.UI.CloseHover");
 		closeButton.OnLeftClick += (elem, evt) => PressCloseButton();
 
 		AddElementToBar(closeButton);
