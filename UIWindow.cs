@@ -72,6 +72,9 @@ public class UIWindow : UIPanel
 	 */
 	private float _topBarOffset = 0.0f;
 
+	// Offset on the right side. Only used for help.
+	private float _topBarHelpOffset = 0.0f;
+
 	// When not null, we assume this window is being dragged.
 	private DragState? _dragState = null;
 
@@ -195,8 +198,17 @@ public class UIWindow : UIPanel
 		_topBarOffset += BarItemWidth + BarInnerPadding;
 	}
 
-	// Add a help button to the bar that will open a help window displaying the given text.
-	public void AddHelp(LocalizedText helpText) => AddElementToBar(new UIHelpIcon(helpText));
+	// Add a help button to the right side (that's where help is).
+	public void AddHelp(LocalizedText helpText)
+	{
+		var helpIcon = new UIHelpIcon(helpText);
+		helpIcon.HAlign = 1;
+		helpIcon.Left = new(-_topBarHelpOffset, 0);
+		helpIcon.Width = new(BarItemWidth, 0);
+		helpIcon.Height = new(BarItemHeight, 0);
+		_topBar.Append(helpIcon);
+		_topBarHelpOffset += BarItemWidth + BarInnerPadding;
+	}
 
 	public CalculatedStyle GetParentDimensions()
 	{
