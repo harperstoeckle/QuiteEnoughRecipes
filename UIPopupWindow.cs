@@ -12,6 +12,7 @@ public class UIPopupWindow : UIWindow
 
 	// When true, this window will not disappear when the cursor leaves.
 	private bool _isPinned = false;
+	private UIQERButton _pinButton = new(QERAssets.ButtonPin, 2);
 
 	private LocalizedText PinButtonText =>
 		_isPinned
@@ -20,15 +21,12 @@ public class UIPopupWindow : UIWindow
 
 	public UIPopupWindow()
 	{
-		var pinButton = new UIQERButton(QERAssets.ButtonPin, 2);
-		pinButton.HoverText = PinButtonText;
-		pinButton.OnLeftClick += (elem, evt) => {
+		_pinButton.OnLeftClick += (elem, evt) => {
 			_isPinned = !_isPinned;
-			pinButton.Frame = _isPinned ? 1 : 0;
-			pinButton.HoverText = PinButtonText;
+			UpdatePinButton();
 		};
 
-		AddElementToBar(pinButton);
+		AddElementToBar(_pinButton);
 	}
 
 	public void Open()
@@ -40,6 +38,13 @@ public class UIPopupWindow : UIWindow
 		 * to defer setting the initial position.
 		 */
 		_wasJustOpened = true;
+	}
+
+	protected override void PressCloseButton()
+	{
+		base.PressCloseButton();
+		_isPinned = false;
+		UpdatePinButton();
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
@@ -81,5 +86,11 @@ public class UIPopupWindow : UIWindow
 		 * of the window in the wrong spot.
 		 */
 		base.DrawSelf(sb);
+	}
+
+	private void UpdatePinButton()
+	{
+		_pinButton.Frame = _isPinned ? 1 : 0;
+		_pinButton.HoverText = PinButtonText;
 	}
 }
