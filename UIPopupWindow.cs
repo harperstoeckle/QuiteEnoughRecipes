@@ -1,7 +1,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
-using ReLogic.Content;
-using Terraria.GameContent.UI.Elements;
+using Terraria.Localization;
 using Terraria;
 
 namespace QuiteEnoughRecipes;
@@ -14,12 +13,19 @@ public class UIPopupWindow : UIWindow
 	// When true, this window will not disappear when the cursor leaves.
 	private bool _isPinned = false;
 
+	private LocalizedText PinButtonText =>
+		_isPinned
+		? Language.GetText("Mods.QuiteEnoughRecipes.UI.PinDownHover")
+		: Language.GetText("Mods.QuiteEnoughRecipes.UI.PinUpHover");
+
 	public UIPopupWindow()
 	{
 		var pinButton = new UIQERButton(QERAssets.ButtonPin, 2);
+		pinButton.HoverText = PinButtonText;
 		pinButton.OnLeftClick += (elem, evt) => {
 			_isPinned = !_isPinned;
 			pinButton.Frame = _isPinned ? 1 : 0;
+			pinButton.HoverText = PinButtonText;
 		};
 
 		AddElementToBar(pinButton);

@@ -47,6 +47,8 @@ UI: {
 		filters. [c/3B95DA:Shift + right click] in this panel to also reset
 		locked filters.
 		''' */
+	// PinUpHover: Pin popup window
+	// PinDownHover: Unpin popup window
 }
 
 Configs: {
