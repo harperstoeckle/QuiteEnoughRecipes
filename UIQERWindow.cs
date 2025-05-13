@@ -226,13 +226,15 @@ public class UIQERWindow : UIWindow
 		HAlign = 0.5f;
 		VAlign = 0.5f;
 
+		// For now, we have a help button for both item and NPC search.
+		AddHelp(Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
+		AddHelp(Language.GetText("Mods.QuiteEnoughRecipes.UI.NPCSearchHelp"));
+
 		var itemGrid = new UIQueryableIngredientGrid<ItemIngredient, UIItemPanel>();
-		var itemSearchPage = new UISearchPage(itemGrid,
-			Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
+		var itemSearchPage = new UISearchPage(itemGrid);
 
 		var npcGrid = new UIQueryableIngredientGrid<NPCIngredient, UINPCPanel>();
-		var npcSearchPage = new UISearchPage(npcGrid,
-			Language.GetText("Mods.QuiteEnoughRecipes.UI.NPCSearchHelp"));
+		var npcSearchPage = new UISearchPage(npcGrid);
 
 		AddHandler(new RecipeHandlers.Basic());
 		AddHandler(new RecipeHandlers.CraftingStations());

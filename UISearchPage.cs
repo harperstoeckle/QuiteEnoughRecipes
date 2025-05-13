@@ -57,15 +57,16 @@ public class OptionPanelToggleButton : UIElement
 	public required string IconPath;
 	public required string Name;
 
-	/*
-	 * `image` is supposed to be either the bestiary filtering or sorting button, since the icon
-	 * can be easily cut out of them from a specific location.
-	 */
-	public OptionPanelToggleButton(IOptionGroup optionGroup)
+	public OptionPanelToggleButton(IOptionGroup optionGroup, LocalizedText? helpText = null)
 	{
 		_optionGroup = optionGroup;
 		Width.Pixels = Height.Pixels = 22;
 		_popupWindow.Contents.Append(_optionGroup.Element);
+
+		if (helpText is not null)
+		{
+			_popupWindow.AddHelp(helpText);
+		}
 	}
 
 	public override void LeftClick(UIMouseEvent e)
@@ -119,34 +120,6 @@ public class OptionPanelToggleButton : UIElement
 	}
 }
 
-// Icon that provides help when hovered.
-public class UIHelpIcon : UIElement
-{
-	private LocalizedText _text;
-	public UIHelpIcon(LocalizedText text)
-	{
-		_text = text;
-
-		Width.Pixels = Height.Pixels = 22;
-		Append(new UIText("?", 0.8f){
-			HAlign = 0.5f,
-			VAlign = 0.5f,
-			TextColor = new Color(0.7f, 0.7f, 0.7f)
-		});
-	}
-
-	protected override void DrawSelf(SpriteBatch sb)
-	{
-		// Kind of a silly way to draw the text on top.
-		base.DrawSelf(sb);
-
-		if (IsMouseHovering)
-		{
-			UICommon.TooltipMouseText(_text.Value);
-		}
-	}
-}
-
 /*
  * A page with a search bar, filters, and sorting options. It maintains an `IQueryable` element,
  * updating it whenever the search options change.
@@ -155,9 +128,7 @@ public class UISearchPage : UIElement, IFocusableSearchPage
 {
 	private IQueryable _queryable;
 
-	private UIOptionPanel _filterPanel = new(
-		Language.GetText("Mods.QuiteEnoughRecipes.UI.FilterHelp")
-		.WithFormatArgs(Main.FavoriteKey.ToString()));
+	private UIOptionPanel _filterPanel = new();
 	private UIOptionPanel _sortPanel = new();
 	private UIQERSearchBar _searchBar = new();
 
@@ -173,7 +144,7 @@ public class UISearchPage : UIElement, IFocusableSearchPage
 	 * `squareSideLength` is the side length of the grid squares, and `padding` is the amount of
 	 * padding between grid squares.
 	 */
-	public UISearchPage(IQueryable queryElement, LocalizedText? helpText = null)
+	public UISearchPage(IQueryable queryElement)
 	{
 		const float BarHeight = 50;
 		const float BottomHeight = 20;
@@ -192,7 +163,9 @@ public class UISearchPage : UIElement, IFocusableSearchPage
 			_filterPanel.Height.Percent = 1;
 			foreach (var f in filters) { _filterPanel.AddGroup(f); }
 
-			var filterToggleButton = new OptionPanelToggleButton(_filterPanel){
+			var filterHelp = Language.GetText("Mods.QuiteEnoughRecipes.UI.FilterHelp")
+				.WithFormatArgs(Main.FavoriteKey.ToString());
+			var filterToggleButton = new OptionPanelToggleButton(_filterPanel, filterHelp){
 				IconPath = "Images/UI/Bestiary/Button_Filtering",
 				Name = Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"),
 				Left = new(offset, 0)
@@ -220,15 +193,6 @@ public class UISearchPage : UIElement, IFocusableSearchPage
 		}
 
 		float rightOffset = 0;
-
-		if (helpText is not null)
-		{
-			var helpIcon = new UIHelpIcon(helpText);
-			helpIcon.HAlign = 1;
-
-			rightOffset += helpIcon.Width.Pixels + 10;
-			Append(helpIcon);
-		}
 
 		// Make room for the filters on the left and the help icon on the right.
 		_searchBar.Width = new StyleDimension(-offset - rightOffset, 1);

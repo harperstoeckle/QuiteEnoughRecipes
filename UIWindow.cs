@@ -1,18 +1,39 @@
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using ReLogic.Content;
 using System.Linq;
 using System;
 using Terraria.GameContent.UI.Elements;
-using Terraria.GameContent;
 using Terraria.GameInput;
+using Terraria.Localization;
 using Terraria.UI;
 using Terraria;
-using ReLogic.Content;
-using Microsoft.Xna.Framework.Graphics;
+using Terraria.ModLoader.UI;
 
 namespace QuiteEnoughRecipes;
 
 public class UIWindow : UIPanel
 {
+	private class UIHelpIcon : UIImageButton
+	{
+		private LocalizedText _text;
+
+		public UIHelpIcon(LocalizedText helpText) : base(QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/button_help"))
+		{
+			_text = helpText;
+			SetVisibility(1.0f, 0.8f);
+		}
+
+		protected override void DrawSelf(SpriteBatch sb)
+		{
+			base.DrawSelf(sb);
+			if (IsMouseHovering)
+			{
+				UICommon.TooltipMouseText(_text.Value);
+			}
+		}
+	}
+
 	private const float BarInnerPadding = 10;
 	private const float BarOuterPadding = 5;
 	private const float BarItemWidth = 22;
@@ -172,6 +193,9 @@ public class UIWindow : UIPanel
 		_topBar.Append(e);
 		_topBarOffset += BarItemWidth + BarInnerPadding;
 	}
+
+	// Add a help button to the bar that will open a help window displaying the given text.
+	public void AddHelp(LocalizedText helpText) => AddElementToBar(new UIHelpIcon(helpText));
 
 	public CalculatedStyle GetParentDimensions()
 	{
