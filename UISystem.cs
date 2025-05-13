@@ -11,7 +11,8 @@ namespace QuiteEnoughRecipes;
 public class UISystem : ModSystem
 {
 	private static UserInterface _userInterface;
-	private static bool _isFullscreen = true;
+
+	public static bool IsFullscreen { get; private set; } = true;
 
 	public static UIQERWindow? Window { get; private set; }
 	public static UIWindowManager? WindowManager { get; private set; }
@@ -20,7 +21,6 @@ public class UISystem : ModSystem
 	public static ModKeybind? HoverSourcesKey { get; private set; }
 	public static ModKeybind? HoverUsesKey { get; private set; }
 	public static ModKeybind? BackKey { get; private set; }
-	public static ModKeybind? ToggleFullscreenKey { get; private set; }
 
 	public static bool ShouldGoBackInHistory { get; private set; } = false;
 	public static bool ShouldGoForwardInHistory { get; private set; } = false;
@@ -37,7 +37,6 @@ public class UISystem : ModSystem
 		HoverSourcesKey = KeybindLoader.RegisterKeybind(Mod, "HoverSources", "OemOpenBrackets");
 		HoverUsesKey = KeybindLoader.RegisterKeybind(Mod, "HoverUses", "OemCloseBrackets");
 		BackKey = KeybindLoader.RegisterKeybind(Mod, "Back", "Back");
-		ToggleFullscreenKey = KeybindLoader.RegisterKeybind(Mod, "ToggleFullscreen", "OemBackslash");
 
 		/*
 		 * I tried to do this by using an interface layer, but this doesn't quite work properly
@@ -97,7 +96,7 @@ public class UISystem : ModSystem
 		WindowManager.AddWindow("QuiteEnoughRecipes/Main", Window);
 		WindowManager.Open(Window);
 
-		_isFullscreen = true;
+		IsFullscreen = true;
 
 		// Loading items beforehand ensures that they *aren't* being loaded while scrolling.
 		if (QERConfig.Instance.ShouldPreloadItems)
@@ -163,7 +162,7 @@ public class UISystem : ModSystem
 	 */
 	public static void Open()
 	{
-		if (_isFullscreen)
+		if (IsFullscreen)
 		{
 			IngameFancyUI.OpenUIState(WindowManager);
 		}
@@ -200,7 +199,7 @@ public class UISystem : ModSystem
 	public static void ToggleFullscreen()
 	{
 		Close();
-		_isFullscreen = !_isFullscreen;
+		IsFullscreen = !IsFullscreen;
 		Open();
 	}
 
@@ -226,11 +225,6 @@ public class UISystem : ModSystem
 		if (OpenUIKey?.JustPressed ?? false)
 		{
 			ToggleOpen();
-		}
-
-		if (ToggleFullscreenKey?.JustPressed ?? false)
-		{
-			ToggleFullscreen();
 		}
 
 		if ((HoverSourcesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)

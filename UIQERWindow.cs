@@ -1,5 +1,5 @@
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework;
+using ReLogic.Content;
 using System.Collections.Generic;
 using System.Linq;
 using System;
@@ -217,6 +217,9 @@ public class UIQERWindow : UIWindow
 	// This will be re-focused when the browser is opened.
 	private IFocusableSearchPage? _pageToFocusOnOpen = null;
 
+	private Asset<Texture2D> FullscreenButtonTexture =>
+		UISystem.IsFullscreen ? QERAssets.ButtonWindowed : QERAssets.ButtonFullscreen;
+
 	public UIQERWindow()
 	{
 		MinWidth = new(400, 0);
@@ -225,6 +228,15 @@ public class UIQERWindow : UIWindow
 		Height = new(0, 0.8f);
 		HAlign = 0.5f;
 		VAlign = 0.5f;
+
+		var fullscreenButton = new UIImageButton(FullscreenButtonTexture);
+		fullscreenButton.SetVisibility(1.0f, 0.8f);
+		fullscreenButton.OnLeftClick += (elem, evt) => {
+			UISystem.ToggleFullscreen();
+			fullscreenButton.SetImage(FullscreenButtonTexture);
+		};
+
+		AddElementToBar(fullscreenButton);
 
 		// For now, we have a help button for both item and NPC search.
 		AddHelp(Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
