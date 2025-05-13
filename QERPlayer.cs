@@ -35,10 +35,5 @@ public class QERPlayer : ModPlayer
 			UISystem.ShowUses(new ItemIngredient(Main.HoverItem));
 			UISystem.Open();
 		}
-
-		if (UISystem.ToggleFullscreenKey?.JustPressed ?? false)
-		{
-			UISystem.ToggleFullscreen();
-		}
 	}
 }
