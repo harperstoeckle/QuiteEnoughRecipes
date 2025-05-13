@@ -69,7 +69,7 @@ public class UIPopupWindow : UIWindow
 
 			_wasJustOpened = false;
 		}
-		else if (!_isPinned && !ContainsPoint(Main.MouseScreen))
+		else if (!_isPinned && !IsDragging && !ContainsPoint(Main.MouseScreen))
 		{
 			UISystem.WindowManager?.Close(this);
 		}

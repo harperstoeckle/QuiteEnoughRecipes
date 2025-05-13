@@ -87,6 +87,9 @@ public class UIWindow : UIPanel
 
 	private bool HoveringResize => _resizeLeft || _resizeRight || _resizeTop || _resizeBottom;
 
+	// True if the window is being dragged or resized.
+	public bool IsDragging => _dragState is not null;
+
 	// Stuff should just be directly appended to this instead of the window itself.
 	public UIElement Contents { get; private set; } = new(){
 		Width = StyleDimension.Fill,
