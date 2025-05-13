@@ -217,8 +217,10 @@ public class UIQERWindow : UIWindow
 	// This will be re-focused when the browser is opened.
 	private IFocusableSearchPage? _pageToFocusOnOpen = null;
 
-	private Asset<Texture2D> FullscreenButtonTexture =>
-		UISystem.IsFullscreen ? QERAssets.ButtonWindowed : QERAssets.ButtonFullscreen;
+	private LocalizedText FullscreenButtonText =>
+		UISystem.IsFullscreen
+		? Language.GetText("Mods.QuiteEnoughRecipes.UI.FullscreenHover")
+		: Language.GetText("Mods.QuiteEnoughRecipes.UI.WindowedHover");
 
 	public UIQERWindow()
 	{
@@ -229,11 +231,13 @@ public class UIQERWindow : UIWindow
 		HAlign = 0.5f;
 		VAlign = 0.5f;
 
-		var fullscreenButton = new UIImageButton(FullscreenButtonTexture);
-		fullscreenButton.SetVisibility(1.0f, 0.8f);
+		var fullscreenButton = new UIQERButton(QERAssets.ButtonFullscreen, 2);
+		fullscreenButton.Frame = UISystem.IsFullscreen ? 1 : 0;
+		fullscreenButton.HoverText = FullscreenButtonText;
 		fullscreenButton.OnLeftClick += (elem, evt) => {
 			UISystem.ToggleFullscreen();
-			fullscreenButton.SetImage(FullscreenButtonTexture);
+			fullscreenButton.Frame = UISystem.IsFullscreen ? 1 : 0;
+			fullscreenButton.HoverText = FullscreenButtonText;
 		};
 
 		AddElementToBar(fullscreenButton);

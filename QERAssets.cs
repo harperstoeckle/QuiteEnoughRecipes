@@ -18,7 +18,6 @@ public class QERAssets : ModSystem
 	public static Asset<Texture2D> ButtonHelp;
 	public static Asset<Texture2D> ButtonPin;
 	public static Asset<Texture2D> ButtonFullscreen;
-	public static Asset<Texture2D> ButtonWindowed;
 #nullable enable
 
 	public override void Load()
@@ -33,7 +32,6 @@ public class QERAssets : ModSystem
 		ButtonHelp = LoadTexture("Images/button_help");
 		ButtonPin = LoadTexture("Images/button_pin");
 		ButtonFullscreen = LoadTexture("Images/button_fullscreen");
-		ButtonWindowed = LoadTexture("Images/button_windowed");
 	}
 
 	private static Asset<Texture2D> LoadTexture(string path)
