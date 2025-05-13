@@ -84,6 +84,8 @@ public class UISystem : ModSystem
 
 	public override void OnWorldLoad()
 	{
+		IsFullscreen = true;
+
 		/*
 		 * We want to reset the UI every time the world loads so it's not carrying over weird state
 		 * across worlds. There's also potentially world-specific data that needs to be handled
@@ -95,8 +97,6 @@ public class UISystem : ModSystem
 
 		WindowManager.AddWindow("QuiteEnoughRecipes/Main", Window);
 		WindowManager.Open(Window);
-
-		IsFullscreen = true;
 
 		// Loading items beforehand ensures that they *aren't* being loaded while scrolling.
 		if (QERConfig.Instance.ShouldPreloadItems)
