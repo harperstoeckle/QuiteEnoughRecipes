@@ -306,6 +306,13 @@ public class UIQERWindow : UIWindow
 		Contents.Append(_recipeTabBar);
 	}
 
+	/*
+	 * We want to close the whole interface instead of just the window. Since this is the main
+	 * window that we access stuff through, closing it without closing the interface would cause
+	 * problems.
+	 */
+	protected override void PressCloseButton() => UISystem.Close();
+
 	protected override void DrawSelf(SpriteBatch sb)
 	{
 		base.DrawSelf(sb);

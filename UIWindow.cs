@@ -112,10 +112,13 @@ public class UIWindow : UIPanel
 
 		var closeButton = new UIImageButton(QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/button_close"));
 		closeButton.SetVisibility(1.0f, 0.8f);
-		closeButton.OnLeftClick += (elem, evt) => UISystem.WindowManager?.Close(this);
+		closeButton.OnLeftClick += (elem, evt) => PressCloseButton();
 
 		AddElementToBar(closeButton);
 	}
+
+	// This is called when the close button is pressed.
+	protected virtual void PressCloseButton() => UISystem.WindowManager?.Close(this);
 
 	public override void LeftMouseDown(UIMouseEvent e)
 	{
