@@ -102,8 +102,8 @@ public class UIWindow : UIPanel
 
 	public UIWindow()
 	{
-		BackgroundColor = QERColors.Brown;
-		BorderColor = QERColors.DarkBrown;
+		BackgroundColor = QERColors.Brown * 0.7f;
+		BorderColor = QERColors.DarkBrown * 0.7f;
 		SetPadding(0);
 		Contents.SetPadding(ResizeBorderWidth);
 		_topBar.SetPadding(BarOuterPadding);
