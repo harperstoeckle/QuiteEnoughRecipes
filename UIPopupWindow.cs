@@ -14,16 +14,12 @@ public class UIPopupWindow : UIWindow
 	// When true, this window will not disappear when the cursor leaves.
 	private bool _isPinned = false;
 
-	private Asset<Texture2D> PinTexture =>
-		_isPinned ? QERAssets.ButtonPinDown : QERAssets.ButtonPinUp;
-
 	public UIPopupWindow()
 	{
-		var pinButton = new UIImageButton(PinTexture);
-		pinButton.SetVisibility(1.0f, 0.8f);
+		var pinButton = new UIQERButton(QERAssets.ButtonPin, 2);
 		pinButton.OnLeftClick += (elem, evt) => {
 			_isPinned = !_isPinned;
-			pinButton.SetImage(PinTexture);
+			pinButton.Frame = _isPinned ? 1 : 0;
 		};
 
 		AddElementToBar(pinButton);

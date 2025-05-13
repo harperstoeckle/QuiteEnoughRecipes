@@ -16,8 +16,7 @@ public class QERAssets : ModSystem
 
 	public static Asset<Texture2D> ButtonClose;
 	public static Asset<Texture2D> ButtonHelp;
-	public static Asset<Texture2D> ButtonPinUp;
-	public static Asset<Texture2D> ButtonPinDown;
+	public static Asset<Texture2D> ButtonPin;
 	public static Asset<Texture2D> ButtonFullscreen;
 	public static Asset<Texture2D> ButtonWindowed;
 #nullable enable
@@ -32,8 +31,7 @@ public class QERAssets : ModSystem
 
 		ButtonClose = LoadTexture("Images/button_close");
 		ButtonHelp = LoadTexture("Images/button_help");
-		ButtonPinUp = LoadTexture("Images/button_pin_up");
-		ButtonPinDown = LoadTexture("Images/button_pin_down");
+		ButtonPin = LoadTexture("Images/button_pin");
 		ButtonFullscreen = LoadTexture("Images/button_fullscreen");
 		ButtonWindowed = LoadTexture("Images/button_windowed");
 	}
