@@ -18,8 +18,6 @@ public class UIQERSearchBar : UIPanel
 	private static readonly Color _backgroundColor = new(35, 40, 83);
 
 	private static UIQERSearchBar? _activeInstance = null;
-
-	private Asset<Texture2D> _cursorIBeam = QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/cursor_i_beam");
 	private UISearchBar _search;
 
 	/*
@@ -95,8 +93,8 @@ public class UIQERSearchBar : UIPanel
 
 		if (IsMouseHovering)
 		{
-			UISystem.CustomCursorTexture = _cursorIBeam;
-			UISystem.CustomCursorOffset = _cursorIBeam.Frame().Size() / 2;
+			UISystem.CustomCursorTexture = QERAssets.CursorIBeam;
+			UISystem.CustomCursorOffset = QERAssets.CursorIBeam.Frame().Size() / 2;
 		}
 	}
 

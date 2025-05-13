@@ -18,7 +18,7 @@ public class UIWindow : UIPanel
 	{
 		private LocalizedText _text;
 
-		public UIHelpIcon(LocalizedText helpText) : base(QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/button_help"))
+		public UIHelpIcon(LocalizedText helpText) : base(QERAssets.ButtonHelp)
 		{
 			_text = helpText;
 			SetVisibility(1.0f, 0.8f);
@@ -72,11 +72,6 @@ public class UIWindow : UIPanel
 	 */
 	private float _topBarOffset = 0.0f;
 
-	private Asset<Texture2D> _cursorCornerRight = QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/cursor_corner_right");
-	private Asset<Texture2D> _cursorCornerLeft = QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/cursor_corner_left");
-	private Asset<Texture2D> _cursorEdgeH = QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/cursor_edge_horizontal");
-	private Asset<Texture2D> _cursorEdgeV = QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/cursor_edge_vertical");
-
 	// When not null, we assume this window is being dragged.
 	private DragState? _dragState = null;
 
@@ -110,7 +105,7 @@ public class UIWindow : UIPanel
 		Append(_topBar);
 		Append(Contents);
 
-		var closeButton = new UIImageButton(QuiteEnoughRecipes.Instance.Assets.Request<Texture2D>("Images/button_close"));
+		var closeButton = new UIImageButton(QERAssets.ButtonClose);
 		closeButton.SetVisibility(1.0f, 0.8f);
 		closeButton.OnLeftClick += (elem, evt) => PressCloseButton();
 
@@ -276,27 +271,27 @@ public class UIWindow : UIPanel
 		{
 			if (_resizeLeft && _resizeTop || _resizeBottom && _resizeRight)
 			{
-				UISystem.CustomCursorTexture = _cursorCornerLeft;
+				UISystem.CustomCursorTexture = QERAssets.CursorCornerLeft;
 			}
 			else
 			{
-				UISystem.CustomCursorTexture = _cursorCornerRight;
+				UISystem.CustomCursorTexture = QERAssets.CursorCornerRight;
 			}
 
-			UISystem.CustomCursorOffset = _cursorCornerLeft.Frame().Size() / 2;
+			UISystem.CustomCursorOffset = UISystem.CustomCursorTexture.Frame().Size() / 2;
 		}
 		else if (numResizeDirs == 1)
 		{
 			if (_resizeLeft || _resizeRight)
 			{
-				UISystem.CustomCursorTexture = _cursorEdgeH;
-				UISystem.CustomCursorOffset = _cursorEdgeH.Frame().Size() / 2;
+				UISystem.CustomCursorTexture = QERAssets.CursorEdgeHorizontal;
 			}
 			else
 			{
-				UISystem.CustomCursorTexture = _cursorEdgeV;
-				UISystem.CustomCursorOffset = _cursorEdgeV.Frame().Size() / 2;
+				UISystem.CustomCursorTexture = QERAssets.CursorEdgeVertical;
 			}
+
+			UISystem.CustomCursorOffset = UISystem.CustomCursorTexture.Frame().Size() / 2;
 		}
 
 		base.DrawSelf(sb);
