@@ -35,7 +35,7 @@ public class UIWindow : UIPanel
 	}
 
 	private const float BarInnerPadding = 10;
-	private const float BarOuterPadding = 5;
+	private const float BarOuterPadding = 6;
 	private const float BarItemWidth = 22;
 	private const float BarItemHeight = BarItemWidth;
 	private const float BarHeight = BarItemHeight + 2 * BarOuterPadding;
