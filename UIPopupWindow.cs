@@ -25,7 +25,7 @@ public class UIPopupWindow : UIWindow
 			_isPinned = !_isPinned;
 			UpdatePinButton();
 		};
-
+		UpdatePinButton();
 		AddElementToBar(_pinButton);
 	}
 
