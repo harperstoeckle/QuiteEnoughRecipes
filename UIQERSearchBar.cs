@@ -45,8 +45,15 @@ public class UIQERSearchBar : UIPanel
 		remove { _search.OnStartTakingInput -= value; }
 	}
 
-	public UIQERSearchBar()
+	public UIQERSearchBar() : base(QERAssets.PanelSearchBar, QERAssets.PanelSearchBar, 8, 4)
 	{
+		OverflowHidden = true;
+		Width.Percent = 1;
+		Height.Pixels = 24;
+		SetPadding(0);
+		BackgroundColor = Color.White;
+		BorderColor = Color.Transparent;
+
 		_search = new UISearchBar(Language.GetText("Mods.QuiteEnoughRecipes.UI.SearchBarDefault"), 0.8f){
 			VAlign = 0.5f,
 			IgnoresMouseInteraction = true
@@ -62,13 +69,6 @@ public class UIQERSearchBar : UIPanel
 		_search.OnEndTakingInput += () => {
 			_activeInstance = null;
 		};
-
-		Width.Percent = 1;
-		Height.Pixels = 24;
-		SetPadding(0);
-
-		BackgroundColor = _backgroundColor;
-		BorderColor = _backgroundColor;
 
 		Append(_search);
 	}
