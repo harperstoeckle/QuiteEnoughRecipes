@@ -10,7 +10,7 @@ namespace QuiteEnoughRecipes;
 
 public class UISystem : ModSystem
 {
-	private static UserInterface _userInterface;
+	private static UserInterface? _userInterface;
 
 	public static bool IsFullscreen { get; private set; } = true;
 
@@ -142,7 +142,7 @@ public class UISystem : ModSystem
 				() => {
 					if (Main.playerInventory)
 					{
-						_userInterface.Draw(Main.spriteBatch, new GameTime());
+						_userInterface?.Draw(Main.spriteBatch, new GameTime());
 					}
 					return true;
 				},
@@ -169,7 +169,7 @@ public class UISystem : ModSystem
 		else
 		{
 			Main.playerInventory = true;
-			_userInterface.SetState(WindowManager);
+			_userInterface?.SetState(WindowManager);
 		}
 
 		Window?.Open();
@@ -178,7 +178,7 @@ public class UISystem : ModSystem
 
 	public static void Close()
 	{
-		_userInterface.SetState(null);
+		_userInterface?.SetState(null);
 		IngameFancyUI.Close();
 
 		Window?.Close();
@@ -208,7 +208,7 @@ public class UISystem : ModSystem
 
 	public static bool IsOpen()
 	{
-		return WindowManager != null && (Main.InGameUI.CurrentState == WindowManager || _userInterface.CurrentState == WindowManager && Main.playerInventory);
+		return WindowManager != null && (Main.InGameUI.CurrentState == WindowManager || _userInterface?.CurrentState == WindowManager && Main.playerInventory);
 	}
 
 	private void HandleInput()
