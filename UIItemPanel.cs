@@ -59,8 +59,11 @@ public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement
 		var inventoryBack = TextureAssets.InventoryBack.Value;
 		sb.Draw(inventoryBack, pos, null, Color.White, 0, Vector2.Zero, _scale, 0, 0);
 
+		float oldInventoryScale = Main.inventoryScale;
+		Main.inventoryScale = _scale;
 		QuiteEnoughRecipes.DrawItemIcon(DisplayedItem, -1, sb, pos + inventoryBack.Size() * _scale / 2,
 			_scale, 32, Color.White);
+		Main.inventoryScale = oldInventoryScale;
 
 		// Draw trapped chest indicator.
 		if (ItemID.Sets.TrapSigned[DisplayedItem.type])
