@@ -20,6 +20,8 @@ public class QERAssets : ModSystem
 	public static Asset<Texture2D> ButtonFullscreen;
 
 	public static Asset<Texture2D> PanelSearchBar;
+
+	public static Asset<Texture2D> InventoryBackground;
 #nullable enable
 
 	public override void Load()
@@ -36,6 +38,8 @@ public class QERAssets : ModSystem
 		ButtonFullscreen = LoadTexture("Images/button_fullscreen");
 
 		PanelSearchBar = LoadTexture("Images/panel_search_bar");
+
+		InventoryBackground = LoadTexture("Images/inventory_background");
 	}
 
 	private static Asset<Texture2D> LoadTexture(string path)

@@ -56,7 +56,7 @@ public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement
 
 		var pos = GetDimensions().Position();
 
-		var inventoryBack = TextureAssets.InventoryBack.Value;
+		var inventoryBack = QERAssets.InventoryBackground.Value;
 		sb.Draw(inventoryBack, pos, null, Color.White, 0, Vector2.Zero, _scale, 0, 0);
 
 		float oldInventoryScale = Main.inventoryScale;

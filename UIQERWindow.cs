@@ -261,6 +261,7 @@ public class UIQERWindow : UIWindow
 		AddHandler(new RecipeHandlers.GlobalDrops());
 
 		var recipePanel = new UIPanel{
+			BackgroundColor = QERColors.Brown,
 			Width = new(0, 0.49f),
 			Height = new(-TabHeight, 1),
 			VAlign = 1,
@@ -281,6 +282,7 @@ public class UIQERWindow : UIWindow
 		};
 
 		var ingredientListPanel = new UIPanel{
+			BackgroundColor = QERColors.Brown,
 			Width = new(0, 0.49f),
 			Height = new(-TabHeight, 1),
 			HAlign = 1,
