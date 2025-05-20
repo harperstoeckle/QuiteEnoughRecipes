@@ -185,37 +185,7 @@ public class UIWindow : UIPanel
 			PlayerInput.LockVanillaMouseScroll("QuiteEnoughRecipes/UIWindow");
 			Main.LocalPlayer.mouseInterface = true;
 		}
-	}
 
-	// `e` should have a fixed width of `BarItemWidth` and be smaller than `BarHeight`.
-	public void AddElementToBar(UIElement e)
-	{
-		e.Left = new(_topBarOffset, 0);
-		e.Width = new(BarItemWidth, 0);
-		e.Height = new(BarItemHeight, 0);
-		_topBar.Append(e);
-		_topBarOffset += BarItemWidth + BarInnerPadding;
-	}
-
-	// Add a help button to the right side (that's where help is).
-	public void AddHelp(LocalizedText helpText)
-	{
-		var helpIcon = new UIHelpIcon(helpText);
-		helpIcon.HAlign = 1;
-		helpIcon.Left = new(-_topBarHelpOffset, 0);
-		helpIcon.Width = new(BarItemWidth, 0);
-		helpIcon.Height = new(BarItemHeight, 0);
-		_topBar.Append(helpIcon);
-		_topBarHelpOffset += BarItemWidth + BarInnerPadding;
-	}
-
-	public CalculatedStyle GetParentDimensions()
-	{
-		return Parent?.GetInnerDimensions() ?? UserInterface.ActiveInstance.GetDimensions();
-	}
-
-	protected override void DrawSelf(SpriteBatch sb)
-	{
 		if (_dragState is DragState s)
 		{
 			var offset = Main.MouseScreen - s.OriginalMouse;
@@ -276,7 +246,37 @@ public class UIWindow : UIPanel
 				_resizeLeft = _resizeRight = _resizeTop = _resizeBottom = false;
 			}
 		}
+	}
 
+	// `e` should have a fixed width of `BarItemWidth` and be smaller than `BarHeight`.
+	public void AddElementToBar(UIElement e)
+	{
+		e.Left = new(_topBarOffset, 0);
+		e.Width = new(BarItemWidth, 0);
+		e.Height = new(BarItemHeight, 0);
+		_topBar.Append(e);
+		_topBarOffset += BarItemWidth + BarInnerPadding;
+	}
+
+	// Add a help button to the right side (that's where help is).
+	public void AddHelp(LocalizedText helpText)
+	{
+		var helpIcon = new UIHelpIcon(helpText);
+		helpIcon.HAlign = 1;
+		helpIcon.Left = new(-_topBarHelpOffset, 0);
+		helpIcon.Width = new(BarItemWidth, 0);
+		helpIcon.Height = new(BarItemHeight, 0);
+		_topBar.Append(helpIcon);
+		_topBarHelpOffset += BarItemWidth + BarInnerPadding;
+	}
+
+	public CalculatedStyle GetParentDimensions()
+	{
+		return Parent?.GetInnerDimensions() ?? UserInterface.ActiveInstance.GetDimensions();
+	}
+
+	protected override void DrawSelf(SpriteBatch sb)
+	{
 		// Two sides being resized at once is a corner. One is an edge.
 		int numResizeDirs = ((bool[])[_resizeLeft, _resizeRight, _resizeTop, _resizeBottom])
 			.Count(b => b);
