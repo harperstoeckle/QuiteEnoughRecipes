@@ -95,8 +95,7 @@ public class UISystem : ModSystem
 		Window = new();
 		_userInterface = new();
 
-		WindowManager.AddWindow("QuiteEnoughRecipes/Main", Window);
-		WindowManager.Open(Window);
+		WindowManager.AddWindow(Window);
 
 		// Loading items beforehand ensures that they *aren't* being loaded while scrolling.
 		if (QERConfig.Instance.ShouldPreloadItems)

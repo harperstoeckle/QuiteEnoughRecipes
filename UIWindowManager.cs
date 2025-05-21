@@ -1,52 +1,51 @@
-using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework;
 using System.Collections.Generic;
-using System;
-using Terraria.UI;
 using System.Linq;
-using Terraria;
+using Terraria.UI;
 
 namespace QuiteEnoughRecipes;
 
 /*
  * Maintains a set of windows and facilitates interaction between them. For example, it allows
- * windows to be opened and closed or moved to the top, and it allows existing windows to be
- * retrieved.
+ * windows to be opened and closed or moved to the top.
  */
 public class UIWindowManager : UIState
 {
-	private Dictionary<string, UIWindow> _windows = new();
+	// These will be opened in the next update.
+	private List<UIWindow> _windowsToOpen = new();
 
-	/*
-	 * In some cases (for example, `UIPopupWindow`, which closes itself during `DrawSelf`), a
-	 * window will attempt to modify the child list while it is being iterated over. Rather than
-	 * calling `RemoveChild` immediately, the call should be deferred until the start of the next
-	 * frame by appending it to this list.
-	 */
-	private List<Action> _deferredCalls = new();
-
-	public void AddWindow(string name, UIWindow w) => _windows.Add(name, w);
-
-	public void Open(UIWindow w) => _deferredCalls.Add(() => { if (!HasChild(w)) { Append(w); } });
-	public void Close(UIWindow w) => _deferredCalls.Add(() => RemoveChild(w));
-	public bool IsOpen(UIWindow w) => HasChild(w);
+	public void AddWindow(UIWindow w) => _windowsToOpen.Add(w);
 	public bool IsHoveringWindow => Children.Any(w => w.IsMouseHovering);
 
-	public override void LeftMouseDown(UIMouseEvent e)
+	public override void Update(GameTime t)
 	{
-		base.LeftMouseDown(e);
+		foreach (var w in _windowsToOpen) { Append(w); }
+		_windowsToOpen.Clear();
 
-		// Move the window to the top when it's clicked.
-		if (e.Target is UIWindow w)
+		var toRemove = Elements.OfType<UIWindow>().Where(w => w.WantsClose).ToList();
+		foreach (var w in toRemove)
 		{
+			w.WantsClose = false;
 			RemoveChild(w);
-			Append(w);
 		}
-	}
 
-	protected override void DrawSelf(SpriteBatch sb)
-	{
-		foreach (var call in _deferredCalls) { call(); }
-		_deferredCalls.Clear();
-		base.DrawSelf(sb);
+		UIWindow? focused = null;
+		foreach (var w in Elements.OfType<UIWindow>())
+		{
+			if (w.WantsFocus)
+			{
+				w.WantsFocus = false;
+				focused = w;
+			}
+		}
+
+		// Bring focused window to the front.
+		if (focused is not null)
+		{
+			RemoveChild(focused);
+			Append(focused);
+		}
+
+		base.Update(t);
 	}
 }

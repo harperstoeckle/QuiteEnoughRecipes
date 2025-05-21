@@ -31,7 +31,7 @@ public class UIPopupWindow : UIWindow
 
 	public void Open()
 	{
-		UISystem.WindowManager?.Open(this);
+		UISystem.WindowManager?.AddWindow(this);
 
 		/*
 		 * Since `UIWindowManager::Open` defers adding this window to the next frame, we also have
@@ -78,7 +78,7 @@ public class UIPopupWindow : UIWindow
 		}
 		else if (!_isPinned && !IsDragging && !ContainsPoint(Main.MouseScreen))
 		{
-			UISystem.WindowManager?.Close(this);
+			WantsClose = true;
 		}
 
 		/*

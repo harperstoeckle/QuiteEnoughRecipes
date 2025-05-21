@@ -89,6 +89,11 @@ public class UIWindow : UIPanel
 
 	private bool HoveringResize => _resizeLeft || _resizeRight || _resizeTop || _resizeBottom;
 
+
+	// When set, the window manager will use these to decide how to rearrange windows.
+	public bool WantsFocus = false;
+	public bool WantsClose = false;
+
 	// True if the window is being dragged or resized.
 	public bool IsDragging => _dragState is not null;
 
@@ -118,10 +123,12 @@ public class UIWindow : UIPanel
 	}
 
 	// This is called when the close button is pressed.
-	protected virtual void PressCloseButton() => UISystem.WindowManager?.Close(this);
+	protected virtual void PressCloseButton() => WantsClose = true;
 
 	public override void LeftMouseDown(UIMouseEvent e)
 	{
+		WantsFocus = true;
+
 		bool isTargetingThisWindow = e.Target == this || e.Target == Contents || e.Target == _topBar;
 
 		/*
