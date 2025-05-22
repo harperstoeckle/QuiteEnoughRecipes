@@ -46,4 +46,20 @@ public class UISystem : ModSystem
 			}
 		}
 	}
+
+	public override void UpdateUI(GameTime t)
+	{
+		/*
+		 * NOTE: This code was taken directly from Recipe Browser. It should allow keybinds to work
+		 * when the game is autopaused.
+		 */
+		if (Main.netMode == NetmodeID.SinglePlayer
+				&& (Main.playerInventory
+					|| Main.npcChatText != ""
+					|| Main.player[Main.myPlayer].sign >= 0
+					|| Main.ingameOptionsWindow
+					|| Main.inFancyUI)
+				&& Main.autoPause)
+			Main.LocalPlayer.GetModPlayer<QERPlayer>().ProcessTriggers(null);
+	}
 }
