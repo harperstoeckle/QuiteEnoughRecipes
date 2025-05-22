@@ -1,45 +1,54 @@
 using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Content;
+using System.Linq;
+using System.Reflection;
+using System;
 using Terraria.ModLoader;
 
 namespace QuiteEnoughRecipes;
 
 public class QERAssets : ModSystem
 {
+	[AttributeUsage(AttributeTargets.Field)]
+	private class AutoTextureAttribute(string path) : Attribute
+	{
+		public string Path = path;
+	}
+
 	// These should never be null when they're used, since they're loaded in `Load`.
 #nullable disable
-	public static Asset<Texture2D> CursorCornerRight;
-	public static Asset<Texture2D> CursorCornerLeft;
-	public static Asset<Texture2D> CursorEdgeHorizontal;
-	public static Asset<Texture2D> CursorEdgeVertical;
-	public static Asset<Texture2D> CursorIBeam;
+	[AutoTexture("Images/cursor_corner_right")] public static Asset<Texture2D> CursorCornerRight;
+	[AutoTexture("Images/cursor_corner_left")] public static Asset<Texture2D> CursorCornerLeft;
+	[AutoTexture("Images/cursor_edge_horizontal")] public static Asset<Texture2D> CursorEdgeHorizontal;
+	[AutoTexture("Images/cursor_edge_vertical")] public static Asset<Texture2D> CursorEdgeVertical;
+	[AutoTexture("Images/cursor_i_beam")] public static Asset<Texture2D> CursorIBeam;
 
-	public static Asset<Texture2D> ButtonClose;
-	public static Asset<Texture2D> ButtonHelp;
-	public static Asset<Texture2D> ButtonPin;
-	public static Asset<Texture2D> ButtonFullscreen;
+	[AutoTexture("Images/button_close")] public static Asset<Texture2D> ButtonClose;
+	[AutoTexture("Images/button_help")] public static Asset<Texture2D> ButtonHelp;
+	[AutoTexture("Images/button_pin")] public static Asset<Texture2D> ButtonPin;
+	[AutoTexture("Images/button_fullscreen")] public static Asset<Texture2D> ButtonFullscreen;
 
-	public static Asset<Texture2D> PanelSearchBar;
+	[AutoTexture("Images/panel_search_bar")] public static Asset<Texture2D> PanelSearchBar;
 
-	public static Asset<Texture2D> InventoryBackground;
+	[AutoTexture("Images/inventory_background")] public static Asset<Texture2D> InventoryBackground;
 #nullable enable
 
 	public override void Load()
 	{
-		CursorCornerRight = LoadTexture("Images/cursor_corner_right");
-		CursorCornerLeft = LoadTexture("Images/cursor_corner_left");
-		CursorEdgeHorizontal = LoadTexture("Images/cursor_edge_horizontal");
-		CursorEdgeVertical = LoadTexture("Images/cursor_edge_vertical");
-		CursorIBeam = LoadTexture("Images/cursor_i_beam");
+		/*
+		 * Extremely lazy way to automatically load texture. It's probably highly unnecessary, but
+		 * it makes it easier to avoid accidentally not initializing a texture.
+		 */
+		var textureFields = typeof(QERAssets)
+			.GetFields(BindingFlags.Public | BindingFlags.Static)
+			.Where(f => f.FieldType == typeof(Asset<Texture2D>));
+		foreach (var field in textureFields)
+		{
+			var textureAttr = field.GetCustomAttribute<AutoTextureAttribute>();
+			if (textureAttr is null) { continue; }
 
-		ButtonClose = LoadTexture("Images/button_close");
-		ButtonHelp = LoadTexture("Images/button_help");
-		ButtonPin = LoadTexture("Images/button_pin");
-		ButtonFullscreen = LoadTexture("Images/button_fullscreen");
-
-		PanelSearchBar = LoadTexture("Images/panel_search_bar");
-
-		InventoryBackground = LoadTexture("Images/inventory_background");
+			field.SetValue(null, LoadTexture(textureAttr.Path));
+		}
 	}
 
 	private static Asset<Texture2D> LoadTexture(string path)
