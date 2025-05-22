@@ -16,6 +16,9 @@ public class UISystem : ModSystem
 	public static ModKeybind? HoverUsesKey { get; private set; }
 	public static ModKeybind? BackKey { get; private set; }
 
+	public static bool ShouldGoBackInHistory { get; private set; } = false;
+	public static bool ShouldGoForwardInHistory { get; private set; } = false;
+
 	public override void Load()
 	{
 		OpenUIKey = KeybindLoader.RegisterKeybind(Mod, "OpenUI", "OemTilde");
@@ -50,16 +53,51 @@ public class UISystem : ModSystem
 	public override void UpdateUI(GameTime t)
 	{
 		/*
-		 * NOTE: This code was taken directly from Recipe Browser. It should allow keybinds to work
-		 * when the game is autopaused.
+		 * This has to be handled here to work even when autopaused. This is (I think) the same set
+		 * of conditions under which `ModPlayer::ProcessTriggers` is called.
 		 */
-		if (Main.netMode == NetmodeID.SinglePlayer
-				&& (Main.playerInventory
-					|| Main.npcChatText != ""
-					|| Main.player[Main.myPlayer].sign >= 0
-					|| Main.ingameOptionsWindow
-					|| Main.inFancyUI)
-				&& Main.autoPause)
-			Main.LocalPlayer.GetModPlayer<QERPlayer>().ProcessTriggers(null);
+		if (Main.hasFocus && !Main.drawingPlayerChat && !Main.editSign && !Main.editChest
+				&& !Main.blockInput)
+		{
+			HandleInput();
+		}
+	}
+
+	private void HandleInput()
+	{
+		ShouldGoBackInHistory = false;
+		ShouldGoForwardInHistory = false;
+
+		if (UISystem.BackKey?.JustPressed ?? false)
+		{
+			ShouldGoForwardInHistory = Main.keyState.PressingShift();
+			ShouldGoBackInHistory = !ShouldGoForwardInHistory;
+		}
+
+		if (UISystem.UI == null) { return; }
+
+		if (UISystem.OpenUIKey?.JustPressed ?? false)
+		{
+			if (UISystem.UI.IsOpen())
+			{
+				UISystem.UI.Close();
+			}
+			else
+			{
+				UISystem.UI.Open();
+			}
+		}
+
+		if ((UISystem.HoverSourcesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)
+		{
+			UISystem.UI.ShowSources(new ItemIngredient(Main.HoverItem));
+			UISystem.UI.Open();
+		}
+
+		if ((UISystem.HoverUsesKey?.JustPressed ?? false) && Main.HoverItem != null && !Main.HoverItem.IsAir)
+		{
+			UISystem.UI.ShowUses(new ItemIngredient(Main.HoverItem));
+			UISystem.UI.Open();
+		}
 	}
 }

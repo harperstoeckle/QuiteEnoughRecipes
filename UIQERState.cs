@@ -354,11 +354,11 @@ public class UIQERState : UIState
 
 	protected override void DrawSelf(SpriteBatch sb)
 	{
-		if (QERPlayer.ShouldGoForwardInHistory)
+		if (UISystem.ShouldGoForwardInHistory)
 		{
 			TryMoveInHistory(1);
 		}
-		else if (QERPlayer.ShouldGoBackInHistory)
+		else if (UISystem.ShouldGoBackInHistory)
 		{
 			TryMoveInHistory(-1);
 		}
