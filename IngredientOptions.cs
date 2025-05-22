@@ -125,6 +125,15 @@ static class IngredientOptions
 	[IngredientOption("ItemFilters.Misc", ItemID.RedHat)]
 	public static bool IsVanity(ItemIngredient i) => i.Item.vanity;
 
+	[IngredientOption("ItemFilters.Misc", ItemID.Cog)]
+	public static bool IsResearched(ItemIngredient i)
+	{
+		Main.LocalPlayerCreativeTracker.ItemSacrifices.TryGetSacrificeNumbers(i.Item.type,
+				out int sacrificed, out int needed);
+
+		return needed > 0 && sacrificed >= needed;
+	}
+
 	[IngredientOption("ItemFilters.Weapons", ItemID.CopperShortsword)]
 	public static bool IsMeleeWeapon(ItemIngredient i) => IsInGroup(i, ItemGroup.MeleeWeapon);
 
@@ -189,15 +198,6 @@ static class IngredientOptions
 
 			yield return new(pred, icon.type, name);
 		}
-	}
-
-	[IngredientOption("ItemFilters.Journey", ItemID.Cog)]
-	public static bool IsResearched(ItemIngredient i)
-	{
-		Main.LocalPlayerCreativeTracker.ItemSacrifices.TryGetSacrificeNumbers(i.Item.type,
-				out int sacrificed, out int needed);
-
-		return needed > 0 && sacrificed >= needed;
 	}
 
 	#endregion

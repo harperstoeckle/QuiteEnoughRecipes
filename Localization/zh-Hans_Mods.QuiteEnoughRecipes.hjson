@@ -114,6 +114,7 @@ OptionGroups: {
 			IsPet: 宠物
 			IsMount: 坐骑
 			IsHook: 抓钩
+			// IsResearched: Researched
 		}
 
 		Weapons: {
@@ -126,11 +127,6 @@ OptionGroups: {
 			IsThrowingWeapon: 投掷伤害武器
 			# Used to format other damage types.
 			IsOtherWeapon: "{0}武器"
-		}
-
-		Journey: {
-			// Name: Journey Mode
-			// IsResearched: Researched
 		}
 	}
 

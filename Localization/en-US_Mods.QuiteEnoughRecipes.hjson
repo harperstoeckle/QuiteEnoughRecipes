@@ -114,6 +114,7 @@ OptionGroups: {
 			IsPet: Pets
 			IsMount: Mounts
 			IsHook: Hooks
+			IsResearched: Researched
 		}
 
 		Weapons: {
@@ -126,11 +127,6 @@ OptionGroups: {
 			IsThrowingWeapon: Throwing Weapons
 			# Used to format other damage types.
 			IsOtherWeapon: "{0} Weapons"
-		}
-
-		Journey: {
-			Name: Journey Mode
-			IsResearched: Researched
 		}
 	}
 

@@ -126,13 +126,6 @@ public class IngredientRegistry : ModSystem
 			AddFilter<ItemIngredient>(pred, icon, name, $"{keyParent}.ItemFilters.Weapons.Name");
 		}
 
-		var journeyItemFilters = IngredientOptions.GetOptionButtons<Predicate<ItemIngredient>>(
-			"ItemFilters.Journey");
-		foreach (var (pred, icon, name) in journeyItemFilters)
-		{
-			AddFilter<ItemIngredient>(pred, icon, name, $"{keyParent}.ItemFilters.Journey.Name");
-		}
-
 		var npcFilters = IngredientOptions.GetOptionButtons<Predicate<NPCIngredient>>("NPCFilters");
 		foreach (var (pred, icon, name) in npcFilters)
 		{
