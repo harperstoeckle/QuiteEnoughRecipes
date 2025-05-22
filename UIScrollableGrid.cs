@@ -64,7 +64,11 @@ public class UIScrollableGrid<T, E> : UIElement
 
 		if (NumRows <= 0 || NumCols <= 0) { return; }
 
-		int totalRows = (Values.Count + NumCols - 1) / NumCols;
+		/*
+		 * Even if there are zero total rows, pretend that there is at least one to avoid breaking
+		 * the scrollbar.
+		 */
+		int totalRows = Math.Max((Values.Count + NumCols - 1) / NumCols, 1);
 
 		Scrollbar?.SetView(NumRows * SquareSideLength + (NumRows - 1) * Padding,
 			totalRows * SquareSideLength + (totalRows - 1) * Padding);
