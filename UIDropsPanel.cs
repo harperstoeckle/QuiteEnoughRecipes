@@ -51,7 +51,7 @@ file class UILootItemPanel : UIItemPanel
 		_chance = info.dropRate;
 
 		var conditionDescs = info.conditions
-			?.Select(c => c.GetConditionDescription())
+			?.Select(c => GetConditionDescriptionSafe(c))
 			?.Where(d => !string.IsNullOrWhiteSpace(d));
 		if (conditionDescs != null)
 		{
@@ -115,6 +115,19 @@ file class UILootItemPanel : UIItemPanel
 		else
 		{
 			return "";
+		}
+	}
+
+	// Needed to catch `NotImplementedException` thrown by Dancing with the Dragon.
+	private static string GetConditionDescriptionSafe(IItemDropRuleCondition c)
+	{
+		try
+		{
+			return c.GetConditionDescription();
+		}
+		catch (Exception e)
+		{
+			return Language.GetTextValue("Mods.QuiteEnoughRecipes.Conditions.Invalid", e.Message);
 		}
 	}
 }

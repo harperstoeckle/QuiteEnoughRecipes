@@ -168,4 +168,7 @@ Tooltips: {
 	// RecipeAddedBy: Recipe added by {0}
 }
 
-Conditions.BannerDrop: 每击杀{0}次掉落一个
+Conditions: {
+	BannerDrop: 每击杀{0}次掉落一个
+	// Invalid: Invalid drop condition ({0})
+}
