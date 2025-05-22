@@ -1,2 +1,6 @@
 Version {ModVersion}
-- Fixed incorrect input item being shown in the shimmer tab when right clicking. (credit: Jadams505)
+- Added a filter for items that have been researched in Journey mode.
+- Fixed some items being drawn at the wrong scale (for example, scoria bars from Calamity).
+- Fixed keybinds not working while autopaused.
+- Fixed the scroll bar in the item panel displaying incorrectly when there are no results for a search.
+- Fixed a crash that could happen when clicking on certain items from Dancing with the Dragon.
