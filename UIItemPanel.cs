@@ -23,7 +23,7 @@ public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement
 	public static int GridSideLength => DefaultSideLength;
 	public static int GridPadding => 5;
 
-	private float _scale;
+	private float _scale => Width.Pixels / DefaultSideLength;
 
 	// The item to show. When this is set to `null`, nothing at all will be drawn.
 	public Item? DisplayedItem;
@@ -36,7 +36,6 @@ public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement
 		DisplayedItem = displayedItem;
 		Width.Pixels = width;
 		Height.Pixels = width;
-		_scale = width / DefaultSideLength;
 
 		// Extremely lazy way to handle text bounds.
 		SetPadding(3 * _scale);

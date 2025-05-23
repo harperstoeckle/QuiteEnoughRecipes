@@ -29,13 +29,19 @@ public interface IScrollableGridElement<T>
 public class UIScrollableGrid<T, E> : UIElement
 	where E : UIElement, IScrollableGridElement<T>, new()
 {
+	/*
+	 * We arbitrarily choose the minimum number of columns to be the number of columns of the
+	 * default size that would fit in a 400-pixel wide grid.
+	 */
+	private static readonly int MinCols = (int) ((400.0f + E.GridPadding) / (E.GridSideLength + E.GridPadding));
+
 	private List<E> _grid = new();
 	private List<T> _values = new();
 	private float _lastViewPosition = 0;
 
 	// Width and height of grid squares, and padding between squares.
-	public float SquareSideLength = E.GridSideLength;
-	public float Padding = E.GridPadding;
+	private float _squareSideLength = E.GridSideLength;
+	private float _padding = E.GridPadding;
 
 	// *all* values to be displayed. These can be scrolled through.
 	public List<T> Values
@@ -56,7 +62,7 @@ public class UIScrollableGrid<T, E> : UIElement
 	public UIScrollbar? Scrollbar = null;
 
 	// Offset into the list of values for displaying.
-	private int _valuesOffset => (int) ((Scrollbar?.ViewPosition ?? 0) / (SquareSideLength + Padding)) * NumCols;
+	private int _valuesOffset => (int) ((Scrollbar?.ViewPosition ?? 0) / (_squareSideLength + _padding)) * NumCols;
 
 	public override void Recalculate()
 	{
@@ -70,8 +76,8 @@ public class UIScrollableGrid<T, E> : UIElement
 		 */
 		int totalRows = Math.Max((Values.Count + NumCols - 1) / NumCols, 1);
 
-		Scrollbar?.SetView(NumRows * SquareSideLength + (NumRows - 1) * Padding,
-			totalRows * SquareSideLength + (totalRows - 1) * Padding);
+		Scrollbar?.SetView(NumRows * _squareSideLength + (NumRows - 1) * _padding,
+			totalRows * _squareSideLength + (totalRows - 1) * _padding);
 	}
 
 	public override void RecalculateChildren()
@@ -110,8 +116,24 @@ public class UIScrollableGrid<T, E> : UIElement
 	{
 		var d = GetInnerDimensions();
 
-		NumCols = (int) ((d.Width + Padding) / (SquareSideLength + Padding));
-		NumRows = (int) ((d.Height + Padding) / (SquareSideLength + Padding));
+		_squareSideLength = E.GridSideLength;
+		_padding = E.GridPadding;
+
+		NumCols = (int) ((d.Width + _padding) / (_squareSideLength + _padding));
+
+		// Not enough columns; Make them smaller, but with the same ratio.
+		if (NumCols < MinCols)
+		{
+			float paddingRatio = _padding / _squareSideLength;
+			NumCols = MinCols;
+			_squareSideLength = d.Width / (NumCols + paddingRatio * NumCols - paddingRatio);
+			_padding = _squareSideLength * paddingRatio;
+		}
+
+		NumRows = (int) ((d.Height + _padding) / (_squareSideLength + _padding));
+
+		NumCols = Math.Max(0, NumCols);
+		NumRows = Math.Max(0, NumRows);
 
 		// Resize the grid without making a whole new list.
 		int oldGridCount = _grid.Count;
@@ -126,7 +148,7 @@ public class UIScrollableGrid<T, E> : UIElement
 		}
 
 		// Extra space added on the top and left to keep the contents centered.
-		float leftOffset = (d.Width - NumCols * SquareSideLength - (NumCols - 1) * Padding) / 2;
+		float leftOffset = (d.Width - NumCols * _squareSideLength - (NumCols - 1) * _padding) / 2;
 		float topOffset = 0;
 
 		for (int i = 0; i < NumRows; ++i)
@@ -135,8 +157,9 @@ public class UIScrollableGrid<T, E> : UIElement
 			{
 				var elem = _grid[i * NumCols + j];
 
-				elem.Left.Pixels = leftOffset + j * (SquareSideLength + Padding);
-				elem.Top.Pixels = topOffset + i * (SquareSideLength + Padding);
+				elem.Left.Pixels = leftOffset + j * (_squareSideLength + _padding);
+				elem.Top.Pixels = topOffset + i * (_squareSideLength + _padding);
+				elem.Width.Pixels = elem.Height.Pixels = _squareSideLength;
 			}
 		}
 	}
