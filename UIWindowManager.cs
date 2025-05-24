@@ -35,19 +35,6 @@ public class UIWindowManager : UIState
 		}
 		_toOpen.Clear();
 
-		var toRemove = Elements.OfType<IWindowManagerElement>().Where(w => w.WantsClose).ToList();
-		foreach (var w in toRemove)
-		{
-			w.WantsMoveToFront = false;
-
-			w.WantsDrag = DragRequestState.None;
-			if (_dragging == w) { w.StopDragging(); }
-
-			w.WantsClose = false;
-			w.OnClose();
-			RemoveChild(w as UIElement);
-		}
-
 		// Sort elements that want to move to the front, to the front.
 		Func<UIElement, int> moveToFrontSortKey = e => {
 			return e is IWindowManagerElement w && w.WantsMoveToFront ? 1 : 0;
@@ -59,7 +46,8 @@ public class UIWindowManager : UIState
 		{
 			w.WantsMoveToFront = false;
 
-			if (w.WantsDrag == DragRequestState.Stop && _dragging == w)
+			// Closed elements also stop getting dragged.
+			if ((w.WantsClose || w.WantsDrag == DragRequestState.Stop) && _dragging == w)
 			{
 				newDragging = null;
 			}
@@ -83,6 +71,16 @@ public class UIWindowManager : UIState
 		{
 			RemoveChild(_dragging as UIElement);
 			Append(_dragging as UIElement);
+		}
+
+		var toRemove = Elements.OfType<IWindowManagerElement>().Where(w => w.WantsClose).ToList();
+		foreach (var w in toRemove)
+		{
+			w.WantsMoveToFront = false;
+
+			w.WantsClose = false;
+			w.OnClose();
+			RemoveChild(w as UIElement);
 		}
 
 		base.Update(t);
