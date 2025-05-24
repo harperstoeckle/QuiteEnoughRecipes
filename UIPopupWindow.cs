@@ -61,6 +61,8 @@ public class UIPopupWindow : UIWindow
 
 	public override void Update(GameTime t)
 	{
+		base.Update(t);
+
 		if (!_isPinned && !IsDraggingOrResizing && !ContainsPoint(Main.MouseScreen))
 		{
 			this.Close();
