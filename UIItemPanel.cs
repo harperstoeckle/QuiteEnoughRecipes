@@ -45,6 +45,12 @@ public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement
 
 	public void SetDisplayedValue(ItemIngredient i) => DisplayedItem = i.Item;
 
+	public override void LeftMouseDown(UIMouseEvent e)
+	{
+		base.LeftMouseDown(e);
+		UISystem.WindowManager?.Open(new UIDraggableItem(DisplayedItem ?? new Item()));
+	}
+
 	/*
 	 * This is a stripped-down version of the vanilla drawing code. It doesn't have to do any of
 	 * the "fancy" stuff that vanilla has to do to handle item slots in specific contexts.
