@@ -200,6 +200,23 @@ public class UIQERWindow : UIWindow
 	 */
 	private const int MaxHistorySize = 100;
 
+	// Never used as actual UI elements. Just used to store dimensions.
+	private UIElement _windowedStyleRef = new(){
+		MinWidth = new(200, 0),
+		MinHeight = new(200, 0),
+		Width = new(-500, 1),
+		Height = new(-400, 1),
+		Left = new(300, 0),
+		Top = new(320, 0),
+	};
+
+	private UIElement _fullscreenStyleRef = new(){
+		Width = new(0, 0.95f),
+		Height = new(0, 0.8f),
+		HAlign = 0.5f,
+		VAlign = 0.5f,
+	};
+
 	// Keeps track of the recipe pages that have been viewed, including the current one.
 	private List<HistoryEntry> _history = [new()];
 	private int _historyIndex = 0;
@@ -222,14 +239,10 @@ public class UIQERWindow : UIWindow
 		? Language.GetText("Mods.QuiteEnoughRecipes.UI.FullscreenHover")
 		: Language.GetText("Mods.QuiteEnoughRecipes.UI.WindowedHover");
 
+
 	public UIQERWindow()
 	{
-		MinWidth = new(400, 0);
-		MinHeight = new(400, 0);
-		Width = new(0, 0.95f);
-		Height = new(0, 0.8f);
-		HAlign = 0.5f;
-		VAlign = 0.5f;
+		CopyStyle(UISystem.IsFullscreen ? _fullscreenStyleRef : _windowedStyleRef);
 
 		// This window should always be behind other windows.
 		ZOrder = -1;
@@ -241,6 +254,16 @@ public class UIQERWindow : UIWindow
 			UISystem.ToggleFullscreen();
 			fullscreenButton.Frame = UISystem.IsFullscreen ? 1 : 0;
 			fullscreenButton.HoverText = FullscreenButtonText;
+
+			if (UISystem.IsFullscreen)
+			{
+				_windowedStyleRef.CopyStyle(this);
+				CopyStyle(_fullscreenStyleRef);
+			}
+			else
+			{
+				CopyStyle(_windowedStyleRef);
+			}
 		};
 
 		AddElementToBar(fullscreenButton);
