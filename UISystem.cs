@@ -125,7 +125,7 @@ public class UISystem : ModSystem
 
 		if (Main.playerInventory)
 		{
-			_userInterface.Update(t);
+			_userInterface?.Update(t);
 		}
 	}
 
