@@ -23,6 +23,8 @@ public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement
 	public static int GridSideLength => DefaultSideLength;
 	public static int GridPadding => 5;
 
+	private Vector2? _dragStartPos = null;
+
 	private float _scale => Width.Pixels / DefaultSideLength;
 
 	// The item to show. When this is set to `null`, nothing at all will be drawn.
@@ -48,7 +50,26 @@ public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement
 	public override void LeftMouseDown(UIMouseEvent e)
 	{
 		base.LeftMouseDown(e);
-		UISystem.WindowManager?.Open(new UIDraggableItem(DisplayedItem ?? new Item()));
+		_dragStartPos = Main.MouseScreen;
+	}
+
+	public override void LeftMouseUp(UIMouseEvent e)
+	{
+		base.LeftMouseUp(e);
+		_dragStartPos = null;
+	}
+
+	public override void Update(GameTime t)
+	{
+		/*
+		 * Make a draggable item appear only if the mouse moves far enough away. This prevents the
+		 * icon from appearing every time the panel is clicked.
+		 */
+		if (_dragStartPos is not null && Vector2.Distance(Main.MouseScreen, _dragStartPos.Value) > 10)
+		{
+			UISystem.WindowManager?.Open(new UIDraggableItem(DisplayedItem ?? new Item()));
+			_dragStartPos = null;
+		}
 	}
 
 	/*
