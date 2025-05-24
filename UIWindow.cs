@@ -91,9 +91,10 @@ public class UIWindow : UIPanel, IWindowManagerElement
 
 
 	// Window manager stuff.
-	public bool WantsMoveToFront { get; set; }
-	public bool WantsClose { get; set; }
-	public DragRequestState WantsDrag { get; set; }
+	public bool WantsMoveToFront { get; set; } = false;
+	public bool WantsClose { get; set; } = false;
+	public DragRequestState WantsDrag { get; set; } = DragRequestState.None;
+	public int ZOrder { get; set; } = 0;
 
 	// Stuff should just be directly appended to this instead of the window itself.
 	public UIElement Contents { get; private set; } = new(){

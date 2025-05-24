@@ -44,8 +44,15 @@ public class UIWindowManager : UIState
 		_toOpen.Clear();
 
 		// Sort elements that want to move to the front, to the front.
-		Func<UIElement, int> moveToFrontSortKey = e => {
-			return e is IWindowManagerElement w && w.WantsMoveToFront ? 1 : 0;
+		Func<UIElement, (int, int)> moveToFrontSortKey = e => {
+			if (e is IWindowManagerElement w)
+			{
+				return (w.ZOrder, w.WantsMoveToFront ? 1 : 0);
+			}
+			else
+			{
+				return (0, 0);
+			}
 		};
 		Elements.Sort((a, b) => moveToFrontSortKey(a).CompareTo(moveToFrontSortKey(b)));
 
@@ -142,6 +149,12 @@ public interface IWindowManagerElement
 	public bool WantsMoveToFront { get; set; }
 	public bool WantsClose { get; set; }
 	public DragRequestState WantsDrag { get; set; }
+
+	/*
+	 * An element with a higher z order will *always* be above an element with a lower one, unless
+	 * the lower one is being dragged (the dragged element is always on top).
+	 */
+	public int ZOrder { get; set; }
 
 	/*
 	 * In some cases, it's impossible to directly tie dragging with left clicking an element. For

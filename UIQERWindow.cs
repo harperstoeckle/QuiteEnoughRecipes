@@ -231,6 +231,9 @@ public class UIQERWindow : UIWindow
 		HAlign = 0.5f;
 		VAlign = 0.5f;
 
+		// This window should always be behind other windows.
+		ZOrder = -1;
+
 		var fullscreenButton = new UIQERButton(QERAssets.ButtonFullscreen, 2);
 		fullscreenButton.Frame = UISystem.IsFullscreen ? 1 : 0;
 		fullscreenButton.HoverText = FullscreenButtonText;
