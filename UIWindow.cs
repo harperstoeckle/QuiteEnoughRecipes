@@ -128,9 +128,13 @@ public class UIWindow : UIPanel, IWindowManagerElement
 	/*
 	 * We want these to be virtual so it's easy for derived window classes to change their
 	 * behavior.
+	 *
+	 * Ignore mouse interaction while dragging so the mouse can interact with other UI elements
+	 * while the window is being dragged (like elements that act as containers for windows).
 	 */
-	public virtual void OnStartDragging() {}
-	public virtual void OnStopDragging() {}
+	public virtual void OnStartDragging() => IgnoresMouseInteraction = true;
+	public virtual void OnStopDragging() => IgnoresMouseInteraction = false;
+
 	public virtual void OnOpen() {}
 	public virtual void OnClose() {}
 	public virtual void OnWindowManagerLeftMouseUp(UIMouseEvent e) {}
