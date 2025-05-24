@@ -1,5 +1,5 @@
 using Microsoft.Xna.Framework.Graphics;
-using ReLogic.Content;
+using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using System.Linq;
 using System;
@@ -324,16 +324,10 @@ public class UIQERWindow : UIWindow
 		Contents.Append(_recipeTabBar);
 	}
 
-	/*
-	 * We want to close the whole interface instead of just the window. Since this is the main
-	 * window that we access stuff through, closing it without closing the interface would cause
-	 * problems.
-	 */
-	protected override void PressCloseButton() => UISystem.Close();
-
-	protected override void DrawSelf(SpriteBatch sb)
+	public override void Update(GameTime t)
 	{
-		base.DrawSelf(sb);
+		base.Update(t);
+
 		if (UISystem.ShouldGoForwardInHistory)
 		{
 			TryMoveInHistory(1);
@@ -343,6 +337,13 @@ public class UIQERWindow : UIWindow
 			TryMoveInHistory(-1);
 		}
 	}
+
+	/*
+	 * We want to close the whole interface instead of just the window. Since this is the main
+	 * window that we access stuff through, closing it without closing the interface would cause
+	 * problems.
+	 */
+	protected override void PressCloseButton() => UISystem.Close();
 
 	public void Open()
 	{
