@@ -12,7 +12,7 @@ using Terraria.ModLoader.UI;
 
 namespace QuiteEnoughRecipes;
 
-public class UIWindow : UIPanel
+public class UIWindow : UIPanel, IWindowManagerElement
 {
 	private class UIHelpIcon : UIQERButton
 	{
@@ -51,7 +51,7 @@ public class UIWindow : UIPanel
 	private const float ResizeCornerWidth = 30;
 	private const float ResizeBorderWidth = 7;
 
-	private struct DragState
+	private struct DragOrResizeInfo
 	{
 		public required Vector2 OriginalSize;
 		public required Vector2 OriginalPos;
@@ -75,7 +75,7 @@ public class UIWindow : UIPanel
 	private float _topBarHelpOffset = 0.0f;
 
 	// When not null, we assume this window is being dragged.
-	private DragState? _dragState = null;
+	private DragOrResizeInfo? _dragOrResizeInfo = null;
 
 	/*
 	 * Each of these is true when the corresponding window resize region is being hovered, or if
@@ -90,12 +90,10 @@ public class UIWindow : UIPanel
 	private bool HoveringResize => _resizeLeft || _resizeRight || _resizeTop || _resizeBottom;
 
 
-	// When set, the window manager will use these to decide how to rearrange windows.
-	public bool WantsFocus = false;
-	public bool WantsClose = false;
-
-	// True if the window is being dragged or resized.
-	public bool IsDragging => _dragState is not null;
+	// Window manager stuff.
+	public bool WantsMoveToFront { get; set; }
+	public bool WantsClose { get; set; }
+	public DragRequestState WantsDrag { get; set; }
 
 	// Stuff should just be directly appended to this instead of the window itself.
 	public UIElement Contents { get; private set; } = new(){
@@ -122,13 +120,27 @@ public class UIWindow : UIPanel
 		AddElementToBar(closeButton);
 	}
 
+	public bool IsDraggingOrResizing => _dragOrResizeInfo is not null;
+
 	// This is called when the close button is pressed.
-	protected virtual void PressCloseButton() => WantsClose = true;
+	protected virtual void PressCloseButton() => this.Close();
+
+	/*
+	 * We want these to be virtual so it's easy for derived window classes to change their
+	 * behavior.
+	 */
+	public virtual void OnStartDragging() {}
+	public virtual void OnStopDragging() {}
+	public virtual void OnOpen() {}
+	public virtual void OnClose() {}
+	public virtual void OnWindowManagerLeftMouseUp(UIMouseEvent e) {}
+	public virtual void OnWindowManagerRightMouseUp(UIMouseEvent e) {}
+	public virtual void OnWindowManagerMiddleMouseUp(UIMouseEvent e) {}
 
 	public override void LeftMouseDown(UIMouseEvent e)
 	{
 		base.LeftMouseDown(e);
-		WantsFocus = true;
+		this.MoveToFront();
 
 		if (e.Target == this || e.Target == Contents || e.Target == _topBar)
 		{
@@ -153,7 +165,7 @@ public class UIWindow : UIPanel
 			HAlign = 0;
 			VAlign = 0;
 
-			var dragState = new DragState{
+			var dragState = new DragOrResizeInfo{
 				OriginalSize = new Vector2(Width.Pixels, Height.Pixels),
 				OriginalPos = new Vector2(Left.Pixels, Top.Pixels),
 				OriginalMouse = Main.MouseScreen,
@@ -165,15 +177,22 @@ public class UIWindow : UIPanel
 			 */
 			if (HoveringResize || _topBar.ContainsPoint(Main.MouseScreen))
 			{
-				_dragState = dragState;
+				_dragOrResizeInfo = dragState;
 			}
+		}
+
+		// We've started dragging, so we should let the window manager know.
+		if (_dragOrResizeInfo is not null && !HoveringResize)
+		{
+			this.StartDragging();
 		}
 	}
 
 	public override void LeftMouseUp(UIMouseEvent e)
 	{
 		base.LeftMouseUp(e);
-		_dragState = null;
+		_dragOrResizeInfo = null;
+		this.StopDragging();
 	}
 
 	public override void Update(GameTime t)
@@ -186,7 +205,7 @@ public class UIWindow : UIPanel
 			Main.LocalPlayer.mouseInterface = true;
 		}
 
-		if (_dragState is DragState s)
+		if (_dragOrResizeInfo is DragOrResizeInfo s)
 		{
 			var offset = Main.MouseScreen - s.OriginalMouse;
 
