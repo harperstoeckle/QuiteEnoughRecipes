@@ -17,7 +17,13 @@ public class UIWindowManager : UIState
 	 * as well as `IWindowManagerElement`s, but there's no clear way to enforce this.
 	 */
 	private List<IWindowManagerElement> _toOpen = new();
-	private IWindowManagerElement? _dragging = null;
+
+	/*
+	 * `Dragging` is the element currently being dragged, and `JustDropped` is the element just
+	 * dropped in the current tick.
+	 */
+	public IWindowManagerElement? Dragging { get; private set; } = null;
+	public IWindowManagerElement? JustDropped { get; private set; } = null;
 
 	public void Open<T>(T w) where T : UIElement, IWindowManagerElement => _toOpen.Add(w);
 
@@ -25,6 +31,8 @@ public class UIWindowManager : UIState
 
 	public override void Update(GameTime t)
 	{
+		JustDropped = null;
+
 		foreach (var w in _toOpen)
 		{
 			if (!HasChild(w as UIElement))
@@ -41,13 +49,13 @@ public class UIWindowManager : UIState
 		};
 		Elements.Sort((a, b) => moveToFrontSortKey(a).CompareTo(moveToFrontSortKey(b)));
 
-		IWindowManagerElement? newDragging = _dragging;
+		IWindowManagerElement? newDragging = Dragging;
 		foreach (var w in Elements.OfType<IWindowManagerElement>())
 		{
 			w.WantsMoveToFront = false;
 
 			// Closed elements also stop getting dragged.
-			if ((w.WantsClose || w.WantsDrag == DragRequestState.Stop) && _dragging == w)
+			if ((w.WantsClose || w.WantsDrag == DragRequestState.Stop) && Dragging == w)
 			{
 				newDragging = null;
 			}
@@ -59,18 +67,19 @@ public class UIWindowManager : UIState
 			w.WantsDrag = DragRequestState.None;
 		}
 
-		if (newDragging != _dragging)
+		if (newDragging != Dragging)
 		{
-			_dragging?.OnStopDragging();
-			_dragging = newDragging;
-			_dragging?.OnStartDragging();
+			JustDropped = Dragging;
+			Dragging?.OnStopDragging();
+			Dragging = newDragging;
+			Dragging?.OnStartDragging();
 		}
 
 		// The dragged element should always be at the very top.
-		if (_dragging is not null && Elements.LastOrDefault() != _dragging)
+		if (Dragging is not null && Elements.LastOrDefault() != Dragging)
 		{
-			RemoveChild(_dragging as UIElement);
-			Append(_dragging as UIElement);
+			RemoveChild(Dragging as UIElement);
+			Append(Dragging as UIElement);
 		}
 
 		var toRemove = Elements.OfType<IWindowManagerElement>().Where(w => w.WantsClose).ToList();
