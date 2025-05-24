@@ -11,8 +11,11 @@ public class UIDraggableItem : UIItemIcon, IWindowManagerElement
 	public bool WantsMoveToFront { get; set; } = false;
 	public DragRequestState WantsDrag { get; set; } = DragRequestState.None;
 
+	public Item Item { get; private set; }
+
 	public UIDraggableItem(Item i) : base(i, false)
 	{
+		Item = i;
 		IgnoresMouseInteraction = true;
 	}
 

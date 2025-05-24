@@ -19,6 +19,7 @@ public class UIQERSearchBar : UIPanel
 
 	private static UIQERSearchBar? _activeInstance = null;
 	private UISearchBar _search;
+	private string _contents = "";
 
 	/*
 	 * We just want to treat this element as if it's the search bar itself, so we forward event
@@ -70,7 +71,20 @@ public class UIQERSearchBar : UIPanel
 			_activeInstance = null;
 		};
 
+		// There's no other way to access the current contents.
+		_search.OnContentsChanged += s => _contents = s;
+
 		Append(_search);
+	}
+
+	public override void Update(GameTime t)
+	{
+		base.Update(t);
+
+		if (IsMouseHovering && UISystem.WindowManager?.JustDropped is UIDraggableItem i)
+		{
+			_search.SetContents($"{_contents}[i:{i.Item?.type ?? 0}]");
+		}
 	}
 
 	public override void LeftClick(UIMouseEvent e)
