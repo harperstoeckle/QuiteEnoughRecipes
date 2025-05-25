@@ -7,12 +7,7 @@ namespace QuiteEnoughRecipes;
 
 public class UIDraggableItem : UIItemIcon, IWindowManagerElement
 {
-	public bool WantsClose { get; set; } = false;
-	public bool WantsMoveToFront { get; set; } = false;
-	public DragRequestState WantsDrag { get; set; } = DragRequestState.None;
-	public UIElement? ReparentDestination { get; set; } = null;
-	public int ZOrder { get; set; } = 0;
-
+	public WindowManagerElementState WindowState { get; private set; } = new();
 	public Item Item { get; private set; }
 
 	public UIDraggableItem(Item i) : base(i, false)

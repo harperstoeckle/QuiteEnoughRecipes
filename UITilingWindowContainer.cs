@@ -93,7 +93,7 @@ public class UITilingWindowContainer : UIElement
 
 		if (_leftWindow is not null)
 		{
-			if (_leftWindow.WantsClose)
+			if (_leftWindow.WindowState.WantsClose)
 			{
 				_leftWindow.CanDragOrResize = true;
 				_leftArea.RemoveChild(_leftWindow);
@@ -113,7 +113,7 @@ public class UITilingWindowContainer : UIElement
 
 		if (_rightWindow is not null)
 		{
-			if (_rightWindow.WantsClose)
+			if (_rightWindow.WindowState.WantsClose)
 			{
 				_rightWindow.CanDragOrResize = true;
 				_rightArea.RemoveChild(_rightWindow);

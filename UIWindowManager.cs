@@ -55,7 +55,7 @@ public class UIWindowManager : UIState
 		Func<UIElement, (int, int)> moveToFrontSortKey = e => {
 			if (e is IWindowManagerElement w)
 			{
-				return (w.ZOrder, w.WantsMoveToFront ? 1 : 0);
+				return (w.WindowState.ZOrder, w.WindowState.WantsMoveToFront ? 1 : 0);
 			}
 			else
 			{
@@ -67,19 +67,19 @@ public class UIWindowManager : UIState
 		IWindowManagerElement? newDragging = Dragging;
 		foreach (var w in Elements.OfType<IWindowManagerElement>())
 		{
-			w.WantsMoveToFront = false;
+			w.WindowState.WantsMoveToFront = false;
 
 			// Closed elements also stop getting dragged.
-			if ((w.WantsClose || w.WantsDrag == DragRequestState.Stop) && Dragging == w)
+			if ((w.WindowState.WantsClose || w.WindowState.WantsDrag == DragRequestState.Stop) && Dragging == w)
 			{
 				newDragging = null;
 			}
-			else if (w.WantsDrag == DragRequestState.Start)
+			else if (w.WindowState.WantsDrag == DragRequestState.Start)
 			{
 				newDragging = w;
 			}
 
-			w.WantsDrag = DragRequestState.None;
+			w.WindowState.WantsDrag = DragRequestState.None;
 		}
 
 		if (newDragging != Dragging)
@@ -98,20 +98,20 @@ public class UIWindowManager : UIState
 		}
 
 		var toRemove = Elements.OfType<IWindowManagerElement>()
-			.Where(w => w.WantsClose || w.ReparentDestination is not null)
+			.Where(w => w.WindowState.WantsClose || w.WindowState.ReparentDestination is not null)
 			.ToList();
 		foreach (var w in toRemove)
 		{
-			if (w.WantsClose)
+			if (w.WindowState.WantsClose)
 			{
-				w.WantsClose = false;
+				w.WindowState.WantsClose = false;
 				w.OnClose();
 				RemoveChild(w as UIElement);
 			}
 
-			if (w.ReparentDestination is UIElement dest)
+			if (w.WindowState.ReparentDestination is UIElement dest)
 			{
-				w.ReparentDestination = null;
+				w.WindowState.ReparentDestination = null;
 				dest.Append(w as UIElement);
 				dest.Recalculate();
 			}
@@ -213,26 +213,25 @@ public enum DragRequestState
 }
 
 /*
+ * Keeps track of data needed used to inform the window manager of what should happen with this
+ * element.
+ */
+public class WindowManagerElementState
+{
+	public bool WantsMoveToFront = false;
+	public bool WantsClose = false;
+	public DragRequestState WantsDrag = DragRequestState.None;
+	public UIElement? ReparentDestination = null;
+	public int ZOrder = 0;
+}
+
+/*
  * Element that the window manager can manage. Something implementing this should always also
  * derive from `UIElement, but I can't figure out how to enforce that.
  */
 public interface IWindowManagerElement
 {
-	public bool WantsMoveToFront { get; set; }
-	public bool WantsClose { get; set; }
-	public DragRequestState WantsDrag { get; set; }
-
-	/*
-	 * The window manager will reparent this element to `ReparentDestination` if it is not null.
-	 * `ReparentDestination` must not be an ancestor of the window manager.
-	 */
-	public UIElement? ReparentDestination { get; set; }
-
-	/*
-	 * An element with a higher z order will *always* be above an element with a lower one, unless
-	 * the lower one is being dragged (the dragged element is always on top).
-	 */
-	public int ZOrder { get; set; }
+	public WindowManagerElementState WindowState { get; }
 
 	/*
 	 * In some cases, it's impossible to directly tie dragging with left clicking an element. For
@@ -276,21 +275,21 @@ public interface IWindowManagerElement
  */
 public static class WindowManagerElementExtensions
 {
-	public static void Close(this IWindowManagerElement e) => e.WantsClose = true;
+	public static void Close(this IWindowManagerElement e) => e.WindowState.WantsClose = true;
 	public static void StartDragging(this IWindowManagerElement e)
 	{
-		e.WantsDrag = DragRequestState.Start;
+		e.WindowState.WantsDrag = DragRequestState.Start;
 	}
 	public static void StopDragging(this IWindowManagerElement e)
 	{
-		e.WantsDrag = DragRequestState.Stop;
+		e.WindowState.WantsDrag = DragRequestState.Stop;
 	}
 	public static void MoveToFront(this IWindowManagerElement e)
 	{
-		e.WantsMoveToFront = true;
+		e.WindowState.WantsMoveToFront = true;
 	}
 	public static void ReparentTo(this IWindowManagerElement e, UIElement newParent)
 	{
-		e.ReparentDestination = newParent;
+		e.WindowState.ReparentDestination = newParent;
 	}
 }

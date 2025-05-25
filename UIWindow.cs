@@ -94,12 +94,7 @@ public class UIWindow : UIPanel, IWindowManagerElement
 
 	private bool HoveringResize => _resizeLeft || _resizeRight || _resizeTop || _resizeBottom;
 
-	// Window manager stuff.
-	public bool WantsMoveToFront { get; set; } = false;
-	public bool WantsClose { get; set; } = false;
-	public DragRequestState WantsDrag { get; set; } = DragRequestState.None;
-	public UIElement? ReparentDestination { get; set; } = null;
-	public int ZOrder { get; set; } = 0;
+	public WindowManagerElementState WindowState { get; private set; } = new();
 
 	/*
 	 * When set to false, clicking the mouse on this window will *still* result in the window

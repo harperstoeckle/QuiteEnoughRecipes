@@ -43,7 +43,7 @@ public class UIQERWindow : UIWindow
 		CanDragOrResize = false;
 
 		// This window should always be behind other windows.
-		ZOrder = -1;
+		WindowState.ZOrder = -1;
 
 		var fullscreenButton = new UIQERButton(QERAssets.ButtonFullscreen, 2);
 		fullscreenButton.Frame = UISystem.IsFullscreen ? 1 : 0;
