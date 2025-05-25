@@ -51,19 +51,6 @@ public class UIWindowManager : UIState
 		}
 		_toOpen.Clear();
 
-		// Sort elements that want to move to the front, to the front.
-		Func<UIElement, (int, int)> moveToFrontSortKey = e => {
-			if (e is IWindowManagerElement w)
-			{
-				return (w.WindowState.ZOrder, w.WindowState.WantsMoveToFront ? 1 : 0);
-			}
-			else
-			{
-				return (0, 0);
-			}
-		};
-		Elements.Sort((a, b) => moveToFrontSortKey(a).CompareTo(moveToFrontSortKey(b)));
-
 		IWindowManagerElement? newDragging = Dragging;
 		foreach (var w in Elements.OfType<IWindowManagerElement>())
 		{
@@ -90,13 +77,6 @@ public class UIWindowManager : UIState
 			Dragging?.OnStartDragging();
 		}
 
-		// The dragged element should always be at the very top.
-		if (Dragging is not null && Elements.LastOrDefault() != Dragging)
-		{
-			RemoveChild(Dragging as UIElement);
-			Append(Dragging as UIElement);
-		}
-
 		var toRemove = Elements.OfType<IWindowManagerElement>()
 			.Where(w => w.WindowState.WantsClose || w.WindowState.ReparentDestination is not null)
 			.ToList();
@@ -116,6 +96,28 @@ public class UIWindowManager : UIState
 				dest.Recalculate();
 			}
 		}
+
+		/*
+		 * This *must* be done with `OrderBy` instead of `Sort`, because `OrderBy` is stable, but
+		 * `Sort` is not.
+		 */
+		var sortedElements = Elements.OrderBy(
+				e => {
+					if (e is IWindowManagerElement w)
+					{
+						/*
+						 * The dragged element is on top, followed by every other element in order
+						 * of z order.
+						 */
+						return (w == Dragging ? 1 : 0, w.WindowState.ZOrder, w.WindowState.WantsMoveToFront ? 1 : 0);
+					}
+					else
+					{
+						return (0, 0, 0);
+					}
+				}).ToList();
+		Elements.Clear();
+		Elements.AddRange(sortedElements);
 
 		base.Update(t);
 	}
