@@ -39,7 +39,8 @@ public class UIQERWindow : UIWindow
 
 	public UIQERWindow()
 	{
-		CopyStyle(UISystem.IsFullscreen ? _fullscreenStyleRef : _windowedStyleRef);
+		CopyStyle(_fullscreenStyleRef);
+		CanDragOrResize = false;
 
 		// This window should always be behind other windows.
 		ZOrder = -1;
@@ -61,10 +62,12 @@ public class UIQERWindow : UIWindow
 			{
 				CopyStyle(_windowedStyleRef);
 			}
+
+			CanDragOrResize = !UISystem.IsFullscreen;
 		};
 
 		AddElementToBar(fullscreenButton);
-
+		Contents.Append(new UITilingWindowContainer{ Width = new(0, 1), Height = new(0, 1) });
 	}
 
 	/*

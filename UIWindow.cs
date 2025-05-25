@@ -93,6 +93,7 @@ public class UIWindow : UIPanel, IWindowManagerElement
 	public bool WantsMoveToFront { get; set; } = false;
 	public bool WantsClose { get; set; } = false;
 	public DragRequestState WantsDrag { get; set; } = DragRequestState.None;
+	public UIElement? ReparentDestination { get; set; } = null;
 	public int ZOrder { get; set; } = 0;
 
 	/*
@@ -101,6 +102,12 @@ public class UIWindow : UIPanel, IWindowManagerElement
 	 * move to follow the cursor.
 	 */
 	public bool CanDragOrResize = true;
+
+	/*
+	 * Mostly used by the tiling window container to detect when a window has been dragged far
+	 * enough to be released.
+	 */
+	public Vector2? DragInitialMousePosition => _dragOrResizeInfo?.OriginalMouse;
 
 	// Stuff should just be directly appended to this instead of the window itself.
 	public UIElement Contents { get; private set; } = new(){

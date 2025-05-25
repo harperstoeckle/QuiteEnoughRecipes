@@ -97,14 +97,24 @@ public class UIWindowManager : UIState
 			Append(Dragging as UIElement);
 		}
 
-		var toRemove = Elements.OfType<IWindowManagerElement>().Where(w => w.WantsClose).ToList();
+		var toRemove = Elements.OfType<IWindowManagerElement>()
+			.Where(w => w.WantsClose || w.ReparentDestination is not null)
+			.ToList();
 		foreach (var w in toRemove)
 		{
-			w.WantsMoveToFront = false;
+			if (w.WantsClose)
+			{
+				w.WantsClose = false;
+				w.OnClose();
+				RemoveChild(w as UIElement);
+			}
 
-			w.WantsClose = false;
-			w.OnClose();
-			RemoveChild(w as UIElement);
+			if (w.ReparentDestination is UIElement dest)
+			{
+				w.ReparentDestination = null;
+				dest.Append(w as UIElement);
+				dest.Recalculate();
+			}
 		}
 
 		base.Update(t);
@@ -213,6 +223,12 @@ public interface IWindowManagerElement
 	public DragRequestState WantsDrag { get; set; }
 
 	/*
+	 * The window manager will reparent this element to `ReparentDestination` if it is not null.
+	 * `ReparentDestination` must not be an ancestor of the window manager.
+	 */
+	public UIElement? ReparentDestination { get; set; }
+
+	/*
 	 * An element with a higher z order will *always* be above an element with a lower one, unless
 	 * the lower one is being dragged (the dragged element is always on top).
 	 */
@@ -272,5 +288,9 @@ public static class WindowManagerElementExtensions
 	public static void MoveToFront(this IWindowManagerElement e)
 	{
 		e.WantsMoveToFront = true;
+	}
+	public static void ReparentTo(this IWindowManagerElement e, UIElement newParent)
+	{
+		e.ReparentDestination = newParent;
 	}
 }
