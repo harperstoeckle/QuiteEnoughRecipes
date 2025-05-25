@@ -2,6 +2,8 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Terraria;
+using Terraria.ModLoader;
 using Terraria.UI;
 
 namespace QuiteEnoughRecipes;
@@ -17,6 +19,12 @@ public class UIWindowManager : UIState
 	 * as well as `IWindowManagerElement`s, but there's no clear way to enforce this.
 	 */
 	private List<IWindowManagerElement> _toOpen = new();
+
+	/*
+	 * When an item panel is being hovered, this keeps track of it. This is needed so that we can
+	 * have the panel do tooltip modifications.
+	 */
+	private UIItemPanel? _hoveredItemPanel = null;
 
 	/*
 	 * `Dragging` is the element currently being dragged, and `JustDropped` is the element just
@@ -130,6 +138,60 @@ public class UIWindowManager : UIState
 		{
 			w.OnWindowManagerMiddleMouseUp(e);
 		}
+	}
+
+	/*
+	 * TODO: Handling for modifying tooltips should not be here, but the window manager element is
+	 * a parent to all of the QER UI stuff, so this is the only place this code can go when using
+	 * the current method (catching mouse events that have bubbled up).
+	 */
+	public override void LeftClick(UIMouseEvent e)
+	{
+		base.LeftClick(e);
+
+		if (!(e.Target is UIQERSearchBar))
+		{
+			UIQERSearchBar.UnfocusAll();
+		}
+
+		if (e.Target is IIngredientElement s && s.Ingredient != null)
+		{
+			UISystem.ShowSources(s.Ingredient);
+		}
+	}
+
+	public override void RightClick(UIMouseEvent e)
+	{
+		base.RightClick(e);
+
+		if (!(e.Target is UIQERSearchBar))
+		{
+			UIQERSearchBar.UnfocusAll();
+		}
+
+		if (e.Target is IIngredientElement s && s.Ingredient != null)
+		{
+			UISystem.ShowUses(s.Ingredient);
+		}
+	}
+
+	public override void MouseOver(UIMouseEvent e)
+	{
+		base.MouseOver(e);
+		if (e.Target is UIItemPanel p) { _hoveredItemPanel = p; }
+	}
+
+	public override void MouseOut(UIMouseEvent e)
+	{
+		base.MouseOut(e);
+		if (e.Target == _hoveredItemPanel) { _hoveredItemPanel = null; }
+	}
+
+	public void ModifyTooltips(Mod mod, Item item, List<TooltipLine> tooltips)
+	{
+		// Prevent weird situations where the wrong tooltip can be modified.
+		if ((_hoveredItemPanel?.DisplayedItem?.type ?? 0) != item.type) { return; }
+		_hoveredItemPanel?.ModifyTooltips(mod, tooltips);
 	}
 }
 

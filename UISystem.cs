@@ -14,7 +14,8 @@ public class UISystem : ModSystem
 
 	public static bool IsFullscreen { get; private set; } = true;
 
-	public static UIQERWindow? Window { get; private set; }
+	public static UIQERWindow? MainWindow { get; private set; }
+	public static UIRecipeWindow? RecipeWindow { get; private set; }
 	public static UIWindowManager? WindowManager { get; private set; }
 
 	public static ModKeybind? OpenUIKey { get; private set; }
@@ -91,11 +92,15 @@ public class UISystem : ModSystem
 		 * across worlds. There's also potentially world-specific data that needs to be handled
 		 * differently in each world.
 		 */
+		var ingredientWindow = new UIIngredientWindow();
 		WindowManager = new();
-		Window = new();
+		MainWindow = new();
+		RecipeWindow = new();
 		_userInterface = new();
 
-		WindowManager.Open(Window);
+		WindowManager.Open(MainWindow);
+		WindowManager.Open(ingredientWindow);
+		WindowManager.Open(RecipeWindow);
 
 		// Loading items beforehand ensures that they *aren't* being loaded while scrolling.
 		if (QERConfig.Instance.ShouldPreloadItems)
@@ -171,8 +176,7 @@ public class UISystem : ModSystem
 			_userInterface?.SetState(WindowManager);
 		}
 
-		Window?.Open();
-		Window?.Recalculate();
+		MainWindow?.Recalculate();
 	}
 
 	public static void Close()
@@ -180,7 +184,7 @@ public class UISystem : ModSystem
 		_userInterface?.SetState(null);
 		IngameFancyUI.Close();
 
-		Window?.Close();
+		UIQERSearchBar.UnfocusAll();
 	}
 
 	public static void ToggleOpen()
@@ -202,8 +206,8 @@ public class UISystem : ModSystem
 		Open();
 	}
 
-	public static void ShowSources(IIngredient i) => Window?.ShowSources(i);
-	public static void ShowUses(IIngredient i) => Window?.ShowUses(i);
+	public static void ShowSources(IIngredient i) => RecipeWindow?.ShowSources(i);
+	public static void ShowUses(IIngredient i) => RecipeWindow?.ShowUses(i);
 
 	public static bool IsOpen()
 	{

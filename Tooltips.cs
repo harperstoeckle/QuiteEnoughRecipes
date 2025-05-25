@@ -10,7 +10,7 @@ public class Tooltips : GlobalItem
 	{
 		if (UISystem.IsOpen())
 		{
-			UISystem.Window.ModifyTooltips(Mod, item, tooltips);
+			UISystem.WindowManager?.ModifyTooltips(Mod, item, tooltips);
 		}
 	}
 }
