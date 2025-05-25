@@ -104,6 +104,7 @@ public class UITilingWindowContainer : UIElement
 		{
 			if (_leftWindow.WindowState.WantsClose)
 			{
+				_leftWindow.ConvertStyleToAbsolute();
 				_leftWindow.CanDragOrResize = true;
 				_leftArea.RemoveChild(_leftWindow);
 				_leftWindow = null;
@@ -124,6 +125,7 @@ public class UITilingWindowContainer : UIElement
 		{
 			if (_rightWindow.WindowState.WantsClose)
 			{
+				_rightWindow.ConvertStyleToAbsolute();
 				_rightWindow.CanDragOrResize = true;
 				_rightArea.RemoveChild(_rightWindow);
 				_rightWindow = null;
