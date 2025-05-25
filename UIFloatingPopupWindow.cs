@@ -6,7 +6,7 @@ using Terraria;
 namespace QuiteEnoughRecipes;
 
 // Window that appears at the cursor when opened and closes when the cursor leaves.
-public class UIPopupWindow : UIWindow
+public class UIFloatingPopupWindow : UIFloatingWindow
 {
 	// When true, this window will not disappear when the cursor leaves.
 	private bool _isPinned = false;
@@ -17,7 +17,7 @@ public class UIPopupWindow : UIWindow
 		? Language.GetText("Mods.QuiteEnoughRecipes.UI.PinDownHover")
 		: Language.GetText("Mods.QuiteEnoughRecipes.UI.PinUpHover");
 
-	public UIPopupWindow()
+	public UIFloatingPopupWindow()
 	{
 		_pinButton.OnLeftClick += (elem, evt) => {
 			_isPinned = !_isPinned;

@@ -12,7 +12,7 @@ using Terraria;
 
 namespace QuiteEnoughRecipes;
 
-public class UIQERWindow : UIWindow
+public class UIQERWindow : UIFloatingWindow
 {
 	// Never used as actual UI elements. Just used to store dimensions.
 	private UIElement _windowedStyleRef = new(){

@@ -12,7 +12,8 @@ using Terraria.ModLoader.UI;
 
 namespace QuiteEnoughRecipes;
 
-public class UIWindow : UIPanel, IWindowManagerElement
+// A traditional floating window that can be dragged and resized.
+public class UIFloatingWindow : UIPanel, IWindow
 {
 	private class UIHelpIcon : UIQERButton
 	{
@@ -94,7 +95,7 @@ public class UIWindow : UIPanel, IWindowManagerElement
 
 	private bool HoveringResize => _resizeLeft || _resizeRight || _resizeTop || _resizeBottom;
 
-	public WindowManagerElementState WindowState { get; private set; } = new();
+	public WindowState WindowState { get; private set; } = new();
 
 	/*
 	 * When set to false, clicking the mouse on this window will *still* result in the window
@@ -116,7 +117,7 @@ public class UIWindow : UIPanel, IWindowManagerElement
 		VAlign = 1,
 	};
 
-	public UIWindow()
+	public UIFloatingWindow()
 	{
 		// Just to make sure we don't get tiny windows that are impossible to grab.
 		Width = Height = MinWidth = MinHeight = new(4 * BarHeight, 0);

@@ -47,7 +47,7 @@ public class OptionPanelToggleButton : UIElement
 	 * then this option group will be set to its default state.
 	 */
 	private IOptionGroup _optionGroup;
-	private UIPopupWindow _popupWindow = new(){
+	private UIFloatingPopupWindow _popupWindow = new(){
 		MinWidth = new(100, 0),
 		MinHeight = new(100, 0),
 		Width = new(0, 0.25f),

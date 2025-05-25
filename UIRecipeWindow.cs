@@ -9,7 +9,7 @@ using Terraria.UI;
 
 namespace QuiteEnoughRecipes;
 
-public class UIRecipeWindow : UIWindow
+public class UIRecipeWindow : UIFloatingWindow
 {
 	// Inner part of recipe page; can be searched.
 	private class UIRecipeList : UIElement, IQueryable

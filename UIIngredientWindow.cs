@@ -5,7 +5,7 @@ using Terraria.UI;
 
 namespace QuiteEnoughRecipes;
 
-public class UIIngredientWindow : UIWindow
+public class UIIngredientWindow : UIFloatingWindow
 {
 	private const float TabHeight = 50;
 

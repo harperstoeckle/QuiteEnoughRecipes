@@ -5,9 +5,9 @@ using Terraria;
 
 namespace QuiteEnoughRecipes;
 
-public class UIDraggableItem : UIItemIcon, IWindowManagerElement
+public class UIDraggableItem : UIItemIcon, IWindow
 {
-	public WindowManagerElementState WindowState { get; private set; } = new();
+	public WindowState WindowState { get; private set; } = new();
 	public Item Item { get; private set; }
 
 	public UIDraggableItem(Item i) : base(i, false)

@@ -9,8 +9,13 @@ using Terraria.UI;
 namespace QuiteEnoughRecipes;
 
 /*
- * Maintains a set of windows and facilitates interaction between them. For example, it allows
- * windows to be opened and closed or moved to the top.
+ * Maintains a set of UI elements that I will, from here on out, be referring to as "windows". The
+ * window manager does not handle the position nor appearance of windows, but it does handle their
+ * stacking order and removal.
+ *
+ * The window manager also manages drag-and-drop behavior. At any time, a window can indicate that
+ * it is starting to be dragged (regardless of what it's actually doing) and the window manager
+ * will keep track of that.
  */
 public class UIWindowManager : UIState
 {
@@ -18,7 +23,7 @@ public class UIWindowManager : UIState
 	 * These will be opened in the next update. Elements in here are guaranteed to be `UIElement`s
 	 * as well as `IWindowManagerElement`s, but there's no clear way to enforce this.
 	 */
-	private List<IWindowManagerElement> _toOpen = new();
+	private List<IWindow> _toOpen = new();
 	private List<Action> _deferredCalls = new();
 
 	/*
@@ -31,12 +36,12 @@ public class UIWindowManager : UIState
 	 * `Dragging` is the element currently being dragged, and `JustDropped` is the element just
 	 * dropped in the current tick.
 	 */
-	public IWindowManagerElement? Dragging { get; private set; } = null;
-	public IWindowManagerElement? JustDropped { get; private set; } = null;
+	public IWindow? Dragging { get; private set; } = null;
+	public IWindow? JustDropped { get; private set; } = null;
 
 	public bool IsHoveringWindow => Children.Any(w => w.IsMouseHovering);
 
-	public void Open<T>(T w) where T : UIElement, IWindowManagerElement => _toOpen.Add(w);
+	public void Open<T>(T w) where T : UIElement, IWindow => _toOpen.Add(w);
 
 	/*
 	 * Defer a function to be called in the next update, just after windows have been rearranged but
@@ -67,8 +72,8 @@ public class UIWindowManager : UIState
 		}
 		_toOpen.Clear();
 
-		IWindowManagerElement? newDragging = Dragging;
-		foreach (var w in Elements.OfType<IWindowManagerElement>())
+		IWindow? newDragging = Dragging;
+		foreach (var w in Elements.OfType<IWindow>())
 		{
 			w.WindowState.WantsMoveToFront = false;
 
@@ -93,7 +98,7 @@ public class UIWindowManager : UIState
 			Dragging?.OnStartDragging();
 		}
 
-		var toRemove = Elements.OfType<IWindowManagerElement>()
+		var toRemove = Elements.OfType<IWindow>()
 			.Where(w => w.WindowState.WantsClose || w.WindowState.ReparentDestination is not null)
 			.ToList();
 		foreach (var w in toRemove)
@@ -118,7 +123,7 @@ public class UIWindowManager : UIState
 		 */
 		var sortedElements = Elements.OrderBy(
 				e => {
-					if (e is IWindowManagerElement w)
+					if (e is IWindow w)
 					{
 						/*
 						 * The dragged element is on top, followed by every other element in order
@@ -144,7 +149,7 @@ public class UIWindowManager : UIState
 	{
 		base.LeftMouseUp(e);
 
-		foreach (var w in Elements.OfType<IWindowManagerElement>())
+		foreach (var w in Elements.OfType<IWindow>())
 		{
 			w.OnWindowManagerLeftMouseUp(e);
 		}
@@ -154,7 +159,7 @@ public class UIWindowManager : UIState
 	{
 		base.RightMouseUp(e);
 
-		foreach (var w in Elements.OfType<IWindowManagerElement>())
+		foreach (var w in Elements.OfType<IWindow>())
 		{
 			w.OnWindowManagerRightMouseUp(e);
 		}
@@ -164,7 +169,7 @@ public class UIWindowManager : UIState
 	{
 		base.MiddleMouseUp(e);
 
-		foreach (var w in Elements.OfType<IWindowManagerElement>())
+		foreach (var w in Elements.OfType<IWindow>())
 		{
 			w.OnWindowManagerMiddleMouseUp(e);
 		}
@@ -234,9 +239,9 @@ public enum DragRequestState
 
 /*
  * Keeps track of data needed used to inform the window manager of what should happen with this
- * element.
+ * window.
  */
-public class WindowManagerElementState
+public class WindowState
 {
 	public bool WantsMoveToFront = false;
 	public bool WantsClose = false;
@@ -246,12 +251,13 @@ public class WindowManagerElementState
 }
 
 /*
- * Element that the window manager can manage. Something implementing this should always also
- * derive from `UIElement, but I can't figure out how to enforce that.
+ * Something implementing `IWindow` should also be derived from `UIElement` to be usable with a
+ * window manager. A "window" can be basically any UI element; it doesn't *have* to be a
+ * traditional floating window.
  */
-public interface IWindowManagerElement
+public interface IWindow
 {
-	public WindowManagerElementState WindowState { get; }
+	public WindowState WindowState { get; }
 
 	/*
 	 * In some cases, it's impossible to directly tie dragging with left clicking an element. For
@@ -295,20 +301,20 @@ public interface IWindowManagerElement
  */
 public static class WindowManagerElementExtensions
 {
-	public static void Close(this IWindowManagerElement e) => e.WindowState.WantsClose = true;
-	public static void StartDragging(this IWindowManagerElement e)
+	public static void Close(this IWindow e) => e.WindowState.WantsClose = true;
+	public static void StartDragging(this IWindow e)
 	{
 		e.WindowState.WantsDrag = DragRequestState.Start;
 	}
-	public static void StopDragging(this IWindowManagerElement e)
+	public static void StopDragging(this IWindow e)
 	{
 		e.WindowState.WantsDrag = DragRequestState.Stop;
 	}
-	public static void MoveToFront(this IWindowManagerElement e)
+	public static void MoveToFront(this IWindow e)
 	{
 		e.WindowState.WantsMoveToFront = true;
 	}
-	public static void ReparentTo(this IWindowManagerElement e, UIElement newParent)
+	public static void ReparentTo(this IWindow e, UIElement newParent)
 	{
 		e.WindowState.ReparentDestination = newParent;
 	}

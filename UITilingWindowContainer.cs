@@ -44,8 +44,8 @@ public class UITilingWindowContainer : UIElement
 		Height = new(0, 1),
 	};
 
-	private UIWindow? _leftWindow = null;
-	private UIWindow? _rightWindow = null;
+	private UIFloatingWindow? _leftWindow = null;
+	private UIFloatingWindow? _rightWindow = null;
 
 	public UITilingWindowContainer()
 	{
@@ -63,15 +63,15 @@ public class UITilingWindowContainer : UIElement
 		bool canAcceptLeft = _leftArea.IsMouseHovering && _leftWindow is null;
 		bool canAcceptRight = _rightArea.IsMouseHovering && _rightWindow is null;
 
-		bool shouldPreviewLeft = canAcceptLeft && UISystem.WindowManager?.Dragging is UIWindow;
-		bool shouldPreviewRight = canAcceptRight && UISystem.WindowManager?.Dragging is UIWindow;
+		bool shouldPreviewLeft = canAcceptLeft && UISystem.WindowManager?.Dragging is UIFloatingWindow;
+		bool shouldPreviewRight = canAcceptRight && UISystem.WindowManager?.Dragging is UIFloatingWindow;
 
 		_leftPreview.BackgroundColor = shouldPreviewLeft ? Color.White * 0.5f : Color.Transparent;
 		_leftPreview.BorderColor = shouldPreviewLeft ? Color.White : Color.Transparent;
 		_rightPreview.BackgroundColor = shouldPreviewRight ? Color.White * 0.5f : Color.Transparent;
 		_rightPreview.BorderColor = shouldPreviewRight ? Color.White : Color.Transparent;
 
-		if (UISystem.WindowManager?.JustDropped is UIWindow w)
+		if (UISystem.WindowManager?.JustDropped is UIFloatingWindow w)
 		{
 			if (canAcceptLeft)
 			{
