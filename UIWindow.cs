@@ -105,6 +105,9 @@ public class UIWindow : UIPanel, IWindowManagerElement
 
 	public UIWindow()
 	{
+		// Just to make sure we don't get tiny windows that are impossible to grab.
+		Width = Height = MinWidth = MinHeight = new(4 * BarHeight, 0);
+
 		BackgroundColor = QERColors.Brown * 0.7f;
 		BorderColor = QERColors.DarkBrown * 0.7f;
 		SetPadding(0);
