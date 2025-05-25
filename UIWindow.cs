@@ -89,12 +89,18 @@ public class UIWindow : UIPanel, IWindowManagerElement
 
 	private bool HoveringResize => _resizeLeft || _resizeRight || _resizeTop || _resizeBottom;
 
-
 	// Window manager stuff.
 	public bool WantsMoveToFront { get; set; } = false;
 	public bool WantsClose { get; set; } = false;
 	public DragRequestState WantsDrag { get; set; } = DragRequestState.None;
 	public int ZOrder { get; set; } = 0;
+
+	/*
+	 * When set to false, clicking the mouse on this window will *still* result in the window
+	 * acting as if it's being dragged (according to the window manager), but it won't actually
+	 * move to follow the cursor.
+	 */
+	public bool CanDragOrResize = true;
 
 	// Stuff should just be directly appended to this instead of the window itself.
 	public UIElement Contents { get; private set; } = new(){
@@ -213,7 +219,7 @@ public class UIWindow : UIPanel, IWindowManagerElement
 			Main.LocalPlayer.mouseInterface = true;
 		}
 
-		if (_dragOrResizeInfo is DragOrResizeInfo s)
+		if (CanDragOrResize && _dragOrResizeInfo is DragOrResizeInfo s)
 		{
 			var offset = Main.MouseScreen - s.OriginalMouse;
 
@@ -304,35 +310,38 @@ public class UIWindow : UIPanel, IWindowManagerElement
 
 	protected override void DrawSelf(SpriteBatch sb)
 	{
-		// Two sides being resized at once is a corner. One is an edge.
-		int numResizeDirs = ((bool[])[_resizeLeft, _resizeRight, _resizeTop, _resizeBottom])
-			.Count(b => b);
-
-		if (numResizeDirs == 2)
+		if (CanDragOrResize)
 		{
-			if (_resizeLeft && _resizeTop || _resizeBottom && _resizeRight)
-			{
-				UISystem.CustomCursorTexture = QERAssets.CursorCornerLeft;
-			}
-			else
-			{
-				UISystem.CustomCursorTexture = QERAssets.CursorCornerRight;
-			}
+			// Two sides being resized at once is a corner. One is an edge.
+			int numResizeDirs = ((bool[])[_resizeLeft, _resizeRight, _resizeTop, _resizeBottom])
+				.Count(b => b);
 
-			UISystem.CustomCursorOffset = UISystem.CustomCursorTexture.Frame().Size() / 2;
-		}
-		else if (numResizeDirs == 1)
-		{
-			if (_resizeLeft || _resizeRight)
+			if (numResizeDirs == 2)
 			{
-				UISystem.CustomCursorTexture = QERAssets.CursorEdgeHorizontal;
-			}
-			else
-			{
-				UISystem.CustomCursorTexture = QERAssets.CursorEdgeVertical;
-			}
+				if (_resizeLeft && _resizeTop || _resizeBottom && _resizeRight)
+				{
+					UISystem.CustomCursorTexture = QERAssets.CursorCornerLeft;
+				}
+				else
+				{
+					UISystem.CustomCursorTexture = QERAssets.CursorCornerRight;
+				}
 
-			UISystem.CustomCursorOffset = UISystem.CustomCursorTexture.Frame().Size() / 2;
+				UISystem.CustomCursorOffset = UISystem.CustomCursorTexture.Frame().Size() / 2;
+			}
+			else if (numResizeDirs == 1)
+			{
+				if (_resizeLeft || _resizeRight)
+				{
+					UISystem.CustomCursorTexture = QERAssets.CursorEdgeHorizontal;
+				}
+				else
+				{
+					UISystem.CustomCursorTexture = QERAssets.CursorEdgeVertical;
+				}
+
+				UISystem.CustomCursorOffset = UISystem.CustomCursorTexture.Frame().Size() / 2;
+			}
 		}
 
 		base.DrawSelf(sb);
