@@ -103,6 +103,7 @@ public class UITilingWindowContainer : UIElement
 			else if (_leftWindow.DragInitialMousePosition is Vector2 p
 					&& Vector2.Distance(p, Main.MouseScreen) > 30)
 			{
+				_leftWindow.ConvertStyleToAbsolute();
 				_leftWindow.CanDragOrResize = true;
 				_leftArea.RemoveChild(_leftWindow);
 				UISystem.WindowManager?.Open(_leftWindow!);
@@ -122,6 +123,7 @@ public class UITilingWindowContainer : UIElement
 			else if (_rightWindow.DragInitialMousePosition is Vector2 p
 					&& Vector2.Distance(p, Main.MouseScreen) > 30)
 			{
+				_rightWindow.ConvertStyleToAbsolute();
 				_rightWindow.CanDragOrResize = true;
 				_rightArea.RemoveChild(_rightWindow);
 				UISystem.WindowManager?.Open(_rightWindow!);

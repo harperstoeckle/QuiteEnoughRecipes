@@ -51,6 +51,11 @@ public class UIWindow : UIPanel, IWindowManagerElement
 	private const float ResizeCornerWidth = 30;
 	private const float ResizeBorderWidth = 7;
 
+	/*
+	 * Keeps track of screen-space coordinates of the click event that started the drag or resize.
+	 * We use screen space coordinates so that dragging can be seamless even if the window changes
+	 * parents.
+	 */
 	private struct DragOrResizeInfo
 	{
 		public required Vector2 OriginalSize;
@@ -166,29 +171,10 @@ public class UIWindow : UIPanel, IWindowManagerElement
 		if (e.Target == this || e.Target == Contents || e.Target == _topBar)
 		{
 			var dims = GetOuterDimensions();
-			var parentBounds = GetParentDimensions();
-			var relativePos = dims.Position() - parentBounds.Position();
-
-			/*
-			 * There is, in my opinion, no clear way to make percentages work with dragging in a
-			 * well-behaved way, so we simply convert the dimensions exclusively into pixels once we
-			 * start dragging.
-			 */
-			Left.Pixels = relativePos.X;
-			Top.Pixels = relativePos.Y;
-			Width.Pixels = dims.Width;
-			Height.Pixels = dims.Height;
-
-			Left.Percent = 0;
-			Top.Percent = 0;
-			Width.Percent = 0;
-			Height.Percent = 0;
-			HAlign = 0;
-			VAlign = 0;
 
 			var dragState = new DragOrResizeInfo{
-				OriginalSize = new Vector2(Width.Pixels, Height.Pixels),
-				OriginalPos = new Vector2(Left.Pixels, Top.Pixels),
+				OriginalSize = dims.ToRectangle().Size(),
+				OriginalPos = dims.Position(),
 				OriginalMouse = Main.MouseScreen,
 			};
 
@@ -228,23 +214,30 @@ public class UIWindow : UIPanel, IWindowManagerElement
 
 		if (CanDragOrResize && _dragOrResizeInfo is DragOrResizeInfo s)
 		{
-			var offset = Main.MouseScreen - s.OriginalMouse;
+			ConvertStyleToAbsolute();
 
+			var offset = Main.MouseScreen - s.OriginalMouse;
 			var parentBounds = GetParentDimensions();
 			var parentSize = new Vector2(parentBounds.Width, parentBounds.Height);
+
+			/*
+			 * Since `_dragOrResizeInfo` is in absolute screen coordinates, we need to make it
+			 * relative to the parent.
+			 */
+			var relativePos = s.OriginalPos - parentBounds.Position();
 
 			// We're not resizing, so we're dragging the window.
 			if (!HoveringResize)
 			{
-				Left.Pixels = Math.Clamp(s.OriginalPos.X + offset.X, 0, parentSize.X - Width.Pixels);
-				Top.Pixels = Math.Clamp(s.OriginalPos.Y + offset.Y, 0, parentSize.Y - Height.Pixels);
+				Left.Pixels = Math.Clamp(relativePos.X + offset.X, 0, parentSize.X - Width.Pixels);
+				Top.Pixels = Math.Clamp(relativePos.Y + offset.Y, 0, parentSize.Y - Height.Pixels);
 			}
 			else
 			{
 				if (_resizeLeft)
 				{
-					Left.Pixels = Math.Clamp(s.OriginalPos.X + offset.X, 0, s.OriginalPos.X + s.OriginalSize.X - MinWidth.Pixels);
-					Width.Pixels = s.OriginalSize.X + s.OriginalPos.X - Left.Pixels;
+					Left.Pixels = Math.Clamp(relativePos.X + offset.X, 0, relativePos.X + s.OriginalSize.X - MinWidth.Pixels);
+					Width.Pixels = s.OriginalSize.X + relativePos.X - Left.Pixels;
 				}
 				else if (_resizeRight)
 				{
@@ -253,8 +246,8 @@ public class UIWindow : UIPanel, IWindowManagerElement
 
 				if (_resizeTop)
 				{
-					Top.Pixels = Math.Clamp(s.OriginalPos.Y + offset.Y, 0, s.OriginalPos.Y + s.OriginalSize.Y - MinHeight.Pixels);
-					Height.Pixels = s.OriginalSize.Y + s.OriginalPos.Y - Top.Pixels;
+					Top.Pixels = Math.Clamp(relativePos.Y + offset.Y, 0, relativePos.Y + s.OriginalSize.Y - MinHeight.Pixels);
+					Height.Pixels = s.OriginalSize.Y + relativePos.Y - Top.Pixels;
 				}
 				else if (_resizeBottom)
 				{
@@ -308,6 +301,36 @@ public class UIWindow : UIPanel, IWindowManagerElement
 		helpIcon.Height = new(BarItemHeight, 0);
 		_topBar.Append(helpIcon);
 		_topBarHelpOffset += BarItemWidth + BarInnerPadding;
+	}
+
+	/*
+	 * Get rid of all relative values in the style dimensions. This might, for example, be used to
+	 * allow a window to change parents while in the middle of dragging it while still maintaining
+	 * the same drag behavior.
+	 */
+	public void ConvertStyleToAbsolute()
+	{
+		var dims = GetOuterDimensions();
+		var parentBounds = GetParentDimensions();
+		var relativePos = dims.Position() - parentBounds.Position();
+
+		/*
+		 * There is, in my opinion, no clear way to make percentages work with dragging in a
+		 * well-behaved way, so we simply convert the dimensions exclusively into pixels once we
+		 * start dragging.
+		 */
+		Left.Pixels = relativePos.X;
+		Top.Pixels = relativePos.Y;
+		Width.Pixels = dims.Width;
+		Height.Pixels = dims.Height;
+
+		Left.Percent = 0;
+		Top.Percent = 0;
+		Width.Percent = 0;
+		Height.Percent = 0;
+		HAlign = 0;
+		VAlign = 0;
+
 	}
 
 	public CalculatedStyle GetParentDimensions()
