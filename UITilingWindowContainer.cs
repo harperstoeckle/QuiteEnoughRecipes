@@ -77,17 +77,24 @@ public class UITilingWindowContainer : UIElement
 			{
 				_leftWindow = w;
 				w.ReparentTo(_leftArea);
-				w.CanDragOrResize = false;
-				w.Left = w.Top = StyleDimension.Empty;
-				w.Width = w.Height = new(0, 1);
+
+				UISystem.WindowManager?.DeferCall(
+						() => {
+							w.CanDragOrResize = false;
+							w.Left = w.Top = StyleDimension.Empty;
+							w.Width = w.Height = new(0, 1);
+						});
 			}
 			else if (canAcceptRight)
 			{
 				_rightWindow = w;
 				w.ReparentTo(_rightArea);
-				w.CanDragOrResize = false;
-				w.Left = w.Top = StyleDimension.Empty;
-				w.Width = w.Height = new(0, 1);
+				UISystem.WindowManager?.DeferCall(
+						() => {
+							w.CanDragOrResize = false;
+							w.Left = w.Top = StyleDimension.Empty;
+							w.Width = w.Height = new(0, 1);
+						});
 			}
 		}
 

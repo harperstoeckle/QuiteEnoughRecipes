@@ -19,6 +19,7 @@ public class UIWindowManager : UIState
 	 * as well as `IWindowManagerElement`s, but there's no clear way to enforce this.
 	 */
 	private List<IWindowManagerElement> _toOpen = new();
+	private List<Action> _deferredCalls = new();
 
 	/*
 	 * When an item panel is being hovered, this keeps track of it. This is needed so that we can
@@ -33,9 +34,24 @@ public class UIWindowManager : UIState
 	public IWindowManagerElement? Dragging { get; private set; } = null;
 	public IWindowManagerElement? JustDropped { get; private set; } = null;
 
+	public bool IsHoveringWindow => Children.Any(w => w.IsMouseHovering);
+
 	public void Open<T>(T w) where T : UIElement, IWindowManagerElement => _toOpen.Add(w);
 
-	public bool IsHoveringWindow => Children.Any(w => w.IsMouseHovering);
+	/*
+	 * Defer a function to be called in the next update, just after windows have been rearranged but
+	 * before children are updated.
+	 *
+	 * For example, let's say a UI element `e` wants to close a window `w` in the window manager and
+	 * add it as a child of itself with different dimensions. Then it should
+	 *
+	 * 1. Tell the window to reparent to `e`.
+	 * 2. Defer a call that modifies `e`'s dimensions.
+	 *
+	 * If the dimensions are modified *before* this, then there may be a short frame where the
+	 * window is drawn in the manager with the wrong dimensions.
+	 */
+	public void DeferCall(Action proc) => _deferredCalls.Add(proc);
 
 	public override void Update(GameTime t)
 	{
@@ -93,7 +109,6 @@ public class UIWindowManager : UIState
 			{
 				w.WindowState.ReparentDestination = null;
 				dest.Append(w as UIElement);
-				dest.Recalculate();
 			}
 		}
 
@@ -118,6 +133,9 @@ public class UIWindowManager : UIState
 				}).ToList();
 		Elements.Clear();
 		Elements.AddRange(sortedElements);
+
+		foreach (var proc in _deferredCalls) { proc(); }
+		_deferredCalls.Clear();
 
 		base.Update(t);
 	}
