@@ -83,6 +83,7 @@ public class UITilingWindowContainer : UIElement
 							w.CanDragOrResize = false;
 							w.Left = w.Top = StyleDimension.Empty;
 							w.Width = w.Height = new(0, 1);
+							w.Recalculate();
 						});
 			}
 			else if (canAcceptRight)
@@ -94,6 +95,7 @@ public class UITilingWindowContainer : UIElement
 							w.CanDragOrResize = false;
 							w.Left = w.Top = StyleDimension.Empty;
 							w.Width = w.Height = new(0, 1);
+							w.Recalculate();
 						});
 			}
 		}
