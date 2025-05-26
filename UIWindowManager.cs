@@ -39,7 +39,13 @@ public class UIWindowManager : UIState
 	public IWindow? Dragging { get; private set; } = null;
 	public IWindow? JustDropped { get; private set; } = null;
 
-	public bool IsHoveringWindow => Children.Any(w => w.IsMouseHovering);
+	/*
+	 * Dragged windows are usually set to `IgnoresMouseInteraction` so they can interact with other
+	 * elements, so we need to also account for that when deciding whether to block inventory
+	 * interactions.
+	 */
+	public bool ShouldBlockInventoryInteraction =>
+		Children.Any(w => w.IsMouseHovering) || Dragging is not null;
 
 	public void Open<T>(T w) where T : UIElement, IWindow => _toOpen.Add(w);
 

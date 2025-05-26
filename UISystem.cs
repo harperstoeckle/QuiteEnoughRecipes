@@ -282,5 +282,5 @@ public class UISystem : ModSystem
 		return orig(smart);
 	}
 
-	private static bool IsHoveringWindow => WindowManager is not null && WindowManager.IsHoveringWindow;
+	private static bool IsHoveringWindow => WindowManager is not null && WindowManager.ShouldBlockInventoryInteraction;
 }
