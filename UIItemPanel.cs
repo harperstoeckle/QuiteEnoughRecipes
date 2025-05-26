@@ -61,13 +61,15 @@ public class UIItemPanel : UIElement, IIngredientElement, IScrollableGridElement
 
 	public override void Update(GameTime t)
 	{
+		base.Update(t);
+
 		/*
 		 * Make a draggable item appear only if the mouse moves far enough away. This prevents the
 		 * icon from appearing every time the panel is clicked.
 		 */
 		if (_dragStartPos is not null && Vector2.Distance(Main.MouseScreen, _dragStartPos.Value) > 10)
 		{
-			UISystem.WindowManager?.Open(new UIDraggableItem(DisplayedItem ?? new Item()));
+			UISystem.WindowManager?.Open(new UIDraggableItem(DisplayedItem?.Clone() ?? new Item()));
 			_dragStartPos = null;
 		}
 	}
@@ -205,6 +207,8 @@ public class UIRecipeGroupPanel : UIItemPanel
 
 	public override void Update(GameTime t)
 	{
+		base.Update(t);
+
 		if (_itemsInGroup.Count == 0) { return; }
 
 		_timeSinceLastCycle += t.ElapsedGameTime;
