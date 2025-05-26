@@ -54,6 +54,12 @@ public class UITilingWindowContainer : UIElement
 		BorderColor = Color.White,
 	};
 
+	public UITilingWindowContainer()
+	{
+		TryInsertWindow(new CursorRegion.BetweenStrips(0), new UIIngredientWindow());
+		TryInsertWindow(new CursorRegion.BetweenStrips(0), new UIIngredientWindow());
+	}
+
 	public override void Update(GameTime t)
 	{
 		base.Update(t);
@@ -143,7 +149,10 @@ public class UITilingWindowContainer : UIElement
 
 		window.CanDragOrResize = false;
 		var stackedWindow = new StackedWindow{ Window = window };
+
+		window.ConvertStyleToAbsolute();
 		window.Width = StyleDimension.Fill;
+		window.Height = window.Left = window.Top = StyleDimension.Empty;
 
 		if (location is CursorRegion.BetweenStrips(int i))
 		{
@@ -180,6 +189,8 @@ public class UITilingWindowContainer : UIElement
 	// Insert the preview element at the given location.
 	private void TryInsertPreview(CursorRegion location)
 	{
+		_previewPanel.Left = _previewPanel.Top = StyleDimension.Empty;
+
 		if (location is CursorRegion.BetweenStrips(int i))
 		{
 			if (_strips.Count == 0)
