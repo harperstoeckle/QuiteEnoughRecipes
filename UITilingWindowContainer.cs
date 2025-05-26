@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using System;
 using Terraria.GameContent.UI.Elements;
 using Terraria.UI;
 using Terraria;
@@ -25,7 +26,7 @@ public class UITilingWindowContainer : UIElement
 	private UIElement _rightArea = new(){
 		Width = new(-ResizeDragBarWidth / 2, 0.5f),
 		Height = new(0, 1),
-		Left = new(ResizeDragBarWidth / 2, 0.5f),
+		HAlign = 1,
 	};
 
 	private UIPanel _leftPreview = new(){
@@ -46,6 +47,8 @@ public class UITilingWindowContainer : UIElement
 
 	private UIFloatingWindow? _leftWindow = null;
 	private UIFloatingWindow? _rightWindow = null;
+
+	bool _isResizing = false;
 
 	// Directly insert left and right windows.
 	public UIFloatingWindow? LeftWindow
@@ -91,6 +94,9 @@ public class UITilingWindowContainer : UIElement
 
 	public UITilingWindowContainer()
 	{
+		_resizeDragBar.OnLeftMouseDown += (evt, elem) => _isResizing = true;
+		_resizeDragBar.OnLeftMouseUp += (evt, elem) => _isResizing = false;
+
 		_leftArea.Append(_leftPreview);
 		_rightArea.Append(_rightPreview);
 		Append(_resizeDragBar);
@@ -101,6 +107,18 @@ public class UITilingWindowContainer : UIElement
 	public override void Update(GameTime t)
 	{
 		base.Update(t);
+
+		if (_isResizing)
+		{
+			var dims = GetInnerDimensions();
+			var mousePercent = (Main.mouseX - dims.X) / dims.Width;
+			mousePercent = Math.Clamp(mousePercent, 0.2f, 0.8f);
+
+			_leftArea.Width = _resizeDragBar.Left = new(-ResizeDragBarWidth / 2, mousePercent);
+			_rightArea.Width = new(-ResizeDragBarWidth / 2, 1 - mousePercent);
+
+			Recalculate();
+		}
 
 		bool canAcceptLeft = _leftArea.IsMouseHovering && LeftWindow is null;
 		bool canAcceptRight = _rightArea.IsMouseHovering && RightWindow is null;
@@ -172,7 +190,7 @@ public class UITilingWindowContainer : UIElement
 	{
 		base.DrawSelf(sb);
 
-		if (_resizeDragBar.IsMouseHovering)
+		if (_resizeDragBar.IsMouseHovering || _isResizing)
 		{
 			UISystem.CustomCursorTexture = QERAssets.CursorEdgeHorizontal;
 			UISystem.CustomCursorOffset = QERAssets.CursorEdgeHorizontal.Frame().Size() / 2;
