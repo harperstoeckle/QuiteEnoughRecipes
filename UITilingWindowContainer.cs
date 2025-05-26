@@ -47,6 +47,48 @@ public class UITilingWindowContainer : UIElement
 	private UIFloatingWindow? _leftWindow = null;
 	private UIFloatingWindow? _rightWindow = null;
 
+	// Directly insert left and right windows.
+	public UIFloatingWindow? LeftWindow
+	{
+		get => _leftWindow;
+		set
+		{
+			if (_leftWindow is not null)
+			{
+				_leftArea.RemoveChild(_leftWindow);
+			}
+
+			_leftWindow = value;
+			if (_leftWindow is not null)
+			{
+				_leftWindow.CanDragOrResize = false;
+				_leftWindow.Left = _leftWindow.Top = StyleDimension.Empty;
+				_leftWindow.Width = _leftWindow.Height = new(0, 1);
+				_leftArea.Append(_leftWindow);
+				_leftWindow.Recalculate();
+			}
+		}
+	}
+	public UIFloatingWindow? RightWindow
+	{
+		get => _rightWindow;
+		set
+		{
+			if (_rightWindow is not null) { _rightArea.RemoveChild(_rightWindow); }
+
+			_rightWindow = value;
+			if (_rightWindow is not null)
+			{
+				_rightWindow.CanDragOrResize = false;
+				_rightWindow.Left = _rightWindow.Top = StyleDimension.Empty;
+				_rightWindow.Width = _rightWindow.Height = new(0, 1);
+				_rightArea.Append(_rightWindow);
+				_rightWindow.Recalculate();
+
+			}
+		}
+	}
+
 	public UITilingWindowContainer()
 	{
 		_leftArea.Append(_leftPreview);
@@ -60,8 +102,8 @@ public class UITilingWindowContainer : UIElement
 	{
 		base.Update(t);
 
-		bool canAcceptLeft = _leftArea.IsMouseHovering && _leftWindow is null;
-		bool canAcceptRight = _rightArea.IsMouseHovering && _rightWindow is null;
+		bool canAcceptLeft = _leftArea.IsMouseHovering && LeftWindow is null;
+		bool canAcceptRight = _rightArea.IsMouseHovering && RightWindow is null;
 
 		bool shouldPreviewLeft = canAcceptLeft && UISystem.WindowManager?.Dragging is UIFloatingWindow;
 		bool shouldPreviewRight = canAcceptRight && UISystem.WindowManager?.Dragging is UIFloatingWindow;
@@ -75,70 +117,53 @@ public class UITilingWindowContainer : UIElement
 		{
 			if (canAcceptLeft)
 			{
-				_leftWindow = w;
-				w.ReparentTo(_leftArea);
-
-				UISystem.WindowManager?.DeferCall(
-						() => {
-							w.CanDragOrResize = false;
-							w.Left = w.Top = StyleDimension.Empty;
-							w.Width = w.Height = new(0, 1);
-							w.Recalculate();
-						});
+				w.SilentRemove();
+				UISystem.WindowManager?.DeferCall(() => LeftWindow = w);
 			}
 			else if (canAcceptRight)
 			{
-				_rightWindow = w;
-				w.ReparentTo(_rightArea);
-				UISystem.WindowManager?.DeferCall(
-						() => {
-							w.CanDragOrResize = false;
-							w.Left = w.Top = StyleDimension.Empty;
-							w.Width = w.Height = new(0, 1);
-							w.Recalculate();
-						});
+				w.SilentRemove();
+				UISystem.WindowManager?.DeferCall(() => RightWindow = w);
 			}
 		}
 
-		if (_leftWindow is not null)
+		if (LeftWindow is not null)
 		{
-			if (_leftWindow.WindowState.WantsClose)
+			if (LeftWindow.WindowState.WantsClose == CloseRequestState.Close)
 			{
-				_leftWindow.ConvertStyleToAbsolute();
-				_leftWindow.CanDragOrResize = true;
-				_leftArea.RemoveChild(_leftWindow);
-				_leftWindow = null;
+				LeftWindow.ConvertStyleToAbsolute();
+				LeftWindow.CanDragOrResize = true;
+				LeftWindow.OnClose();
+				LeftWindow = null;
 			}
 			// Dragged far enough to release it.
-			else if (_leftWindow.DragInitialMousePosition is Vector2 p
+			else if (LeftWindow.DragInitialMousePosition is Vector2 p
 					&& Vector2.Distance(p, Main.MouseScreen) > 30)
 			{
-				_leftWindow.ConvertStyleToAbsolute();
-				_leftWindow.CanDragOrResize = true;
-				_leftArea.RemoveChild(_leftWindow);
-				UISystem.WindowManager?.Open(_leftWindow!);
-				_leftWindow = null;
+				LeftWindow.ConvertStyleToAbsolute();
+				LeftWindow.CanDragOrResize = true;
+				UISystem.WindowManager?.Open(LeftWindow!);
+				LeftWindow = null;
 			}
 		}
 
-		if (_rightWindow is not null)
+		if (RightWindow is not null)
 		{
-			if (_rightWindow.WindowState.WantsClose)
+			if (RightWindow.WindowState.WantsClose == CloseRequestState.Close)
 			{
-				_rightWindow.ConvertStyleToAbsolute();
-				_rightWindow.CanDragOrResize = true;
-				_rightArea.RemoveChild(_rightWindow);
-				_rightWindow = null;
+				RightWindow.ConvertStyleToAbsolute();
+				RightWindow.CanDragOrResize = true;
+				RightWindow.OnClose();
+				RightWindow = null;
 			}
 			// Dragged far enough to release it.
-			else if (_rightWindow.DragInitialMousePosition is Vector2 p
+			else if (RightWindow.DragInitialMousePosition is Vector2 p
 					&& Vector2.Distance(p, Main.MouseScreen) > 30)
 			{
-				_rightWindow.ConvertStyleToAbsolute();
-				_rightWindow.CanDragOrResize = true;
-				_rightArea.RemoveChild(_rightWindow);
-				UISystem.WindowManager?.Open(_rightWindow!);
-				_rightWindow = null;
+				RightWindow.ConvertStyleToAbsolute();
+				RightWindow.CanDragOrResize = true;
+				UISystem.WindowManager?.Open(RightWindow!);
+				RightWindow = null;
 			}
 		}
 	}

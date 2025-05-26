@@ -84,7 +84,9 @@ public class UIWindowManager : UIState
 			w.WindowState.WantsMoveToFront = false;
 
 			// Closed elements also stop getting dragged.
-			if ((w.WindowState.WantsClose || w.WindowState.WantsDrag == DragRequestState.Stop) && Dragging == w)
+			if ((w.WindowState.WantsClose != CloseRequestState.None
+						|| w.WindowState.WantsDrag == DragRequestState.Stop)
+					&& Dragging == w)
 			{
 				newDragging = null;
 			}
@@ -105,22 +107,13 @@ public class UIWindowManager : UIState
 		}
 
 		var toRemove = Elements.OfType<IWindow>()
-			.Where(w => w.WindowState.WantsClose || w.WindowState.ReparentDestination is not null)
+			.Where(w => w.WindowState.WantsClose != CloseRequestState.None)
 			.ToList();
 		foreach (var w in toRemove)
 		{
-			if (w.WindowState.WantsClose)
-			{
-				w.WindowState.WantsClose = false;
-				w.OnClose();
-				RemoveChild(w as UIElement);
-			}
-
-			if (w.WindowState.ReparentDestination is UIElement dest)
-			{
-				w.WindowState.ReparentDestination = null;
-				dest.Append(w as UIElement);
-			}
+			if (w.WindowState.WantsClose == CloseRequestState.Close) { w.OnClose(); }
+			w.WindowState.WantsClose = CloseRequestState.None;
+			RemoveChild(w as UIElement);
 		}
 
 		/*
@@ -243,6 +236,17 @@ public enum DragRequestState
 	Stop,
 }
 
+public enum CloseRequestState
+{
+	None,
+	Close,
+	/*
+	 * Remove the element from the window manager without calling `OnClose`. This might be used,
+	 * for example, when reparenting the window to another element.
+	 */
+	SilentRemove,
+}
+
 /*
  * Keeps track of data needed used to inform the window manager of what should happen with this
  * window.
@@ -250,9 +254,8 @@ public enum DragRequestState
 public class WindowState
 {
 	public bool WantsMoveToFront = false;
-	public bool WantsClose = false;
+	public CloseRequestState WantsClose = CloseRequestState.None;
 	public DragRequestState WantsDrag = DragRequestState.None;
-	public UIElement? ReparentDestination = null;
 	public int ZOrder = 0;
 }
 
@@ -307,7 +310,14 @@ public interface IWindow
  */
 public static class WindowManagerElementExtensions
 {
-	public static void Close(this IWindow e) => e.WindowState.WantsClose = true;
+	public static void Close(this IWindow e)
+	{
+		e.WindowState.WantsClose = CloseRequestState.Close;
+	}
+	public static void SilentRemove(this IWindow e)
+	{
+		e.WindowState.WantsClose = CloseRequestState.SilentRemove;
+	}
 	public static void StartDragging(this IWindow e)
 	{
 		e.WindowState.WantsDrag = DragRequestState.Start;
@@ -319,9 +329,5 @@ public static class WindowManagerElementExtensions
 	public static void MoveToFront(this IWindow e)
 	{
 		e.WindowState.WantsMoveToFront = true;
-	}
-	public static void ReparentTo(this IWindow e, UIElement newParent)
-	{
-		e.WindowState.ReparentDestination = newParent;
 	}
 }
