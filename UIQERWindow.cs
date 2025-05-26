@@ -67,9 +67,6 @@ public class UIQERWindow : UIFloatingWindow
 		};
 
 		var container = new UITilingWindowContainer{ Width = new(0, 1), Height = new(0, 1) };
-		container.LeftWindow = UISystem.RecipeWindow = new UIRecipeWindow();
-		container.RightWindow = new UIIngredientWindow();
-
 		AddElementToBar(fullscreenButton);
 		Contents.Append(container);
 	}

@@ -45,7 +45,7 @@ public class UITilingWindowContainer : UIElement
 		public float CurrentWidthPercent = 1;
 	}
 
-	private const float WindowInsertionWidth = 20;
+	private const float WindowInsertionWidth = 40;
 
 	private List<Strip> _strips = new();
 	private UIPanel _previewPanel = new(){
@@ -70,15 +70,6 @@ public class UITilingWindowContainer : UIElement
 		if (!IsMouseHovering) { return; }
 
 		var cursorRegion = GetCursorRegion();
-
-		if (cursorRegion is CursorRegion.BetweenStrips(int i))
-		{
-			Main.NewText($"BS({i})");
-		}
-		else if (cursorRegion is CursorRegion.BetweenWindows(int a, int b))
-		{
-			Main.NewText($"BW({a}, {b})");
-		}
 
 		if (UISystem.WindowManager?.JustDropped is UIFloatingWindow droppedWindow)
 		{
