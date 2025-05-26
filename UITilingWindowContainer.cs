@@ -4,196 +4,301 @@ using System;
 using Terraria.GameContent.UI.Elements;
 using Terraria.UI;
 using Terraria;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace QuiteEnoughRecipes;
 
-// Allows windows to be dragged into and out of it.
+/*
+ * Allows windows to be dragged into and out of it. The container is divided horizontally into
+ * strips, each of which can support any number of windows stacked vertically. Dragging a window
+ * in the middle between two of the strips will create a new strip with that single window.
+ * Dragging the window between two stacked windows in the strip will allow that window to be
+ * placed between the two windows.
+ */
 public class UITilingWindowContainer : UIElement
 {
-	private const float ResizeDragBarWidth = 10;
+	/*
+	 * Used to represent a position where the cursor is in the current layout. Used to determine
+	 * resizing and new window placement.
+	 */
+	private interface CursorRegion
+	{
+		public record None() : CursorRegion;
+		public record BetweenStrips(int Index) : CursorRegion;
+		public record BetweenWindows(int StripIndex, int Index) : CursorRegion;
+	}
 
-	private UIElement _resizeDragBar = new(){
-		Width = new(ResizeDragBarWidth, 0),
-		Height = new(0, 1),
-		Left = new(-ResizeDragBarWidth / 2, 0.5f),
-	};
+	private class StackedWindow
+	{
+		public required UIFloatingWindow Window;
+		public float CurrentHeightPercent = 1;
+	}
 
-	private UIElement _leftArea = new(){
-		Width = new(-ResizeDragBarWidth / 2, 0.5f),
-		Height = new(0, 1),
-	};
+	// A single strip of stacked windows.
+	private class Strip
+	{
+		public UIElement Container = new(){
+			Height = new(0, 1),
+		};
+		public List<StackedWindow> Windows = new();
+		public float CurrentWidthPercent = 1;
+	}
 
-	private UIElement _rightArea = new(){
-		Width = new(-ResizeDragBarWidth / 2, 0.5f),
-		Height = new(0, 1),
-		HAlign = 1,
-	};
+	private const float WindowInsertionWidth = 20;
 
-	private UIPanel _leftPreview = new(){
+	private List<Strip> _strips = new();
+	private UIPanel _previewPanel = new(){
 		IgnoresMouseInteraction = true,
-		BackgroundColor = Color.Transparent,
-		BorderColor = Color.Transparent,
-		Width = new(0, 1),
-		Height = new(0, 1),
+		BackgroundColor = Color.White * 0.5f,
+		BorderColor = Color.White,
 	};
-
-	private UIPanel _rightPreview = new(){
-		IgnoresMouseInteraction = true,
-		BackgroundColor = Color.Transparent,
-		BorderColor = Color.Transparent,
-		Width = new(0, 1),
-		Height = new(0, 1),
-	};
-
-	private UIFloatingWindow? _leftWindow = null;
-	private UIFloatingWindow? _rightWindow = null;
-
-	bool _isResizing = false;
-
-	// Directly insert left and right windows.
-	public UIFloatingWindow? LeftWindow
-	{
-		get => _leftWindow;
-		set
-		{
-			if (_leftWindow is not null)
-			{
-				_leftArea.RemoveChild(_leftWindow);
-			}
-
-			_leftWindow = value;
-			if (_leftWindow is not null)
-			{
-				_leftWindow.CanDragOrResize = false;
-				_leftWindow.Left = _leftWindow.Top = StyleDimension.Empty;
-				_leftWindow.Width = _leftWindow.Height = new(0, 1);
-				_leftArea.Append(_leftWindow);
-				_leftWindow.Recalculate();
-			}
-		}
-	}
-	public UIFloatingWindow? RightWindow
-	{
-		get => _rightWindow;
-		set
-		{
-			if (_rightWindow is not null) { _rightArea.RemoveChild(_rightWindow); }
-
-			_rightWindow = value;
-			if (_rightWindow is not null)
-			{
-				_rightWindow.CanDragOrResize = false;
-				_rightWindow.Left = _rightWindow.Top = StyleDimension.Empty;
-				_rightWindow.Width = _rightWindow.Height = new(0, 1);
-				_rightArea.Append(_rightWindow);
-				_rightWindow.Recalculate();
-
-			}
-		}
-	}
-
-	public UITilingWindowContainer()
-	{
-		_resizeDragBar.OnLeftMouseDown += (evt, elem) => _isResizing = true;
-		_resizeDragBar.OnLeftMouseUp += (evt, elem) => _isResizing = false;
-
-		_leftArea.Append(_leftPreview);
-		_rightArea.Append(_rightPreview);
-		Append(_resizeDragBar);
-		Append(_leftArea);
-		Append(_rightArea);
-	}
 
 	public override void Update(GameTime t)
 	{
 		base.Update(t);
 
-		if (_isResizing)
+		_previewPanel.Remove();
+		ResetToStoredPositions();
+
+		if (!IsMouseHovering) { return; }
+
+		var cursorRegion = GetCursorRegion();
+
+		if (UISystem.WindowManager?.JustDropped is UIFloatingWindow droppedWindow)
 		{
-			var dims = GetInnerDimensions();
-			var mousePercent = (Main.mouseX - dims.X) / dims.Width;
-			mousePercent = Math.Clamp(mousePercent, 0.2f, 0.8f);
-
-			_leftArea.Width = _resizeDragBar.Left = new(-ResizeDragBarWidth / 2, mousePercent);
-			_rightArea.Width = new(-ResizeDragBarWidth / 2, 1 - mousePercent);
-
-			Recalculate();
+			droppedWindow.SilentRemove();
+			UISystem.WindowManager?.DeferCall(() => TryInsertWindow(cursorRegion, droppedWindow));
+		}
+		else if (UISystem.WindowManager?.Dragging is UIFloatingWindow)
+		{
+			TryInsertPreview(cursorRegion);
 		}
 
-		bool canAcceptLeft = _leftArea.IsMouseHovering && LeftWindow is null;
-		bool canAcceptRight = _rightArea.IsMouseHovering && RightWindow is null;
-
-		bool shouldPreviewLeft = canAcceptLeft && UISystem.WindowManager?.Dragging is UIFloatingWindow;
-		bool shouldPreviewRight = canAcceptRight && UISystem.WindowManager?.Dragging is UIFloatingWindow;
-
-		_leftPreview.BackgroundColor = shouldPreviewLeft ? Color.White * 0.5f : Color.Transparent;
-		_leftPreview.BorderColor = shouldPreviewLeft ? Color.White : Color.Transparent;
-		_rightPreview.BackgroundColor = shouldPreviewRight ? Color.White * 0.5f : Color.Transparent;
-		_rightPreview.BorderColor = shouldPreviewRight ? Color.White : Color.Transparent;
-
-		if (UISystem.WindowManager?.JustDropped is UIFloatingWindow w)
-		{
-			if (canAcceptLeft)
-			{
-				w.SilentRemove();
-				UISystem.WindowManager?.DeferCall(() => LeftWindow = w);
-			}
-			else if (canAcceptRight)
-			{
-				w.SilentRemove();
-				UISystem.WindowManager?.DeferCall(() => RightWindow = w);
-			}
-		}
-
-		if (LeftWindow is not null)
-		{
-			if (LeftWindow.WindowState.WantsClose == CloseRequestState.Close)
-			{
-				LeftWindow.ConvertStyleToAbsolute();
-				LeftWindow.CanDragOrResize = true;
-				LeftWindow.OnClose();
-				LeftWindow = null;
-			}
-			// Dragged far enough to release it.
-			else if (LeftWindow.DragInitialMousePosition is Vector2 p
-					&& Vector2.Distance(p, Main.MouseScreen) > 30)
-			{
-				LeftWindow.ConvertStyleToAbsolute();
-				LeftWindow.CanDragOrResize = true;
-				UISystem.WindowManager?.Open(LeftWindow!);
-				LeftWindow = null;
-			}
-		}
-
-		if (RightWindow is not null)
-		{
-			if (RightWindow.WindowState.WantsClose == CloseRequestState.Close)
-			{
-				RightWindow.ConvertStyleToAbsolute();
-				RightWindow.CanDragOrResize = true;
-				RightWindow.OnClose();
-				RightWindow = null;
-			}
-			// Dragged far enough to release it.
-			else if (RightWindow.DragInitialMousePosition is Vector2 p
-					&& Vector2.Distance(p, Main.MouseScreen) > 30)
-			{
-				RightWindow.ConvertStyleToAbsolute();
-				RightWindow.CanDragOrResize = true;
-				UISystem.WindowManager?.Open(RightWindow!);
-				RightWindow = null;
-			}
-		}
+		//if (RightWindow is not null)
+		//{
+		//	if (RightWindow.WindowState.WantsClose == CloseRequestState.Close)
+		//	{
+		//		RightWindow.ConvertStyleToAbsolute();
+		//		RightWindow.CanDragOrResize = true;
+		//		RightWindow.WindowState.WantsClose = CloseRequestState.None;
+		//		RightWindow.OnClose();
+		//		RightWindow = null;
+		//	}
+		//	// Dragged far enough to release it.
+		//	else if (RightWindow.DragInitialMousePosition is Vector2 p
+		//			&& Vector2.Distance(p, Main.MouseScreen) > 30)
+		//	{
+		//		RightWindow.ConvertStyleToAbsolute();
+		//		RightWindow.CanDragOrResize = true;
+		//		UISystem.WindowManager?.Open(RightWindow!);
+		//		RightWindow = null;
+		//	}
+		//}
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
 	{
 		base.DrawSelf(sb);
 
-		if (_resizeDragBar.IsMouseHovering || _isResizing)
+		//if (_resizeDragBar.IsMouseHovering || _isResizing)
+		//{
+		//	UISystem.CustomCursorTexture = QERAssets.CursorEdgeHorizontal;
+		//	UISystem.CustomCursorOffset = QERAssets.CursorEdgeHorizontal.Frame().Size() / 2;
+		//}
+	}
+
+	private void ResetToStoredPositions()
+	{
+		foreach (var s in _strips)
 		{
-			UISystem.CustomCursorTexture = QERAssets.CursorEdgeHorizontal;
-			UISystem.CustomCursorOffset = QERAssets.CursorEdgeHorizontal.Frame().Size() / 2;
+			s.Container.Width.Percent = s.CurrentWidthPercent;
+			foreach (var w in s.Windows)
+			{
+				w.Window.Height.Percent = w.CurrentHeightPercent;
+			}
+			ArrangeElementsContiguously(s.Windows.Select(w => w.Window), AccessTop, AccessHeight);
 		}
+		ArrangeElementsContiguously(_strips.Select(s => s.Container), AccessLeft, AccessWidth);
+	}
+
+	/*
+	 * Insert a window for real, also modifying the stored structure and making the window
+	 * undraggable.
+	 */
+	private void TryInsertWindow(CursorRegion location, UIFloatingWindow window)
+	{
+		if (location is CursorRegion.None) { return; }
+
+		ResetToStoredPositions();
+
+		window.CanDragOrResize = false;
+		var stackedWindow = new StackedWindow{ Window = window };
+		window.Width = StyleDimension.Fill;
+
+		if (location is CursorRegion.BetweenStrips(int i))
+		{
+			var newStrip = new Strip{ Windows = [stackedWindow] };
+			newStrip.Container.Append(stackedWindow.Window);
+
+			if (_strips.Count == 0) { i = 0; }
+
+			InsertElementNormalized(this, _strips.Select(s => s.Container), newStrip.Container,
+					i, AccessLeft, AccessWidth);
+			_strips.Insert(i, newStrip);
+
+			foreach (var s in _strips)
+			{
+				s.CurrentWidthPercent = s.Container.Width.Percent;
+			}
+		}
+		else if (location is CursorRegion.BetweenWindows(int stripIndex, int windowIndex))
+		{
+			InsertElementNormalized(_strips[stripIndex].Container,
+					_strips[stripIndex].Windows.Select(w => w.Window), window, windowIndex,
+					AccessTop, AccessHeight);
+			_strips[stripIndex].Windows.Insert(windowIndex, stackedWindow);
+
+			foreach (var w in _strips[stripIndex].Windows)
+			{
+				w.CurrentHeightPercent = w.Window.Height.Percent;
+			}
+		}
+
+		Recalculate();
+	}
+
+	// Insert the preview element at the given location.
+	private void TryInsertPreview(CursorRegion location)
+	{
+		if (location is CursorRegion.BetweenStrips(int i))
+		{
+			if (_strips.Count == 0)
+			{
+				_previewPanel.Width = StyleDimension.Fill;
+				_previewPanel.Height = StyleDimension.Fill;
+				Append(_previewPanel);
+			}
+			else
+			{
+				_previewPanel.Height = StyleDimension.Fill;
+				InsertElementNormalized(this, _strips.Select(s => s.Container), _previewPanel, i,
+						AccessLeft, AccessWidth);
+			}
+		}
+		else if (location is CursorRegion.BetweenWindows(int stripIndex, int windowIndex))
+		{
+			_previewPanel.Width = StyleDimension.Fill;
+			InsertElementNormalized(_strips[stripIndex].Container,
+					_strips[stripIndex].Windows.Select(w => w.Window), _previewPanel,
+					windowIndex, AccessTop, AccessHeight);
+		}
+
+		Recalculate();
+	}
+
+	delegate ref float DimenAccessor(UIElement e);
+	private ref float AccessWidth(UIElement e) => ref e.Width.Precent;
+	private ref float AccessHeight(UIElement e) => ref e.Height.Precent;
+	private ref float AccessLeft(UIElement e) => ref e.Left.Precent;
+	private ref float AccessTop(UIElement e) => ref e.Top.Precent;
+
+	/*
+	 * `getPos(e)` gets a reference to the position
+	 * `Left` or `Top`, and the size might be `Width` or `Height`. This is included just 
+	 */
+	private static void InsertElementNormalized(UIElement parent,
+			IEnumerable<UIElement> curChildren, UIElement newElement, int index,
+			DimenAccessor accessPos, DimenAccessor accessSize)
+	{
+		var children = curChildren.ToList();
+		float newElementWidth = accessSize(newElement) = 1.0f / (children.Count + 1);
+		foreach (var c in children) { accessSize(c) *= (1 - newElementWidth); }
+		children.Insert(index, newElement);
+		ArrangeElementsContiguously(children, accessPos, accessSize);
+	}
+
+	private static void ArrangeElementsContiguously(IEnumerable<UIElement> elements,
+			DimenAccessor accessPos, DimenAccessor accessSize)
+	{
+		float offset = 0;
+		foreach (var e in elements)
+		{
+			accessPos(e) = offset;
+			offset += accessSize(e);
+		}
+	}
+
+	/*
+	 * If there are no windows, we pretend as if there is a single strip the width of the entire
+	 * window.
+	 */
+	private CursorRegion GetCursorRegion()
+	{
+		if (!ContainsPoint(Main.MouseScreen)) { return new CursorRegion.None(); }
+
+		var cursorOffset = Main.MouseScreen - GetInnerDimensions().Position();
+
+		if (_strips.Count == 0)
+		{
+			int i = RegionIndexFromWidths([1.0f], cursorOffset.X, WindowInsertionWidth,
+					out bool inbetween);
+
+			return i == -1 || !inbetween
+				? new CursorRegion.None()
+				: new CursorRegion.BetweenStrips(i);
+		}
+
+		{
+			int i = RegionIndexFromWidths(_strips.Select(r => r.CurrentWidthPercent),
+					cursorOffset.X, WindowInsertionWidth, out bool inbetween);
+
+			if (i == -1) { return new CursorRegion.None(); }
+			if (inbetween) { return new CursorRegion.BetweenStrips(i); }
+
+			int windowIndex = RegionIndexFromWidths(
+					_strips[i].Windows.Select(w => w.CurrentHeightPercent), cursorOffset.Y,
+					WindowInsertionWidth, out bool inbetweenWindows);
+
+			return windowIndex == -1 || !inbetweenWindows
+				? new CursorRegion.None()
+				: new CursorRegion.BetweenWindows(i, windowIndex);
+		}
+	}
+
+	private static int RegionIndexFromWidths(IEnumerable<float> regions, float pos,
+			float inbetweenWidth, out bool inbetween)
+	{
+		if (pos < -inbetweenWidth / 2)
+		{
+			inbetween = false;
+			return -1;
+		}
+		else if (pos < inbetweenWidth / 2)
+		{
+			inbetween = true;
+			return 0;
+		}
+
+		float offset = 0;
+
+		foreach (var (width, index) in regions.Select((w, i) => (w, i)))
+		{
+			offset += width;
+
+			if (pos < offset - inbetweenWidth / 2)
+			{
+				inbetween = false;
+				return index;
+			}
+			else if (pos <= offset + inbetweenWidth / 2)
+			{
+				inbetween = true;
+				return index + 1;
+			}
+		}
+
+		inbetween = false;
+		return -1;
 	}
 }
