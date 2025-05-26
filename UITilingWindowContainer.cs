@@ -65,6 +65,15 @@ public class UITilingWindowContainer : UIElement
 
 		var cursorRegion = GetCursorRegion();
 
+		if (cursorRegion is CursorRegion.BetweenStrips(int i))
+		{
+			Main.NewText($"BS({i})");
+		}
+		else if (cursorRegion is CursorRegion.BetweenWindows(int a, int b))
+		{
+			Main.NewText($"BW({a}, {b})");
+		}
+
 		if (UISystem.WindowManager?.JustDropped is UIFloatingWindow droppedWindow)
 		{
 			droppedWindow.SilentRemove();
@@ -215,6 +224,7 @@ public class UITilingWindowContainer : UIElement
 		float newElementWidth = accessSize(newElement) = 1.0f / (children.Count + 1);
 		foreach (var c in children) { accessSize(c) *= (1 - newElementWidth); }
 		children.Insert(index, newElement);
+		parent.Append(newElement);
 		ArrangeElementsContiguously(children, accessPos, accessSize);
 	}
 
@@ -237,11 +247,13 @@ public class UITilingWindowContainer : UIElement
 	{
 		if (!ContainsPoint(Main.MouseScreen)) { return new CursorRegion.None(); }
 
-		var cursorOffset = Main.MouseScreen - GetInnerDimensions().Position();
+		var dims = GetInnerDimensions();
+		var cursorPercent = (Main.MouseScreen - dims.Position()) / dims.ToRectangle().Size();
+		var relativeInsertionWidths = new Vector2(WindowInsertionWidth) / dims.ToRectangle().Size();
 
 		if (_strips.Count == 0)
 		{
-			int i = RegionIndexFromWidths([1.0f], cursorOffset.X, WindowInsertionWidth,
+			int i = RegionIndexFromWidths([1.0f], cursorPercent.X, relativeInsertionWidths.X,
 					out bool inbetween);
 
 			return i == -1 || !inbetween
@@ -251,14 +263,14 @@ public class UITilingWindowContainer : UIElement
 
 		{
 			int i = RegionIndexFromWidths(_strips.Select(r => r.CurrentWidthPercent),
-					cursorOffset.X, WindowInsertionWidth, out bool inbetween);
+					cursorPercent.X, relativeInsertionWidths.X, out bool inbetween);
 
 			if (i == -1) { return new CursorRegion.None(); }
 			if (inbetween) { return new CursorRegion.BetweenStrips(i); }
 
 			int windowIndex = RegionIndexFromWidths(
-					_strips[i].Windows.Select(w => w.CurrentHeightPercent), cursorOffset.Y,
-					WindowInsertionWidth, out bool inbetweenWindows);
+					_strips[i].Windows.Select(w => w.CurrentHeightPercent), cursorPercent.Y,
+					relativeInsertionWidths.Y, out bool inbetweenWindows);
 
 			return windowIndex == -1 || !inbetweenWindows
 				? new CursorRegion.None()
