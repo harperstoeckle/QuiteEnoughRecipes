@@ -15,7 +15,8 @@ public class UISystem : ModSystem
 	public static bool IsFullscreen { get; private set; } = true;
 
 	public static UIQERWindow? MainWindow { get; private set; }
-	public static UIRecipeWindow? RecipeWindow { get; private set; }
+	// This gets set by `UIQERWindow` when it's constructed.
+	public static UIRecipeWindow? RecipeWindow { get; internal set; }
 	public static UIWindowManager? WindowManager { get; private set; }
 
 	public static ModKeybind? OpenUIKey { get; private set; }
@@ -92,15 +93,11 @@ public class UISystem : ModSystem
 		 * across worlds. There's also potentially world-specific data that needs to be handled
 		 * differently in each world.
 		 */
-		var ingredientWindow = new UIIngredientWindow();
 		WindowManager = new();
 		MainWindow = new();
-		RecipeWindow = new();
 		_userInterface = new();
 
 		WindowManager.Open(MainWindow);
-		WindowManager.Open(ingredientWindow);
-		WindowManager.Open(RecipeWindow);
 
 		// Loading items beforehand ensures that they *aren't* being loaded while scrolling.
 		if (QERConfig.Instance.ShouldPreloadItems)

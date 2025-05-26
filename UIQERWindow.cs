@@ -66,8 +66,12 @@ public class UIQERWindow : UIFloatingWindow
 			CanDragOrResize = !UISystem.IsFullscreen;
 		};
 
+		var container = new UITilingWindowContainer{ Width = new(0, 1), Height = new(0, 1) };
+		container.LeftWindow = UISystem.RecipeWindow = new UIRecipeWindow();
+		container.RightWindow = new UIIngredientWindow();
+
 		AddElementToBar(fullscreenButton);
-		Contents.Append(new UITilingWindowContainer{ Width = new(0, 1), Height = new(0, 1) });
+		Contents.Append(container);
 	}
 
 	/*
