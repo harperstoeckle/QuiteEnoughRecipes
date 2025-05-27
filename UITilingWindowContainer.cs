@@ -113,11 +113,17 @@ public class UITilingWindowContainer : UIElement
 	{
 		base.DrawSelf(sb);
 
-		//if (_resizeDragBar.IsMouseHovering || _isResizing)
-		//{
-		//	UISystem.CustomCursorTexture = QERAssets.CursorEdgeHorizontal;
-		//	UISystem.CustomCursorOffset = QERAssets.CursorEdgeHorizontal.Frame().Size() / 2;
-		//}
+		if (_cursorRegion is CursorRegion.BetweenStrips(int i) && 0 < i && i < _strips.Count)
+		{
+			UISystem.CustomCursorTexture = QERAssets.CursorEdgeHorizontal;
+			UISystem.CustomCursorOffset = QERAssets.CursorEdgeHorizontal.Frame().Size() / 2;
+		}
+		else if (_cursorRegion is CursorRegion.BetweenWindows(int stripIndex, int windowIndex)
+				&& 0 < windowIndex && windowIndex < _strips[stripIndex].Windows.Count)
+		{
+			UISystem.CustomCursorTexture = QERAssets.CursorEdgeVertical;
+			UISystem.CustomCursorOffset = QERAssets.CursorEdgeVertical.Frame().Size() / 2;
+		}
 	}
 
 	private void ResetToStoredPositions()
