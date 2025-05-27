@@ -33,6 +33,7 @@ public class UITilingWindowContainer : UIElement
 	{
 		public required UIFloatingWindow Window;
 		public float CurrentHeightPercent = 1;
+		public bool ShouldRemove = false;
 	}
 
 	// A single strip of stacked windows.
@@ -64,6 +65,58 @@ public class UITilingWindowContainer : UIElement
 	public override void Update(GameTime t)
 	{
 		base.Update(t);
+
+		bool didChangeLayout = false;
+
+		// Remove closed or dragged windows.
+		foreach (var s in _strips)
+		{
+			foreach (var w in s.Windows)
+			{
+				if (w.Window.WindowState.WantsClose == CloseRequestState.Close)
+				{
+					w.Window.ConvertStyleToAbsolute();
+					w.Window.CanDragOrResize = true;
+					w.Window.WindowState.WantsClose = CloseRequestState.None;
+					w.Window.OnClose();
+					w.Window.Remove();
+					w.ShouldRemove = true;
+				}
+				else if (w.Window.DragInitialMousePosition is Vector2 p
+						&& Vector2.Distance(p, Main.MouseScreen) > 30)
+				{
+					w.Window.ConvertStyleToAbsolute();
+					w.Window.CanDragOrResize = true;
+					w.Window.Remove();
+					UISystem.WindowManager?.Open(w.Window);
+					w.ShouldRemove = true;
+				}
+			}
+
+			if (s.Windows.RemoveAll(w => w.ShouldRemove) > 0)
+			{
+				ArrangeContiguousNormalized(s.Windows, w => ref w.Window.Top.Precent,
+						w => ref w.CurrentHeightPercent);
+				didChangeLayout = true;
+			}
+
+			if (s.Windows.Count == 0)
+			{
+				s.Container.Remove();
+			}
+		}
+
+		if (_strips.RemoveAll(s => s.Windows.Count == 0) > 0)
+		{
+			ArrangeContiguousNormalized(_strips, s => ref s.Container.Left.Precent,
+					s => ref s.CurrentWidthPercent);
+			didChangeLayout = true;
+		}
+
+		if (didChangeLayout)
+		{
+			ResetToStoredPositions();
+		}
 
 		var newCursorRegion = GetCursorRegion();
 
