@@ -70,7 +70,11 @@ public class UIWindowManager : UIState
 
 		foreach (var w in _toOpen)
 		{
-			if (!HasChild(w as UIElement))
+			/*
+			 * If the window has a parent (whether it be this window manager or another element),
+			 * then we can assume it's currently visible, so we don't want to open it.
+			 */
+			if (((UIElement) w).Parent is null)
 			{
 				Append(w as UIElement);
 				w.OnOpen();
