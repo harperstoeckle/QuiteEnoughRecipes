@@ -48,6 +48,7 @@ public class UITilingWindowContainer : UIElement
 	private const float WindowInsertionWidth = 40;
 
 	private List<Strip> _strips = new();
+	private CursorRegion _cursorRegion = new CursorRegion.None();
 	private UIPanel _previewPanel = new(){
 		IgnoresMouseInteraction = true,
 		BackgroundColor = Color.White * 0.5f,
@@ -56,7 +57,7 @@ public class UITilingWindowContainer : UIElement
 
 	public UITilingWindowContainer()
 	{
-		TryInsertWindow(new CursorRegion.BetweenStrips(0), new UIIngredientWindow());
+		TryInsertWindow(new CursorRegion.BetweenStrips(0), UISystem.RecipeWindow!);
 		TryInsertWindow(new CursorRegion.BetweenStrips(0), new UIIngredientWindow());
 	}
 
@@ -64,21 +65,26 @@ public class UITilingWindowContainer : UIElement
 	{
 		base.Update(t);
 
-		_previewPanel.Remove();
-		ResetToStoredPositions();
+		var newCursorRegion = GetCursorRegion();
 
-		if (!IsMouseHovering) { return; }
+		if (newCursorRegion != _cursorRegion)
+		{
+			_previewPanel.Remove();
+			ResetToStoredPositions();
 
-		var cursorRegion = GetCursorRegion();
+			_cursorRegion = newCursorRegion;
 
-		if (UISystem.WindowManager?.JustDropped is UIFloatingWindow droppedWindow)
+			if (UISystem.WindowManager?.Dragging is UIFloatingWindow)
+			{
+				TryInsertPreview(_cursorRegion);
+			}
+		}
+
+		if (_cursorRegion is not CursorRegion.None
+				&& UISystem.WindowManager?.JustDropped is UIFloatingWindow droppedWindow)
 		{
 			droppedWindow.SilentRemove();
-			UISystem.WindowManager?.DeferCall(() => TryInsertWindow(cursorRegion, droppedWindow));
-		}
-		else if (UISystem.WindowManager?.Dragging is UIFloatingWindow)
-		{
-			TryInsertPreview(cursorRegion);
+			UISystem.WindowManager?.DeferCall(() => TryInsertWindow(_cursorRegion, droppedWindow));
 		}
 
 		//if (RightWindow is not null)
@@ -123,9 +129,15 @@ public class UITilingWindowContainer : UIElement
 			{
 				w.Window.Height.Percent = w.CurrentHeightPercent;
 			}
-			ArrangeElementsContiguously(s.Windows.Select(w => w.Window), AccessTop, AccessHeight);
+
+			ArrangeContiguousNormalized(s.Windows, w => ref w.Window.Top.Precent,
+					w => ref w.Window.Height.Precent);
 		}
-		ArrangeElementsContiguously(_strips.Select(s => s.Container), AccessLeft, AccessWidth);
+
+		ArrangeContiguousNormalized(_strips, s => ref s.Container.Left.Precent,
+				s => ref s.Container.Width.Precent);
+
+		Recalculate();
 	}
 
 	/*
@@ -136,45 +148,40 @@ public class UITilingWindowContainer : UIElement
 	{
 		if (location is CursorRegion.None) { return; }
 
-		ResetToStoredPositions();
-
 		window.CanDragOrResize = false;
 		var stackedWindow = new StackedWindow{ Window = window };
 
 		window.ConvertStyleToAbsolute();
-		window.Width = StyleDimension.Fill;
-		window.Height = window.Left = window.Top = StyleDimension.Empty;
+		window.Width = window.Height = StyleDimension.Fill;
+		window.Left = window.Top = StyleDimension.Empty;
 
 		if (location is CursorRegion.BetweenStrips(int i))
 		{
-			var newStrip = new Strip{ Windows = [stackedWindow] };
-			newStrip.Container.Append(stackedWindow.Window);
-
 			if (_strips.Count == 0) { i = 0; }
 
-			InsertElementNormalized(this, _strips.Select(s => s.Container), newStrip.Container,
-					i, AccessLeft, AccessWidth);
+			var newStrip = new Strip{ Windows = [stackedWindow] };
+			newStrip.CurrentWidthPercent = _strips.Count == 0 ? 1.0f : 1.0f / _strips.Count;
+			newStrip.Container.Height = StyleDimension.Fill;
+			newStrip.Container.Append(stackedWindow.Window);
+			Append(newStrip.Container);
+
 			_strips.Insert(i, newStrip);
 
-			foreach (var s in _strips)
-			{
-				s.CurrentWidthPercent = s.Container.Width.Percent;
-			}
+			ArrangeContiguousNormalized(_strips, s => ref s.Container.Left.Precent,
+					s => ref s.CurrentWidthPercent);
 		}
 		else if (location is CursorRegion.BetweenWindows(int stripIndex, int windowIndex))
 		{
-			InsertElementNormalized(_strips[stripIndex].Container,
-					_strips[stripIndex].Windows.Select(w => w.Window), window, windowIndex,
-					AccessTop, AccessHeight);
-			_strips[stripIndex].Windows.Insert(windowIndex, stackedWindow);
+			var windows = _strips[stripIndex].Windows;
+			stackedWindow.CurrentHeightPercent = windows.Count == 0 ? 1.0f : 1.0f / windows.Count;
+			_strips[stripIndex].Container.Append(window);
+			windows.Insert(windowIndex, stackedWindow);
 
-			foreach (var w in _strips[stripIndex].Windows)
-			{
-				w.CurrentHeightPercent = w.Window.Height.Percent;
-			}
+			ArrangeContiguousNormalized(windows, w => ref w.Window.Top.Precent,
+					w => ref w.CurrentHeightPercent);
 		}
 
-		Recalculate();
+		ResetToStoredPositions();
 	}
 
 	// Insert the preview element at the given location.
@@ -184,70 +191,64 @@ public class UITilingWindowContainer : UIElement
 
 		if (location is CursorRegion.BetweenStrips(int i))
 		{
-			if (_strips.Count == 0)
-			{
-				_previewPanel.Width = StyleDimension.Fill;
-				_previewPanel.Height = StyleDimension.Fill;
-				Append(_previewPanel);
-			}
-			else
-			{
-				_previewPanel.Height = StyleDimension.Fill;
-				InsertElementNormalized(this, _strips.Select(s => s.Container), _previewPanel, i,
-						AccessLeft, AccessWidth);
-			}
+			_previewPanel.Height = StyleDimension.Fill;
+			_previewPanel.Width.Percent = _strips.Count == 0 ? 1.0f : 1.0f / _strips.Count;
+			Append(_previewPanel);
+
+			var strips = _strips.Select(s => s.Container).ToList<UIElement>();
+			strips.Insert(i, _previewPanel);
+
+			ArrangeContiguousNormalized(strips, AccessLeft, AccessWidth);
 		}
 		else if (location is CursorRegion.BetweenWindows(int stripIndex, int windowIndex))
 		{
+			var windows = _strips[stripIndex].Windows;
 			_previewPanel.Width = StyleDimension.Fill;
-			InsertElementNormalized(_strips[stripIndex].Container,
-					_strips[stripIndex].Windows.Select(w => w.Window), _previewPanel,
-					windowIndex, AccessTop, AccessHeight);
+			_previewPanel.Height.Percent = windows.Count == 0 ? 1.0f : 1.0f / windows.Count;
+
+			_strips[stripIndex].Container.Append(_previewPanel);
+
+			var elements = windows.Select(w => w.Window).ToList<UIElement>();
+			elements.Insert(windowIndex, _previewPanel);
+
+			ArrangeContiguousNormalized(elements, AccessTop, AccessHeight);
 		}
 
 		Recalculate();
 	}
 
-	delegate ref float DimenAccessor(UIElement e);
+	delegate ref U Accessor<T, U>(T t);
 	private ref float AccessWidth(UIElement e) => ref e.Width.Precent;
 	private ref float AccessHeight(UIElement e) => ref e.Height.Precent;
 	private ref float AccessLeft(UIElement e) => ref e.Left.Precent;
 	private ref float AccessTop(UIElement e) => ref e.Top.Precent;
 
 	/*
-	 * `getPos(e)` gets a reference to the position
-	 * `Left` or `Top`, and the size might be `Width` or `Height`. This is included just 
+	 * Modify positions and sizes of each element in `elements` such that their total size adds up
+	 * to 1 and they are laid out end-to-end. Their sizes will remain the same relative to each
+	 * other.
 	 */
-	private static void InsertElementNormalized(UIElement parent,
-			IEnumerable<UIElement> curChildren, UIElement newElement, int index,
-			DimenAccessor accessPos, DimenAccessor accessSize)
+	private static void ArrangeContiguousNormalized<T>(List<T> elements,
+			Accessor<T, float> accessPos, Accessor<T, float> accessSize)
 	{
-		var children = curChildren.ToList();
-		float newElementWidth = accessSize(newElement) = 1.0f / (children.Count + 1);
-		foreach (var c in children) { accessSize(c) *= (1 - newElementWidth); }
-		children.Insert(index, newElement);
-		parent.Append(newElement);
-		ArrangeElementsContiguously(children, accessPos, accessSize);
-	}
+		float curTotalSize = elements.Select(e => accessSize(e)).Sum();
 
-	private static void ArrangeElementsContiguously(IEnumerable<UIElement> elements,
-			DimenAccessor accessPos, DimenAccessor accessSize)
-	{
 		float offset = 0;
 		foreach (var e in elements)
 		{
+			accessSize(e) /= curTotalSize;
 			accessPos(e) = offset;
 			offset += accessSize(e);
 		}
 	}
 
 	/*
-	 * If there are no windows, we pretend as if there is a single strip the width of the entire
-	 * window.
+	 * Get the part of the window currently being hovered. If the window is not actively being
+	 * hovered, return `CursorRegion.None`.
 	 */
 	private CursorRegion GetCursorRegion()
 	{
-		if (!ContainsPoint(Main.MouseScreen)) { return new CursorRegion.None(); }
+		if (!IsMouseHovering) { return new CursorRegion.None(); }
 
 		var dims = GetInnerDimensions();
 		var cursorPercent = (Main.MouseScreen - dims.Position()) / dims.ToRectangle().Size();
