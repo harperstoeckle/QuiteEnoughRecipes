@@ -250,6 +250,8 @@ public class UITilingWindowContainer : UIElement
 
 		if (location is CursorRegion.BetweenStrips(int i))
 		{
+			if (_strips.Count == 0) { i = 0; }
+
 			_previewPanel.Height = StyleDimension.Fill;
 			_previewPanel.Width.Percent = _strips.Count == 0 ? 1.0f : 1.0f / _strips.Count;
 			Append(_previewPanel);
