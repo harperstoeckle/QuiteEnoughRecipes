@@ -108,7 +108,7 @@ public class UIFloatingWindow : UIPanel, IWindow
 	 * Mostly used by the tiling window container to detect when a window has been dragged far
 	 * enough to be released.
 	 */
-	public Vector2? DragInitialMousePosition => _dragOrResizeInfo?.OriginalMouse;
+	public Vector2? DragInitialMousePosition => HoveringResize ? null : _dragOrResizeInfo?.OriginalMouse;
 
 	// Stuff should just be directly appended to this instead of the window itself.
 	public UIElement Contents { get; private set; } = new(){
@@ -208,50 +208,53 @@ public class UIFloatingWindow : UIPanel, IWindow
 			Main.LocalPlayer.mouseInterface = true;
 		}
 
-		if (CanDragOrResize && _dragOrResizeInfo is DragOrResizeInfo s)
+		if (_dragOrResizeInfo is DragOrResizeInfo s)
 		{
-			ConvertStyleToAbsolute();
-
-			var offset = Main.MouseScreen - s.OriginalMouse;
-			var parentBounds = GetParentDimensions();
-			var parentSize = new Vector2(parentBounds.Width, parentBounds.Height);
-
-			/*
-			 * Since `_dragOrResizeInfo` is in absolute screen coordinates, we need to make it
-			 * relative to the parent.
-			 */
-			var relativePos = s.OriginalPos - parentBounds.Position();
-
-			// We're not resizing, so we're dragging the window.
-			if (!HoveringResize)
+			if (CanDragOrResize)
 			{
-				Left.Pixels = Math.Clamp(relativePos.X + offset.X, 0, parentSize.X - Width.Pixels);
-				Top.Pixels = Math.Clamp(relativePos.Y + offset.Y, 0, parentSize.Y - Height.Pixels);
-			}
-			else
-			{
-				if (_resizeLeft)
+				ConvertStyleToAbsolute();
+
+				var offset = Main.MouseScreen - s.OriginalMouse;
+				var parentBounds = GetParentDimensions();
+				var parentSize = new Vector2(parentBounds.Width, parentBounds.Height);
+
+				/*
+				 * Since `_dragOrResizeInfo` is in absolute screen coordinates, we need to make it
+				 * relative to the parent.
+				 */
+				var relativePos = s.OriginalPos - parentBounds.Position();
+
+				// We're not resizing, so we're dragging the window.
+				if (!HoveringResize)
 				{
-					Left.Pixels = Math.Clamp(relativePos.X + offset.X, 0, relativePos.X + s.OriginalSize.X - MinWidth.Pixels);
-					Width.Pixels = s.OriginalSize.X + relativePos.X - Left.Pixels;
+					Left.Pixels = Math.Clamp(relativePos.X + offset.X, 0, parentSize.X - Width.Pixels);
+					Top.Pixels = Math.Clamp(relativePos.Y + offset.Y, 0, parentSize.Y - Height.Pixels);
 				}
-				else if (_resizeRight)
+				else
 				{
-					Width.Pixels = Math.Clamp(s.OriginalSize.X + offset.X, MinWidth.Pixels, parentSize.X - Left.Pixels);
+					if (_resizeLeft)
+					{
+						Left.Pixels = Math.Clamp(relativePos.X + offset.X, 0, relativePos.X + s.OriginalSize.X - MinWidth.Pixels);
+						Width.Pixels = s.OriginalSize.X + relativePos.X - Left.Pixels;
+					}
+					else if (_resizeRight)
+					{
+						Width.Pixels = Math.Clamp(s.OriginalSize.X + offset.X, MinWidth.Pixels, parentSize.X - Left.Pixels);
+					}
+
+					if (_resizeTop)
+					{
+						Top.Pixels = Math.Clamp(relativePos.Y + offset.Y, 0, relativePos.Y + s.OriginalSize.Y - MinHeight.Pixels);
+						Height.Pixels = s.OriginalSize.Y + relativePos.Y - Top.Pixels;
+					}
+					else if (_resizeBottom)
+					{
+						Height.Pixels = Math.Clamp(s.OriginalSize.Y + offset.Y, MinHeight.Pixels, parentSize.Y - Top.Pixels);
+					}
 				}
 
-				if (_resizeTop)
-				{
-					Top.Pixels = Math.Clamp(relativePos.Y + offset.Y, 0, relativePos.Y + s.OriginalSize.Y - MinHeight.Pixels);
-					Height.Pixels = s.OriginalSize.Y + relativePos.Y - Top.Pixels;
-				}
-				else if (_resizeBottom)
-				{
-					Height.Pixels = Math.Clamp(s.OriginalSize.Y + offset.Y, MinHeight.Pixels, parentSize.Y - Top.Pixels);
-				}
+				Recalculate();
 			}
-
-			Recalculate();
 		}
 		else
 		{
