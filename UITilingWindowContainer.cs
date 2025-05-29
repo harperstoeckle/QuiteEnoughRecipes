@@ -47,9 +47,11 @@ public class UITilingWindowContainer : UIElement
 	}
 
 	private const float WindowInsertionWidth = 40;
+	private const float MinWindowPercentWhenResizing = 0.1f;
 
 	private List<Strip> _strips = new();
 	private CursorRegion _cursorRegion = new CursorRegion.None();
+	private bool _isResizing = false;
 	private UIPanel _previewPanel = new(){
 		IgnoresMouseInteraction = true,
 		BackgroundColor = Color.White * 0.5f,
@@ -113,9 +115,32 @@ public class UITilingWindowContainer : UIElement
 			didChangeLayout = true;
 		}
 
+		/*
+		 * Changing layout means the stored region being resized could no longer be meaningful.
+		 * But this should not be able to happen.
+		 */
 		if (didChangeLayout)
 		{
 			ResetToStoredPositions();
+			_isResizing = false;
+		}
+
+		if (_isResizing)
+		{
+			var cursorPos = GetMouseAsPercent();
+
+			if (_cursorRegion is CursorRegion.BetweenStrips(int i))
+			{
+				ResizeFromCursorPos(_strips, i, cursorPos.X, s => ref s.CurrentWidthPercent);
+			}
+			else if (_cursorRegion is CursorRegion.BetweenWindows(int stripIndex, int windowIndex))
+			{
+				ResizeFromCursorPos(_strips[stripIndex].Windows, windowIndex, cursorPos.Y,
+						w => ref w.CurrentHeightPercent);
+			}
+
+			ResetToStoredPositions();
+			return;
 		}
 
 		var newCursorRegion = GetCursorRegion();
@@ -139,27 +164,24 @@ public class UITilingWindowContainer : UIElement
 			droppedWindow.SilentRemove();
 			UISystem.WindowManager?.DeferCall(() => TryInsertWindow(_cursorRegion, droppedWindow));
 		}
+	}
 
-		//if (RightWindow is not null)
-		//{
-		//	if (RightWindow.WindowState.WantsClose == CloseRequestState.Close)
-		//	{
-		//		RightWindow.ConvertStyleToAbsolute();
-		//		RightWindow.CanDragOrResize = true;
-		//		RightWindow.WindowState.WantsClose = CloseRequestState.None;
-		//		RightWindow.OnClose();
-		//		RightWindow = null;
-		//	}
-		//	// Dragged far enough to release it.
-		//	else if (RightWindow.DragInitialMousePosition is Vector2 p
-		//			&& Vector2.Distance(p, Main.MouseScreen) > 30)
-		//	{
-		//		RightWindow.ConvertStyleToAbsolute();
-		//		RightWindow.CanDragOrResize = true;
-		//		UISystem.WindowManager?.Open(RightWindow!);
-		//		RightWindow = null;
-		//	}
-		//}
+	public override void LeftMouseDown(UIMouseEvent e)
+	{
+		base.LeftMouseDown(e);
+
+		if (_cursorRegion is CursorRegion.BetweenStrips(int i) && 0 < i && i < _strips.Count
+				|| _cursorRegion is CursorRegion.BetweenWindows(int stripIndex, int windowIndex)
+				&& 0 < windowIndex && windowIndex < _strips[stripIndex].Windows.Count)
+		{
+			_isResizing = true;
+		}
+	}
+
+	public override void LeftMouseUp(UIMouseEvent e)
+	{
+		base.LeftMouseUp(e);
+		_isResizing = false;
 	}
 
 	protected override void DrawSelf(SpriteBatch sb)
@@ -304,6 +326,32 @@ public class UITilingWindowContainer : UIElement
 	}
 
 	/*
+	 * `elements` is a list of element-like objects whose sizes (on one axis) can be accessed with
+	 * `accessSize`. `barIndex` is the index of the "bar" (area between elements) being grabbed,
+	 * and `cursorPos` is the position of the cursor on that axis. This function will resize the
+	 * elements left and right of the bar at that index to match the mouse position (clamped if
+	 * the mouse moved too far).
+	 */
+	private static void ResizeFromCursorPos<T>(List<T> elements, int barIndex, float cursorPos,
+			Accessor<T, float> accessSize)
+	{
+		if (barIndex <= 0 || barIndex >= elements.Count) { return; }
+
+		float leftOffset = elements.Take(barIndex - 1).Select(e => accessSize(e)).Sum();
+		float rightOffset = leftOffset + accessSize(elements[barIndex - 1]) + accessSize(elements[barIndex]);
+
+		float minPos = leftOffset + MinWindowPercentWhenResizing;
+		float maxPos = rightOffset - MinWindowPercentWhenResizing;
+
+		// Windows are too small to resize.
+		if (maxPos <= minPos) { return; }
+
+		float newBarPos = Math.Clamp(cursorPos, minPos, maxPos);
+		accessSize(elements[barIndex - 1]) = newBarPos - leftOffset;
+		accessSize(elements[barIndex]) = rightOffset - newBarPos;
+	}
+
+	/*
 	 * Get the part of the window currently being hovered. If the window is not actively being
 	 * hovered, return `CursorRegion.None`.
 	 */
@@ -311,8 +359,8 @@ public class UITilingWindowContainer : UIElement
 	{
 		if (!IsMouseHovering) { return new CursorRegion.None(); }
 
+		var cursorPercent = GetMouseAsPercent();
 		var dims = GetInnerDimensions();
-		var cursorPercent = (Main.MouseScreen - dims.Position()) / dims.ToRectangle().Size();
 		var relativeInsertionWidths = new Vector2(WindowInsertionWidth) / dims.ToRectangle().Size();
 
 		if (_strips.Count == 0)
@@ -340,6 +388,16 @@ public class UITilingWindowContainer : UIElement
 				? new CursorRegion.None()
 				: new CursorRegion.BetweenWindows(i, windowIndex);
 		}
+	}
+
+	/*
+	 * Mouse coordinates as a percentage of the size of the inner dimensions of this element,
+	 * relative to the top-left corner.
+	 */
+	private Vector2 GetMouseAsPercent()
+	{
+		var dims = GetInnerDimensions();
+		return (Main.MouseScreen - dims.Position()) / dims.ToRectangle().Size();
 	}
 
 	private static int RegionIndexFromWidths(IEnumerable<float> regions, float pos,
