@@ -151,16 +151,25 @@ public class UITilingWindowContainer : UIElement
 
 		if (_isResizing)
 		{
+			var dims = GetInnerDimensions();
 			var cursorPos = GetMouseAsPercent();
 
 			if (_cursorRegion.LayoutEdge is LayoutEdge.BetweenStrips(int i))
 			{
-				ResizeFromCursorPos(_strips, i, cursorPos.X, s => ref s.CurrentWidthPercent);
+				Func<Strip, float> getMinStripSize = s => {
+					if (s.Windows.Count == 0) { return 0; }
+					else
+					{
+						return s.Windows.Select(w => GetPercent(w.Window.MinWidth, dims.Width)).Max();
+					}
+				};
+
+				ResizeFromCursorPos(_strips, i, cursorPos.X, s => ref s.CurrentWidthPercent, getMinStripSize);
 			}
 			else if (_cursorRegion.LayoutEdge is LayoutEdge.BetweenWindows(int stripIndex, int windowIndex))
 			{
 				ResizeFromCursorPos(_strips[stripIndex].Windows, windowIndex, cursorPos.Y,
-						w => ref w.CurrentHeightPercent);
+						w => ref w.CurrentHeightPercent, w => GetPercent(w.Window.MinHeight, dims.Height));
 			}
 
 			ResetToStoredPositions();
@@ -359,18 +368,19 @@ public class UITilingWindowContainer : UIElement
 	 * `accessSize`. `barIndex` is the index of the "bar" (area between elements) being grabbed,
 	 * and `cursorPos` is the position of the cursor on that axis. This function will resize the
 	 * elements left and right of the bar at that index to match the mouse position (clamped if
-	 * the mouse moved too far).
+	 * the mouse moved too far and the sizes would be smaller than the min sizes obtained with
+	 * `getMinSize`). All dimensions should be given as fractions of the container size.
 	 */
 	private static void ResizeFromCursorPos<T>(List<T> elements, int barIndex, float cursorPos,
-			Accessor<T, float> accessSize)
+			Accessor<T, float> accessSize, Func<T, float> getMinSize)
 	{
 		if (barIndex <= 0 || barIndex >= elements.Count) { return; }
 
 		float leftOffset = elements.Take(barIndex - 1).Select(e => accessSize(e)).Sum();
 		float rightOffset = leftOffset + accessSize(elements[barIndex - 1]) + accessSize(elements[barIndex]);
 
-		float minPos = leftOffset + MinWindowPercentWhenResizing;
-		float maxPos = rightOffset - MinWindowPercentWhenResizing;
+		float minPos = leftOffset + getMinSize(elements[barIndex - 1]);
+		float maxPos = rightOffset - getMinSize(elements[barIndex]);
 
 		// Windows are too small to resize.
 		if (maxPos <= minPos) { return; }
@@ -481,5 +491,14 @@ public class UITilingWindowContainer : UIElement
 		inResize = false;
 		inbetween = false;
 		return -1;
+	}
+
+	/*
+	 * Get a child style dimension as a percent of the parent size. Like `GetValue`, but for percent
+	 * instead. `parentSize` is in pixels.
+	 */
+	private static float GetPercent(StyleDimension childSize, float parentSize)
+	{
+		return childSize.Percent + childSize.Pixels / parentSize;
 	}
 }
