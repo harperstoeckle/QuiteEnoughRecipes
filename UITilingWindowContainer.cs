@@ -19,14 +19,37 @@ namespace QuiteEnoughRecipes;
 public class UITilingWindowContainer : UIElement
 {
 	/*
-	 * Used to represent a position where the cursor is in the current layout. Used to determine
-	 * resizing and new window placement.
+	 * Represents an "edge" in the layout (i.e., somewhere where a new window could be placed).
+	 * This could either be in between strips (or at the left or right edge of the container) or
+	 * between windows in one of the strips.
 	 */
-	private interface CursorRegion
+	private interface LayoutEdge
 	{
-		public record None() : CursorRegion;
-		public record BetweenStrips(int Index) : CursorRegion;
-		public record BetweenWindows(int StripIndex, int Index) : CursorRegion;
+		public record None() : LayoutEdge;
+		public record BetweenStrips(int Index) : LayoutEdge;
+		public record BetweenWindows(int StripIndex, int Index) : LayoutEdge;
+	}
+
+	private struct CursorRegion
+	{
+		/*
+		 * Edge the mouse is hovering. If the user is dragging a floating window, then this is
+		 * where the window would be placed. The "line" that needs to be hovered is of thickness
+		 * `WindowInsertionWidth`.
+		 */
+		public LayoutEdge LayoutEdge = new LayoutEdge.None();
+
+		/*
+		 * The window insertion area is pretty wide to make it easy to insert windows, to the
+		 * extent that it bleeds slightly into the actual content of the windows. If we were to
+		 * allow windows to be resized from anywhere in that region, then some UI elements near the
+		 * edge of the window would no longer work, since clicking would resize instead. So we say
+		 * that the mouse is in the resize area if it's in the strip of width `ResizeWidth` in the
+		 * middle of the edge area.
+		 */
+		public bool IsInResizeArea = false;
+
+		public CursorRegion() {}
 	}
 
 	private class StackedWindow
@@ -46,11 +69,12 @@ public class UITilingWindowContainer : UIElement
 		public float CurrentWidthPercent = 1;
 	}
 
-	private const float WindowInsertionWidth = 40;
+	private const float WindowInsertionWidth = 60;
+	private const float ResizeWidth = 2 * UIFloatingWindow.ResizeBorderWidth;
 	private const float MinWindowPercentWhenResizing = 0.1f;
 
 	private List<Strip> _strips = new();
-	private CursorRegion _cursorRegion = new CursorRegion.None();
+	private CursorRegion _cursorRegion = new();
 	private bool _isResizing = false;
 	private UIPanel _previewPanel = new(){
 		IgnoresMouseInteraction = true,
@@ -60,8 +84,8 @@ public class UITilingWindowContainer : UIElement
 
 	public UITilingWindowContainer()
 	{
-		TryInsertWindow(new CursorRegion.BetweenStrips(0), UISystem.RecipeWindow!);
-		TryInsertWindow(new CursorRegion.BetweenStrips(0), new UIIngredientWindow());
+		TryInsertWindow(new LayoutEdge.BetweenStrips(0), UISystem.RecipeWindow!);
+		TryInsertWindow(new LayoutEdge.BetweenStrips(0), new UIIngredientWindow());
 	}
 
 	public override void Update(GameTime t)
@@ -129,11 +153,11 @@ public class UITilingWindowContainer : UIElement
 		{
 			var cursorPos = GetMouseAsPercent();
 
-			if (_cursorRegion is CursorRegion.BetweenStrips(int i))
+			if (_cursorRegion.LayoutEdge is LayoutEdge.BetweenStrips(int i))
 			{
 				ResizeFromCursorPos(_strips, i, cursorPos.X, s => ref s.CurrentWidthPercent);
 			}
-			else if (_cursorRegion is CursorRegion.BetweenWindows(int stripIndex, int windowIndex))
+			else if (_cursorRegion.LayoutEdge is LayoutEdge.BetweenWindows(int stripIndex, int windowIndex))
 			{
 				ResizeFromCursorPos(_strips[stripIndex].Windows, windowIndex, cursorPos.Y,
 						w => ref w.CurrentHeightPercent);
@@ -145,34 +169,36 @@ public class UITilingWindowContainer : UIElement
 
 		var newCursorRegion = GetCursorRegion();
 
-		if (newCursorRegion != _cursorRegion)
+		if (newCursorRegion.LayoutEdge != _cursorRegion.LayoutEdge)
 		{
 			_previewPanel.Remove();
 			ResetToStoredPositions();
 
-			_cursorRegion = newCursorRegion;
-
 			if (UISystem.WindowManager?.Dragging is UIFloatingWindow)
 			{
-				TryInsertPreview(_cursorRegion);
+				TryInsertPreview(newCursorRegion.LayoutEdge);
 			}
 		}
 
-		if (_cursorRegion is not CursorRegion.None
+		if (newCursorRegion.LayoutEdge is not LayoutEdge.None
 				&& UISystem.WindowManager?.JustDropped is UIFloatingWindow droppedWindow)
 		{
 			droppedWindow.SilentRemove();
-			UISystem.WindowManager?.DeferCall(() => TryInsertWindow(_cursorRegion, droppedWindow));
+			UISystem.WindowManager?.DeferCall(() => TryInsertWindow(newCursorRegion.LayoutEdge, droppedWindow));
 		}
+
+		_cursorRegion = newCursorRegion;
 	}
 
 	public override void LeftMouseDown(UIMouseEvent e)
 	{
 		base.LeftMouseDown(e);
 
-		if (_cursorRegion is CursorRegion.BetweenStrips(int i) && 0 < i && i < _strips.Count
-				|| _cursorRegion is CursorRegion.BetweenWindows(int stripIndex, int windowIndex)
-				&& 0 < windowIndex && windowIndex < _strips[stripIndex].Windows.Count)
+		if (_cursorRegion.IsInResizeArea
+				&& (_cursorRegion.LayoutEdge is LayoutEdge.BetweenStrips(int i)
+					&& 0 < i && i < _strips.Count
+					|| _cursorRegion.LayoutEdge is LayoutEdge.BetweenWindows(int stripIndex, int windowIndex)
+					&& 0 < windowIndex && windowIndex < _strips[stripIndex].Windows.Count))
 		{
 			_isResizing = true;
 		}
@@ -188,12 +214,15 @@ public class UITilingWindowContainer : UIElement
 	{
 		base.DrawSelf(sb);
 
-		if (_cursorRegion is CursorRegion.BetweenStrips(int i) && 0 < i && i < _strips.Count)
+		if (_cursorRegion.IsInResizeArea
+				&& _cursorRegion.LayoutEdge is LayoutEdge.BetweenStrips(int i)
+				&& 0 < i && i < _strips.Count)
 		{
 			UISystem.CustomCursorTexture = QERAssets.CursorEdgeHorizontal;
 			UISystem.CustomCursorOffset = QERAssets.CursorEdgeHorizontal.Frame().Size() / 2;
 		}
-		else if (_cursorRegion is CursorRegion.BetweenWindows(int stripIndex, int windowIndex)
+		else if (_cursorRegion.IsInResizeArea
+				&& _cursorRegion.LayoutEdge is LayoutEdge.BetweenWindows(int stripIndex, int windowIndex)
 				&& 0 < windowIndex && windowIndex < _strips[stripIndex].Windows.Count)
 		{
 			UISystem.CustomCursorTexture = QERAssets.CursorEdgeVertical;
@@ -225,9 +254,9 @@ public class UITilingWindowContainer : UIElement
 	 * Insert a window for real, also modifying the stored structure and making the window
 	 * undraggable.
 	 */
-	private void TryInsertWindow(CursorRegion location, UIFloatingWindow window)
+	private void TryInsertWindow(LayoutEdge location, UIFloatingWindow window)
 	{
-		if (location is CursorRegion.None) { return; }
+		if (location is LayoutEdge.None) { return; }
 
 		window.CanDragOrResize = false;
 		var stackedWindow = new StackedWindow{ Window = window };
@@ -236,7 +265,7 @@ public class UITilingWindowContainer : UIElement
 		window.Width = window.Height = StyleDimension.Fill;
 		window.Left = window.Top = StyleDimension.Empty;
 
-		if (location is CursorRegion.BetweenStrips(int i))
+		if (location is LayoutEdge.BetweenStrips(int i))
 		{
 			if (_strips.Count == 0) { i = 0; }
 
@@ -251,7 +280,7 @@ public class UITilingWindowContainer : UIElement
 			ArrangeContiguousNormalized(_strips, s => ref s.Container.Left.Precent,
 					s => ref s.CurrentWidthPercent);
 		}
-		else if (location is CursorRegion.BetweenWindows(int stripIndex, int windowIndex))
+		else if (location is LayoutEdge.BetweenWindows(int stripIndex, int windowIndex))
 		{
 			var windows = _strips[stripIndex].Windows;
 			stackedWindow.CurrentHeightPercent = windows.Count == 0 ? 1.0f : 1.0f / windows.Count;
@@ -266,11 +295,11 @@ public class UITilingWindowContainer : UIElement
 	}
 
 	// Insert the preview element at the given location.
-	private void TryInsertPreview(CursorRegion location)
+	private void TryInsertPreview(LayoutEdge location)
 	{
 		_previewPanel.Left = _previewPanel.Top = StyleDimension.Empty;
 
-		if (location is CursorRegion.BetweenStrips(int i))
+		if (location is LayoutEdge.BetweenStrips(int i))
 		{
 			if (_strips.Count == 0) { i = 0; }
 
@@ -283,7 +312,7 @@ public class UITilingWindowContainer : UIElement
 
 			ArrangeContiguousNormalized(strips, AccessLeft, AccessWidth);
 		}
-		else if (location is CursorRegion.BetweenWindows(int stripIndex, int windowIndex))
+		else if (location is LayoutEdge.BetweenWindows(int stripIndex, int windowIndex))
 		{
 			var windows = _strips[stripIndex].Windows;
 			_previewPanel.Width = StyleDimension.Fill;
@@ -357,36 +386,49 @@ public class UITilingWindowContainer : UIElement
 	 */
 	private CursorRegion GetCursorRegion()
 	{
-		if (!IsMouseHovering) { return new CursorRegion.None(); }
+		if (!IsMouseHovering) { return new CursorRegion(); }
 
 		var cursorPercent = GetMouseAsPercent();
 		var dims = GetInnerDimensions();
 		var relativeInsertionWidths = new Vector2(WindowInsertionWidth) / dims.ToRectangle().Size();
+		var relativeResizeWidths = new Vector2(ResizeWidth) / dims.ToRectangle().Size();
 
 		if (_strips.Count == 0)
 		{
 			int i = RegionIndexFromWidths([1.0f], cursorPercent.X, relativeInsertionWidths.X,
-					out bool inbetween);
+					relativeResizeWidths.X, out bool inbetween, out bool inResize);
 
-			return i == -1 || !inbetween
-				? new CursorRegion.None()
-				: new CursorRegion.BetweenStrips(i);
+			LayoutEdge layoutEdge = i == -1 || !inbetween
+				? new LayoutEdge.None()
+				: new LayoutEdge.BetweenStrips(0);
+
+			return new CursorRegion{ LayoutEdge = layoutEdge, IsInResizeArea = inResize };
 		}
 
 		{
 			int i = RegionIndexFromWidths(_strips.Select(r => r.CurrentWidthPercent),
-					cursorPercent.X, relativeInsertionWidths.X, out bool inbetween);
+					cursorPercent.X, relativeInsertionWidths.X, relativeResizeWidths.X,
+					out bool inbetween, out bool inResize);
 
-			if (i == -1) { return new CursorRegion.None(); }
-			if (inbetween) { return new CursorRegion.BetweenStrips(i); }
+			if (i == -1) { return new CursorRegion(); }
+			if (inbetween)
+			{
+				return new CursorRegion{
+					LayoutEdge = new LayoutEdge.BetweenStrips(i),
+					IsInResizeArea = inResize,
+				};
+			}
 
 			int windowIndex = RegionIndexFromWidths(
 					_strips[i].Windows.Select(w => w.CurrentHeightPercent), cursorPercent.Y,
-					relativeInsertionWidths.Y, out bool inbetweenWindows);
+					relativeInsertionWidths.Y, relativeResizeWidths.Y,
+					out bool inbetweenWindows, out bool inResizeBetweenWindows);
 
-			return windowIndex == -1 || !inbetweenWindows
-				? new CursorRegion.None()
-				: new CursorRegion.BetweenWindows(i, windowIndex);
+			LayoutEdge layoutEdge = windowIndex == -1 || !inbetweenWindows
+				? new LayoutEdge.None()
+				: new LayoutEdge.BetweenWindows(i, windowIndex);
+
+			return new CursorRegion{ LayoutEdge = layoutEdge, IsInResizeArea = inResizeBetweenWindows };
 		}
 	}
 
@@ -401,16 +443,18 @@ public class UITilingWindowContainer : UIElement
 	}
 
 	private static int RegionIndexFromWidths(IEnumerable<float> regions, float pos,
-			float inbetweenWidth, out bool inbetween)
+			float inbetweenWidth, float resizeWidth, out bool inbetween, out bool inResize)
 	{
 		if (pos < -inbetweenWidth / 2)
 		{
 			inbetween = false;
+			inResize = false;
 			return -1;
 		}
 		else if (pos < inbetweenWidth / 2)
 		{
 			inbetween = true;
+			inResize = -resizeWidth / 2 <= pos && pos <= resizeWidth / 2;
 			return 0;
 		}
 
@@ -423,15 +467,18 @@ public class UITilingWindowContainer : UIElement
 			if (pos < offset - inbetweenWidth / 2)
 			{
 				inbetween = false;
+				inResize = false;
 				return index;
 			}
 			else if (pos <= offset + inbetweenWidth / 2)
 			{
 				inbetween = true;
+				inResize = offset - resizeWidth / 2 <= pos && pos <= offset + resizeWidth / 2;
 				return index + 1;
 			}
 		}
 
+		inResize = false;
 		inbetween = false;
 		return -1;
 	}

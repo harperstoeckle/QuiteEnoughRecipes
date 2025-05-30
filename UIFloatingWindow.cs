@@ -49,8 +49,8 @@ public class UIFloatingWindow : UIPanel, IWindow
 	 * However, the cursor must also be within the border of width `ResizeBorderWidth` around the
 	 * edge of the window to actually start resizing when clicked.
 	 */
-	private const float ResizeCornerWidth = 30;
-	private const float ResizeBorderWidth = 7;
+	public const float ResizeCornerWidth = 30;
+	public const float ResizeBorderWidth = 7;
 
 	/*
 	 * Keeps track of screen-space coordinates of the click event that started the drag or resize.
