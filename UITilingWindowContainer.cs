@@ -71,7 +71,6 @@ public class UITilingWindowContainer : UIElement
 
 	private const float WindowInsertionWidth = 60;
 	private const float ResizeWidth = 2 * UIFloatingWindow.ResizeBorderWidth;
-	private const float MinWindowPercentWhenResizing = 0.1f;
 
 	private List<Strip> _strips = new();
 	private CursorRegion _cursorRegion = new();
