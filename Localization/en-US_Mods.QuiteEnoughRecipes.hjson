@@ -174,3 +174,11 @@ Conditions: {
 	BannerDrop: Drops once for every {0} kills
 	Invalid: Invalid drop condition ({0})
 }
+
+Windows: {
+	Main: Main
+	Ingredients: Ingredients
+	Recipes: Recipes
+	Filter: Filter
+	Sort: Sort
+}

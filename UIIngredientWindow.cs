@@ -12,7 +12,7 @@ public class UIIngredientWindow : UIFloatingWindow
 	// This will be re-focused when the browser is opened.
 	private IFocusableSearchPage? _pageToFocusOnOpen = null;
 
-	public UIIngredientWindow()
+	public UIIngredientWindow() : base(Language.GetText("Mods.QuiteEnoughRecipes.Windows.Ingredients"))
 	{
 		// For now, we have a help button for both item and NPC search.
 		TitleBar.AddHelp(Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));

@@ -42,7 +42,7 @@ public class UITitleBar : UIPanel
 	private UIText _title;
 	private StyleDimension _rightOffset = StyleDimension.Empty;
 
-	public UITitleBar(string title)
+	public UITitleBar(LocalizedText title)
 	{
 		Width = StyleDimension.Fill;
 		Height = new(BarHeight, 0);
@@ -59,8 +59,6 @@ public class UITitleBar : UIPanel
 
 		Append(_title);
 	}
-
-	public UITitleBar(LocalizedText title) : this(title.Value) {}
 
 	// Elements are added from right to left, on the right side.
 	public void AddElement(UIElement e)

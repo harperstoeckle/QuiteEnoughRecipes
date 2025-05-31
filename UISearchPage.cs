@@ -47,18 +47,20 @@ public class OptionPanelToggleButton : UIElement
 	 * then this option group will be set to its default state.
 	 */
 	private IOptionGroup _optionGroup;
-	private UIFloatingPopupWindow _popupWindow = new(){
-		MinWidth = new(100, 0),
-		MinHeight = new(100, 0),
-		Width = new(0, 0.25f),
-		Height = new(0, 0.5f),
-	};
+	private UIFloatingPopupWindow _popupWindow;
 
 	public required string IconPath;
 	public required string Name;
 
-	public OptionPanelToggleButton(IOptionGroup optionGroup, LocalizedText? helpText = null)
+	public OptionPanelToggleButton(IOptionGroup optionGroup, LocalizedText title,
+			LocalizedText? helpText = null)
 	{
+		_popupWindow = new(title){
+			MinWidth = new(100, 0),
+			MinHeight = new(100, 0),
+			Width = new(0, 0.25f),
+			Height = new(0, 0.5f),
+		};
 		_optionGroup = optionGroup;
 		Width.Pixels = Height.Pixels = 22;
 		_popupWindow.Contents.Append(_optionGroup.Element);
@@ -163,9 +165,10 @@ public class UISearchPage : UIElement, IFocusableSearchPage
 			_filterPanel.Height.Percent = 1;
 			foreach (var f in filters) { _filterPanel.AddGroup(f); }
 
+			var title = Language.GetText("Mods.QuiteEnoughRecipes.Windows.Filter");
 			var filterHelp = Language.GetText("Mods.QuiteEnoughRecipes.UI.FilterHelp")
 				.WithFormatArgs(Main.FavoriteKey.ToString());
-			var filterToggleButton = new OptionPanelToggleButton(_filterPanel, filterHelp){
+			var filterToggleButton = new OptionPanelToggleButton(_filterPanel, title, filterHelp){
 				IconPath = "Images/UI/Bestiary/Button_Filtering",
 				Name = Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.FilterHover"),
 				Left = new(offset, 0)
@@ -182,7 +185,8 @@ public class UISearchPage : UIElement, IFocusableSearchPage
 			_sortPanel.Height.Percent = 1;
 			foreach (var s in sorts) { _sortPanel.AddGroup(s); }
 
-			var sortToggleButton = new OptionPanelToggleButton(_sortPanel){
+			var title = Language.GetText("Mods.QuiteEnoughRecipes.Windows.Sort");
+			var sortToggleButton = new OptionPanelToggleButton(_sortPanel, title){
 				IconPath = "Images/UI/Bestiary/Button_Sorting",
 				Name = Language.GetTextValue("Mods.QuiteEnoughRecipes.UI.SortHover"),
 				Left = new(offset, 0)

@@ -70,7 +70,7 @@ public class UIFloatingWindow : UIPanel, IWindow
 	 */
 	public Vector2? DragInitialMousePosition => HoveringResize ? null : _dragOrResizeInfo?.OriginalMouse;
 
-	public UITitleBar TitleBar = new("Name");
+	public UITitleBar TitleBar { get; private set; }
 
 	// Stuff should just be directly appended to this instead of the window itself.
 	public UIElement Contents { get; private set; } = new(){
@@ -79,8 +79,10 @@ public class UIFloatingWindow : UIPanel, IWindow
 		VAlign = 1,
 	};
 
-	public UIFloatingWindow()
+	public UIFloatingWindow(LocalizedText title)
 	{
+		TitleBar = new(title);
+
 		// Just to make sure we don't get tiny windows that are impossible to grab.
 		Width = Height = MinWidth = MinHeight = new(150, 0);
 

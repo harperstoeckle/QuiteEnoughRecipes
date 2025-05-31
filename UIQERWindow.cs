@@ -37,7 +37,7 @@ public class UIQERWindow : UIFloatingWindow
 		: Language.GetText("Mods.QuiteEnoughRecipes.UI.WindowedHover");
 
 
-	public UIQERWindow()
+	public UIQERWindow() : base(Language.GetText("Mods.QuiteEnoughRecipes.Windows.Main"))
 	{
 		CopyStyle(_fullscreenStyleRef);
 		CanDragOrResize = false;

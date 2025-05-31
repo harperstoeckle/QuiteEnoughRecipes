@@ -203,7 +203,7 @@ public class UIRecipeWindow : UIFloatingWindow
 
 	private UITabBar<UIRecipePage> _recipeTabBar = new();
 
-	public UIRecipeWindow()
+	public UIRecipeWindow() : base(Language.GetText("Mods.QuiteEnoughRecipes.Windows.Recipes"))
 	{
 		AddHandler(new RecipeHandlers.Basic());
 		AddHandler(new RecipeHandlers.CraftingStations());

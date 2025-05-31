@@ -17,7 +17,7 @@ public class UIFloatingPopupWindow : UIFloatingWindow
 		? Language.GetText("Mods.QuiteEnoughRecipes.UI.PinDownHover")
 		: Language.GetText("Mods.QuiteEnoughRecipes.UI.PinUpHover");
 
-	public UIFloatingPopupWindow()
+	public UIFloatingPopupWindow(LocalizedText title) : base(title)
 	{
 		_pinButton.OnLeftClick += (elem, evt) => {
 			_isPinned = !_isPinned;
