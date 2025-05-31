@@ -42,19 +42,19 @@ public class UITitleBar : UIPanel
 	private UIText _title;
 	private StyleDimension _rightOffset = StyleDimension.Empty;
 
-	public UITitleBar(LocalizedText title)
+	public UITitleBar(LocalizedText title) : base(QERAssets.PanelTitleBar, QERAssets.PanelTitleBar, 6, 4)
 	{
 		Width = StyleDimension.Fill;
 		Height = new(BarHeight, 0);
 		SetPadding(BarOuterPadding);
-		BackgroundColor = QERColors.Browns[3];
-		BorderColor = QERColors.Browns[4];
+		BackgroundColor = Color.White;
+		BorderColor = Color.Transparent;
 
 		_title = new(title){
 			Width = new(TitleWidth, 0),
 			Height = StyleDimension.Fill,
 			IgnoresMouseInteraction = true,
-			TextColor = QERColors.Browns[0],
+			TextColor = QERColors.Browns[3],
 			ShadowColor = Color.Transparent,
 			DynamicallyScaleDownToWidth = true,
 			TextOriginX = 0,

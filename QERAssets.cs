@@ -29,6 +29,7 @@ public class QERAssets : ModSystem
 	[AutoTexture("Images/button_fullscreen")] public static Asset<Texture2D> ButtonFullscreen;
 
 	[AutoTexture("Images/panel_search_bar")] public static Asset<Texture2D> PanelSearchBar;
+	[AutoTexture("Images/panel_title_bar")] public static Asset<Texture2D> PanelTitleBar;
 
 	[AutoTexture("Images/inventory_background")] public static Asset<Texture2D> InventoryBackground;
 #nullable enable
