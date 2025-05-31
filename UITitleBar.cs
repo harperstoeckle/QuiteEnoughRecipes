@@ -1,5 +1,5 @@
-// Title bar for use with a window.
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework;
 using Terraria.GameContent.UI.Elements;
 using Terraria.Localization;
 using Terraria.ModLoader.UI;
@@ -53,6 +53,7 @@ public class UITitleBar : UIPanel
 		_title = new(title){
 			Width = new(TitleWidth, 0),
 			Height = StyleDimension.Fill,
+			ShadowColor = Color.Transparent,
 			DynamicallyScaleDownToWidth = true,
 			TextOriginX = 0,
 		};
