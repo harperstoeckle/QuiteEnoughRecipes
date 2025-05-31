@@ -86,8 +86,8 @@ public class UIFloatingWindow : UIPanel, IWindow
 		// Just to make sure we don't get tiny windows that are impossible to grab.
 		Width = Height = MinWidth = MinHeight = new(150, 0);
 
-		BackgroundColor = QERColors.Brown * 0.7f;
-		BorderColor = QERColors.DarkBrown * 0.7f;
+		BackgroundColor = QERColors.Browns[3] * 0.7f;
+		BorderColor = QERColors.Browns[4] * 0.7f;
 		SetPadding(0);
 		Contents.SetPadding(ResizeBorderWidth);
 

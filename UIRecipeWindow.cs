@@ -214,7 +214,7 @@ public class UIRecipeWindow : UIFloatingWindow
 		AddHandler(new RecipeHandlers.GlobalDrops());
 
 		var recipePanel = new UIPanel{
-			BackgroundColor = QERColors.Brown,
+			BackgroundColor = QERColors.Browns[3],
 			Width = new(0, 0.49f),
 			Height = new(-TabHeight, 1),
 			VAlign = 1,

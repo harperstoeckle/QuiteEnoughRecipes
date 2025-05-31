@@ -47,12 +47,14 @@ public class UITitleBar : UIPanel
 		Width = StyleDimension.Fill;
 		Height = new(BarHeight, 0);
 		SetPadding(BarOuterPadding);
-		BackgroundColor = QERColors.Brown;
-		BorderColor = QERColors.DarkBrown;
+		BackgroundColor = QERColors.Browns[3];
+		BorderColor = QERColors.Browns[4];
 
 		_title = new(title){
 			Width = new(TitleWidth, 0),
 			Height = StyleDimension.Fill,
+			IgnoresMouseInteraction = true,
+			TextColor = QERColors.Browns[0],
 			ShadowColor = Color.Transparent,
 			DynamicallyScaleDownToWidth = true,
 			TextOriginX = 0,
