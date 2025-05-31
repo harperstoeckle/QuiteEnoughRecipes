@@ -31,7 +31,7 @@ public class UIQERButton : UIElement
 		_texture = texture;
 		_numFrames = Math.Max(1, numFrames);
 
-		Width.Pixels = _texture.Width();
+		Width.Pixels = _texture.Width() / numFrames;
 		Height.Pixels = _texture.Height();
 	}
 
