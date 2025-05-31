@@ -65,7 +65,7 @@ public class OptionPanelToggleButton : UIElement
 
 		if (helpText is not null)
 		{
-			_popupWindow.AddHelp(helpText);
+			_popupWindow.TitleBar.AddHelp(helpText);
 		}
 	}
 

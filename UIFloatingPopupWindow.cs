@@ -24,7 +24,7 @@ public class UIFloatingPopupWindow : UIFloatingWindow
 			UpdatePinButton();
 		};
 		UpdatePinButton();
-		AddElementToBar(_pinButton);
+		TitleBar.AddElement(_pinButton);
 	}
 
 	public override void OnOpen()

@@ -67,7 +67,7 @@ public class UIQERWindow : UIFloatingWindow
 		};
 
 		var container = new UITilingWindowContainer{ Width = new(0, 1), Height = new(0, 1) };
-		AddElementToBar(fullscreenButton);
+		TitleBar.AddElement(fullscreenButton);
 		Contents.Append(container);
 	}
 

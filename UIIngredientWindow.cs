@@ -15,8 +15,8 @@ public class UIIngredientWindow : UIFloatingWindow
 	public UIIngredientWindow()
 	{
 		// For now, we have a help button for both item and NPC search.
-		AddHelp(Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
-		AddHelp(Language.GetText("Mods.QuiteEnoughRecipes.UI.NPCSearchHelp"));
+		TitleBar.AddHelp(Language.GetText("Mods.QuiteEnoughRecipes.UI.ItemSearchHelp"));
+		TitleBar.AddHelp(Language.GetText("Mods.QuiteEnoughRecipes.UI.NPCSearchHelp"));
 
 		var itemGrid = new UIQueryableIngredientGrid<ItemIngredient, UIItemPanel>();
 		var itemSearchPage = new UISearchPage(itemGrid);

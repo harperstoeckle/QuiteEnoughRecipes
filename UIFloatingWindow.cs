@@ -15,30 +15,6 @@ namespace QuiteEnoughRecipes;
 // A traditional floating window that can be dragged and resized.
 public class UIFloatingWindow : UIPanel, IWindow
 {
-	private class UIHelpIcon : UIQERButton
-	{
-		private LocalizedText _text;
-
-		public UIHelpIcon(LocalizedText helpText) : base(QERAssets.ButtonHelp)
-		{
-			_text = helpText;
-		}
-
-		protected override void DrawSelf(SpriteBatch sb)
-		{
-			base.DrawSelf(sb);
-			if (IsMouseHovering)
-			{
-				UICommon.TooltipMouseText(_text.Value);
-			}
-		}
-	}
-
-	private const float BarInnerPadding = 10;
-	private const float BarOuterPadding = 6;
-	private const float BarItemWidth = 22;
-	private const float BarItemHeight = BarItemWidth;
-	private const float BarHeight = BarItemHeight + 2 * BarOuterPadding;
 
 	/*
 	 * Window resizing considers two different regions. First, the cursor is checked against each
@@ -63,22 +39,6 @@ public class UIFloatingWindow : UIPanel, IWindow
 		public required Vector2 OriginalPos;
 		public required Vector2 OriginalMouse;
 	}
-
-	private UIPanel _topBar = new(){
-		Width = StyleDimension.Fill,
-		Height = new(BarHeight, 0),
-		BackgroundColor = QERColors.Brown,
-		BorderColor = QERColors.DarkBrown,
-	};
-
-	/*
-	 * Used to determine where to put the next item in the bar. Bar elements are arranged from left
-	 * to right.
-	 */
-	private float _topBarOffset = 0.0f;
-
-	// Offset on the right side. Only used for help.
-	private float _topBarHelpOffset = 0.0f;
 
 	// When not null, we assume this window is being dragged.
 	private DragOrResizeInfo? _dragOrResizeInfo = null;
@@ -110,32 +70,33 @@ public class UIFloatingWindow : UIPanel, IWindow
 	 */
 	public Vector2? DragInitialMousePosition => HoveringResize ? null : _dragOrResizeInfo?.OriginalMouse;
 
+	public UITitleBar TitleBar = new("Name");
+
 	// Stuff should just be directly appended to this instead of the window itself.
 	public UIElement Contents { get; private set; } = new(){
 		Width = StyleDimension.Fill,
-		Height = new(-BarHeight, 1),
+		Height = new(-UITitleBar.BarHeight, 1),
 		VAlign = 1,
 	};
 
 	public UIFloatingWindow()
 	{
 		// Just to make sure we don't get tiny windows that are impossible to grab.
-		Width = Height = MinWidth = MinHeight = new(4 * BarHeight, 0);
+		Width = Height = MinWidth = MinHeight = new(150, 0);
 
 		BackgroundColor = QERColors.Brown * 0.7f;
 		BorderColor = QERColors.DarkBrown * 0.7f;
 		SetPadding(0);
 		Contents.SetPadding(ResizeBorderWidth);
-		_topBar.SetPadding(BarOuterPadding);
 
-		Append(_topBar);
+		Append(TitleBar);
 		Append(Contents);
 
 		var closeButton = new UIQERButton(QERAssets.ButtonClose);
 		closeButton.HoverText = Language.GetText("Mods.QuiteEnoughRecipes.UI.CloseHover");
 		closeButton.OnLeftClick += (elem, evt) => PressCloseButton();
 
-		AddElementToBar(closeButton);
+		TitleBar.AddElement(closeButton);
 	}
 
 	public bool IsDraggingOrResizing => _dragOrResizeInfo is not null;
@@ -164,7 +125,7 @@ public class UIFloatingWindow : UIPanel, IWindow
 		base.LeftMouseDown(e);
 		this.MoveToFront();
 
-		if (e.Target == this || e.Target == Contents || e.Target == _topBar)
+		if (e.Target == this || e.Target == Contents || e.Target == TitleBar)
 		{
 			var dims = GetOuterDimensions();
 
@@ -178,7 +139,7 @@ public class UIFloatingWindow : UIPanel, IWindow
 			 * If we're not resizing, then we only want to drag the window if we grabbed it by the
 			 * top bar.
 			 */
-			if (HoveringResize || _topBar.ContainsPoint(Main.MouseScreen))
+			if (HoveringResize || TitleBar.ContainsPoint(Main.MouseScreen))
 			{
 				_dragOrResizeInfo = dragState;
 			}
@@ -278,28 +239,6 @@ public class UIFloatingWindow : UIPanel, IWindow
 				_resizeLeft = _resizeRight = _resizeTop = _resizeBottom = false;
 			}
 		}
-	}
-
-	// `e` should have a fixed width of `BarItemWidth` and be smaller than `BarHeight`.
-	public void AddElementToBar(UIElement e)
-	{
-		e.Left = new(_topBarOffset, 0);
-		e.Width = new(BarItemWidth, 0);
-		e.Height = new(BarItemHeight, 0);
-		_topBar.Append(e);
-		_topBarOffset += BarItemWidth + BarInnerPadding;
-	}
-
-	// Add a help button to the right side (that's where help is).
-	public void AddHelp(LocalizedText helpText)
-	{
-		var helpIcon = new UIHelpIcon(helpText);
-		helpIcon.HAlign = 1;
-		helpIcon.Left = new(-_topBarHelpOffset, 0);
-		helpIcon.Width = new(BarItemWidth, 0);
-		helpIcon.Height = new(BarItemHeight, 0);
-		_topBar.Append(helpIcon);
-		_topBarHelpOffset += BarItemWidth + BarInnerPadding;
 	}
 
 	/*
