@@ -57,6 +57,9 @@ public class UITilingWindowContainer : UIElement
 		public required UIFloatingWindow Window;
 		public float CurrentHeightPercent = 1;
 		public bool ShouldRemove = false;
+
+		public required StyleDimension WidthBeforeInsertion;
+		public required StyleDimension HeightBeforeInsertion;
 	}
 
 	// A single strip of stacked windows.
@@ -105,6 +108,8 @@ public class UITilingWindowContainer : UIElement
 					w.Window.WindowState.WantsClose = CloseRequestState.None;
 					w.Window.OnClose();
 					w.Window.Remove();
+					w.Window.Width = w.WidthBeforeInsertion;
+					w.Window.Height = w.HeightBeforeInsertion;
 					w.ShouldRemove = true;
 				}
 				else if (w.Window.DragInitialMousePosition is Vector2 p
@@ -114,6 +119,19 @@ public class UITilingWindowContainer : UIElement
 					w.Window.CanDragOrResize = true;
 					w.Window.Remove();
 					UISystem.WindowManager?.Open(w.Window);
+					UISystem.WindowManager?.DeferCall(
+							() => {
+								w.Window.Width = w.WidthBeforeInsertion;
+								w.Window.Height = w.HeightBeforeInsertion;
+
+								/*
+								 * Since floating windows use their cached positions and sizes to
+								 * handle dragging, we need to recalculate here so it's actually
+								 * using the right ones. Otherwise, it will just use the stored size
+								 * from when it was in this container.
+								 */
+								w.Window.Recalculate();
+							});
 					w.ShouldRemove = true;
 				}
 			}
@@ -267,7 +285,11 @@ public class UITilingWindowContainer : UIElement
 		if (location is LayoutEdge.None) { return; }
 
 		window.CanDragOrResize = false;
-		var stackedWindow = new StackedWindow{ Window = window };
+		var stackedWindow = new StackedWindow{
+			Window = window,
+			WidthBeforeInsertion = window.Width,
+			HeightBeforeInsertion = window.Height,
+		};
 
 		window.ConvertStyleToAbsolute();
 		window.Width = window.Height = StyleDimension.Fill;
