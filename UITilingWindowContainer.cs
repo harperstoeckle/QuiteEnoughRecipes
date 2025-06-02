@@ -406,7 +406,7 @@ public class UITilingWindowContainer : UIElement
 		// Windows are too small to resize.
 		if (maxPos <= minPos) { return; }
 
-		float newBarPos = Math.Clamp(cursorPos, minPos, maxPos);
+		float newBarPos = MathHelper.Clamp(cursorPos, minPos, maxPos);
 		accessSize(elements[barIndex - 1]) = newBarPos - leftOffset;
 		accessSize(elements[barIndex]) = rightOffset - newBarPos;
 	}

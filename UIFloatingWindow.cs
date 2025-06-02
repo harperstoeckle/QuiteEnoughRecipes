@@ -190,29 +190,29 @@ public class UIFloatingWindow : UIPanel, IWindow
 				// We're not resizing, so we're dragging the window.
 				if (!HoveringResize)
 				{
-					Left.Pixels = Math.Clamp(relativePos.X + offset.X, 0, parentSize.X - Width.Pixels);
-					Top.Pixels = Math.Clamp(relativePos.Y + offset.Y, 0, parentSize.Y - Height.Pixels);
+					Left.Pixels = MathHelper.Clamp(relativePos.X + offset.X, 0, parentSize.X - Width.Pixels);
+					Top.Pixels = MathHelper.Clamp(relativePos.Y + offset.Y, 0, parentSize.Y - Height.Pixels);
 				}
 				else
 				{
 					if (_resizeLeft)
 					{
-						Left.Pixels = Math.Clamp(relativePos.X + offset.X, 0, relativePos.X + s.OriginalSize.X - MinWidth.Pixels);
+						Left.Pixels = MathHelper.Clamp(relativePos.X + offset.X, 0, relativePos.X + s.OriginalSize.X - MinWidth.Pixels);
 						Width.Pixels = s.OriginalSize.X + relativePos.X - Left.Pixels;
 					}
 					else if (_resizeRight)
 					{
-						Width.Pixels = Math.Clamp(s.OriginalSize.X + offset.X, MinWidth.Pixels, parentSize.X - Left.Pixels);
+						Width.Pixels = MathHelper.Clamp(s.OriginalSize.X + offset.X, MinWidth.Pixels, parentSize.X - Left.Pixels);
 					}
 
 					if (_resizeTop)
 					{
-						Top.Pixels = Math.Clamp(relativePos.Y + offset.Y, 0, relativePos.Y + s.OriginalSize.Y - MinHeight.Pixels);
+						Top.Pixels = MathHelper.Clamp(relativePos.Y + offset.Y, 0, relativePos.Y + s.OriginalSize.Y - MinHeight.Pixels);
 						Height.Pixels = s.OriginalSize.Y + relativePos.Y - Top.Pixels;
 					}
 					else if (_resizeBottom)
 					{
-						Height.Pixels = Math.Clamp(s.OriginalSize.Y + offset.Y, MinHeight.Pixels, parentSize.Y - Top.Pixels);
+						Height.Pixels = MathHelper.Clamp(s.OriginalSize.Y + offset.Y, MinHeight.Pixels, parentSize.Y - Top.Pixels);
 					}
 				}
 
