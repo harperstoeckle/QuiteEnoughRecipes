@@ -30,6 +30,8 @@ public class QERAssets : ModSystem
 
 	[AutoTexture("Images/panel_search_bar")] public static Asset<Texture2D> PanelSearchBar;
 	[AutoTexture("Images/panel_title_bar")] public static Asset<Texture2D> PanelTitleBar;
+	[AutoTexture("Images/panel_tab_selected")] public static Asset<Texture2D> PanelTabSelected;
+	[AutoTexture("Images/panel_tab_unselected")] public static Asset<Texture2D> PanelTabUnselected;
 
 	[AutoTexture("Images/inventory_background")] public static Asset<Texture2D> InventoryBackground;
 #nullable enable
