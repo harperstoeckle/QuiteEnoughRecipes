@@ -177,16 +177,13 @@ public static class RecipeHandlers
 
 			if (queryType == QueryType.Sources)
 			{
-				var item = new Item();
 				for (int itemID = 0; itemID < ItemLoader.ItemCount; ++itemID)
 				{
-					item.SetDefaults(itemID);
-
-					var droppedItems = GetItemDrops(item.type);
+					var droppedItems = GetItemDrops(itemID);
 					if (droppedItems.Any(info => info.itemId == i.Item.type))
 					{
 						yield return new ItemDropsRecipe{
-							Item = item.Clone(),
+							Item = new(itemID),
 							Drops = droppedItems
 						};
 					}
