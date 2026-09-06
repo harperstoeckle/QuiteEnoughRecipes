@@ -1,0 +1,187 @@
+Keybinds: {
+	OpenUI.DisplayName: Abrir/cerrar QER browser
+	HoverSources.DisplayName: Buscar receta/info del objeto señalado
+	HoverUses.DisplayName: Buscar dónde se usa el objeto señalado
+	Back.DisplayName: Ir a la página de la receta anterior
+}
+
+UI: {
+	SearchBarDefault: Buscar
+	FilterHover: Filtros
+	SortHover: Opciones de ordenación
+	RightClickToClear: "Haga [c/3B95DA:clic derecho] para restaurarlo a los valores predeterminados"
+	ShiftRightClickToClearLocks: "[c/3B95DA:Shift + clic derecho] para borrar bloqueos y restaurarlo a los valores predeterminados"
+	ResultCount: "{0}/{1} ({2} filtrado)"
+	ItemSearchHelp:
+		'''
+		[c/32FF82:Sintaxis de búsqueda]
+		
+		Para buscar un objeto por su descripción, usé el signo [c/3B95DA:#].
+		
+		[c/F2A754:Ejemplo de búsqueda por descripción]
+		Al escribir [c/3B95DA:#lingote] en el buscador, mostrará como resultado las distintas mejoras de yunques.
+		
+		Para buscar por mod, incluya [c/3B95DA:@], junto con el nombre (sin espacios) del mod en su búsqueda.
+		
+		[c/F2A754:Ejemplo de búsqueda por nombre de mod]
+		Si tienes instalado el mod [c/7cb518:Magic Storage] y quieres buscar todos los
+		objetos que añade dicho mod, en ese caso escribe en el buscador [c/3B95DA:@magicstorage].
+		'''
+	NPCSearchHelp:
+		'''
+		[c/32FF82:Sintaxis de búsqueda]
+		
+		Para buscar un NPC por su descripción en el bestiario, usé el signo [c/3B95DA:#].
+		
+		[c/F2A754:Ejemplo de búsqueda por descripción]
+		Al escribir [c/3B95DA:#recetas] en el buscador, mostrará como resultado al Guía.
+		
+		Para buscar por mod, incluya [c/3B95DA:@], junto con el nombre (sin espacios) del mod en su búsqueda.
+		
+		[c/F2A754:Ejemplo de búsqueda por nombre de mod]
+		Si tienes instalado el mod [c/7cb518:AlchemistNPC Lite] y quieres buscar todos los
+		NPCs que añade dicho mod, en ese caso escribe en el buscador [c/3B95DA:@alchemistnpclite].
+		'''
+	FilterHelp:
+		'''
+		[c/32FF82:Cómo usar los filtros]
+
+		Para activar o desactivar un filtro, haz [c/3B95DA:clic izquierdo] en él.
+		Si quieres activar varios filtros a la vez,
+		tienes que mantener pulsada la tecla [c/3B95DA:shift] y hacer [c/3B95DA:clic izquierdo].
+		Solo se mostrarán los resultados que coincidan con todos los filtros activados,
+		siendo una buena forma para ver todas las estaciones de trabajo, en especial si tienes
+		varios mods activados o que añaden mucho contenido.
+		
+		Para invertir un filtro, haz [c/3B95DA:clic derecho] en él.
+		Los resultados que coincidan con cualquiera de los filtros invertidos no se mostrarán.
+		Se puede usar para ocultar todo el contenido de algún mod en concreto que no deseas ver por ahora.
+		
+		Para bloquear un filtro, mantenga presionada la tecla [c/3B95DA:{0}], mientras
+		lo activas con [c/3B95DA:clic izquierdo] o lo inviertes con [c/3B95DA:clic derecho].
+		Los filtros bloqueados no se restablecerán automáticamente.
+
+		Para restablecer todos los filtros aplicados, haz [c/3B95DA:clic derecho] en cualquier lugar de esta ventana.
+		Si quieres restablecer todos los filtros bloqueados, debes hacer [c/3B95DA:clic derecho + shift] en cualquier lugar de esta ventana.
+		'''
+}
+
+Configs: {
+	QERConfig: {
+		ShouldPreloadItems: {
+			Label: Pre-cargar las texturas de todos los objetos
+			Tooltip:
+				'''
+				Si esta opción está activada, las texturas de los objetos se cargarán antes de cargar un mundo,
+				lo que debería reducir el retardo/relentización al desplazarse por la lista de objetos.
+				Esto puede aumentar [c/e66710:significativamente] el tiempo de carga de un mundo la primera vez en una sesión.
+				'''
+		}
+
+		AutoFocusSearchBars: {
+			Label: Enfocar automáticamente las barras de búsqueda
+			Tooltip:
+				'''
+				Si esta opción está habilitada, la barra de búsqueda ya estara lista
+				para escribir automáticamente al abrir el navegador o al cambiar de pestaña.
+				'''
+		}
+
+		ShowDropChancesInTooltips: {
+			Label: Mostrar las probabilidades de caída del objeto en su descripción
+			Tooltip:
+				'''
+				La probabilidad de obtener un objeto, se añadirá en la descripción del objeto en lugar de dibujarse sobre él.
+				'''
+		}
+
+		DisplayName: Configuración de QER
+	}
+}
+
+Tabs: {
+	ItemList: Objetos
+	NPCList: NPCs
+	Recipes: Recetas
+	Tiles: Recetas que requieren esta estación de elaboración
+	Shimmer: Transmutaciones en el fulgor
+	Shops: Tiendas de NPCs
+	ItemDrops: Botín de objetos
+	NPCDrops: Botín de NPC
+	GlobalDrops: Botín global
+}
+
+OptionGroups: {
+	ItemFilters: {
+		Misc: {
+			Name: Categorías de varios tipos de objetos
+			IsTile: Bloques
+			IsCraftingStation: Estación de elaboración
+			IsBossSummon: Invocadores de jefes
+			IsLootItem: Objetos de botín
+			IsFishing: Pesca
+			IsDye: Tintes
+			IsAccessory: Accesorios
+			IsTool: Herramientas
+			IsArmor: Armaduras
+			IsVanity: Vanidad
+			IsPotion: Pociones
+			IsFood: Comidas
+			IsWings: Alas
+			IsPet: Mascotas
+			IsMount: Monturas
+			IsHook: Ganchos
+			IsResearched: Investigado
+		}
+
+		Weapons: {
+			Name: Categorías de armas
+			IsMeleeWeapon: Armas cuerpo a cuerpo
+			IsRangedWeapon: Armas a distancia
+			IsMagicWeapon: Armas mágicas
+			IsSummonWeapon: Armas de invocador
+			IsClasslessWeapon: Armas sin clase
+			IsThrowingWeapon: Armas arrojadizas
+			# Used to format other damage types.
+			IsOtherWeapon: "Armas de {0}"
+		}
+	}
+
+	ItemSorts: {
+		Name: Órdenes de clasificación de objetos
+		ByCreative: Ordenar en orden creativo
+		ByID: Ordenar por ID
+		ByName: Ordenar alfabéticamente
+		ByRarity: Ordenar por rareza
+		ByValue: Ordenar por valor
+	}
+
+	NPCFilters: {
+		Name: Categorías de NPC
+		IsBoss: Jefes
+		IsTownNPC: NPCs de la ciudad
+	}
+
+	NPCSorts: {
+		Name: Órdenes de clasificación de los NPC
+		ByBestiary: Ordenar en orden del bestiario
+		ByID: "{$ItemSorts.ByID}"
+		ByName: "{$ItemSorts.ByName}"
+		ByRarity: "{$ItemSorts.ByRarity}"
+	}
+
+	Mods: {
+		Name: Mods
+		ModName: "{0}"
+	}
+}
+
+Tooltips: {
+	DropChance: "{0} probabilidad de caída"
+	RecipeAddedBy: Receta añadida por {0}
+}
+
+Conditions: {
+	BannerDrop: Se obtiene una vez por cada {0} muertes
+	Invalid: Condición de caída no válida ({0})
+}
